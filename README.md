@@ -1,3 +1,15 @@
+> ⚠️ **Fork Notice – Community Continuation**
+>
+> This repository is **not the official The New Economy (TNE) project**.
+>
+> The original TNE project was officially **retired on January 1st, 2026**.  
+> This repository is a **community-maintained fork** created to continue development, maintenance, and support for TNE moving forward.
+>
+> Our goal with this fork is to **take over active support**, accept fixes and improvements, and ensure long-term usability of TNE for existing and future servers.
+>
+> All original licensing (AGPLv3) and attributions are preserved.
+
+
 # The New Economy
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/246101510dca4eb9a729ef178dae682c)](https://app.codacy.com/gh/TheNewEconomy/EconomyCore/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
