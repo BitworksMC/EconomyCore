@@ -116,7 +116,7 @@ public class MySQLDialect implements TNEDialect {
 
     this.saveReceipt = "INSERT INTO " + prefix + "receipts (uid, performed, receipt_type, receipt_source, " +
                        "receipt_source_type, archive, voided) " +
-                       "VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
+                       "VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
 
     this.loadReceiptHolding = "SELECT BIN_TO_UUID(participant) AS participant, ending, server, region, " +
                               "BIN_TO_UUID(currency) AS currency, holdings_type, holdings FROM " +

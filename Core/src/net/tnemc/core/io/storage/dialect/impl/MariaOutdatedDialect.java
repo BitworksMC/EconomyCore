@@ -138,7 +138,7 @@ public class MariaOutdatedDialect implements TNEDialect {
 
     this.saveReceipt = "INSERT INTO " + prefix + "receipts (uid, performed, receipt_type, receipt_source, " +
                        "receipt_source_type, archive, voided) " +
-                       "VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
+                       "VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
 
     this.loadReceiptHolding = "SELECT participant AS participant, ending, server, region, " +
                               "currency AS currency, holdings_type, holdings FROM " +
