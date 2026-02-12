@@ -19,6 +19,22 @@ package net.tnemc.bukkit.depend.towny;
  */
 
 import net.tnemc.core.TNECore;
+import net.tnemc.core.account.Account;
+import net.tnemc.core.account.SharedAccount;
+import net.tnemc.core.account.holdings.HoldingsEntry;
+import net.tnemc.plugincore.PluginCore;
+import net.tnemc.plugincore.core.id.UUIDPair;
+
+import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.TownySettings;
+import com.palmergames.bukkit.towny.object.Nation;
+import com.palmergames.bukkit.towny.object.Town;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * TownyHandler
@@ -32,5 +48,77 @@ public class TownyHandler {
 
     TNECore.eco().account().addAccountType(TownAccount.class, new TownCheck().check());
     TNECore.eco().account().addAccountType(NationAccount.class, new NationCheck().check());
+  }
+
+  public static void synchronizeAccounts() {
+
+    final Iterator<Map.Entry<UUID, UUIDPair>> idIterator = TNECore.eco().account().uuidProvider().pairs().entrySet().iterator();
+    while(idIterator.hasNext()) {
+
+      final Map.Entry<UUID, UUIDPair> entry = idIterator.next();
+      final String name = entry.getValue().getUsername();
+
+      if(name.contains(TownySettings.getTownAccountPrefix())) {
+
+        final Town town = TownyAPI.getInstance().getTown(name.replace(TownySettings.getTownAccountPrefix(), ""));
+        if(town == null) {
+
+          PluginCore.log().inform("Removing stale Towny town account: " + name);
+          TNECore.eco().account().deleteAccount(entry.getKey());
+          continue;
+        }
+
+        final UUID townyUUID = town.getUUID();
+        final Optional<Account> account = TNECore.eco().account().findAccount(entry.getKey().toString());
+        if(!townyUUID.equals(entry.getKey()) && account.isPresent()) {
+
+          PluginCore.log().inform("Repairing Towny town UUID mismatch for: " + name + ". Old UUID: " + entry.getKey() + ", New UUID: " + townyUUID + '.');
+
+          final List<HoldingsEntry> holdings = account.get().getWallet().entryList();
+
+          idIterator.remove();
+          TNECore.eco().account().deleteAccount(entry.getKey());
+
+          final Optional<SharedAccount> response = TNECore.eco().account().createNonPlayerAccount(townyUUID.toString(), name);
+          if(response.isPresent()) {
+
+            for(final HoldingsEntry entry1 : holdings) {
+
+              response.get().setHoldings(entry1);
+            }
+          }
+        }
+      } else if(entry.getValue().getUsername().contains(TownySettings.getNationAccountPrefix())) {
+
+        final Nation nation = TownyAPI.getInstance().getNation(name.replace(TownySettings.getNationAccountPrefix(), ""));
+        if(nation == null) {
+
+          PluginCore.log().inform("Removing stale Towny nation account: " + name);
+          TNECore.eco().account().deleteAccount(entry.getKey());
+          continue;
+        }
+
+        final UUID townyUUID = nation.getUUID();
+        final Optional<Account> account = TNECore.eco().account().findAccount(entry.getKey().toString());
+        if(!townyUUID.equals(entry.getKey()) && account.isPresent()) {
+
+          PluginCore.log().inform("Repairing Towny nation UUID mismatch for: " + name + ". Old UUID: " + entry.getKey() + ", New UUID: " + townyUUID + '.');
+
+          final List<HoldingsEntry> holdings = account.get().getWallet().entryList();
+
+          idIterator.remove();
+          TNECore.eco().account().deleteAccount(entry.getKey());
+
+          final Optional<SharedAccount> response = TNECore.eco().account().createNonPlayerAccount(townyUUID.toString(), name);
+          if(response.isPresent()) {
+
+            for(final HoldingsEntry entry1 : holdings) {
+
+              response.get().setHoldings(entry1);
+            }
+          }
+        }
+      }
+    }
   }
 }
