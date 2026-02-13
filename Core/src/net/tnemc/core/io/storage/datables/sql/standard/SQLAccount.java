@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.lang.Math.min;
+
 /**
  * SQLAccount
  *
@@ -95,6 +97,8 @@ public class SQLAccount implements Datable<Account> {
 
       PluginCore.log().debug("Saving Account with ID: " + identifier + " Name: " + account.getName(), DebugLevel.STANDARD);
 
+      resolveUsernameConflict(sql, tne, account);
+
       //store the basic account information(accounts table)
       final int test = sql.executeUpdate(tne.saveAccount(),
                                          new Object[]{
@@ -110,6 +114,13 @@ public class SQLAccount implements Datable<Account> {
                                                  });
 
       PluginCore.log().debug("Account Insert Executed correctly: " + test + " - " + identifier, DebugLevel.DETAILED);
+
+      if(!accountPersisted(sql, tne, account.getIdentifier().toString())) {
+        PluginCore.log().warn("Skipping dependent account table saves for " + account.getIdentifier() +
+                              " (" + account.getName() + "): account row was not persisted. " +
+                              "This usually means a unique username conflict with a different uid.");
+        return;
+      }
 
       if(account instanceof final PlayerAccount playerAccount) {
 
@@ -156,6 +167,90 @@ public class SQLAccount implements Datable<Account> {
       PluginCore.callbacks().call(callback);
 
       TNECore.instance().storage().storeAll(account.getIdentifier().toString());
+    }
+  }
+
+
+  private void resolveUsernameConflict(@NotNull final SQLConnector sql,
+                                       @NotNull final TNEDialect dialect,
+                                       @NotNull final Account account) {
+
+    final String accountUid = account.getIdentifier().toString();
+
+    try(final ResultSet conflict = sql.executeQuery(dialect.loadAccountByUsername(), new Object[]{ account.getName() })) {
+
+      if(!conflict.next()) return;
+
+      final String conflictingUid = conflict.getString("uid");
+      if(accountUid.equalsIgnoreCase(conflictingUid)) return;
+
+      final String expiredName = findAvailableExpiredUsername(sql, dialect, account.getName(), conflictingUid);
+
+      final int renamed = sql.executeUpdate(dialect.expireAccountUsername(),
+                                            new Object[]{ expiredName, conflictingUid, account.getName() });
+
+      PluginCore.log().warn("Detected username collision for '" + account.getName() + "': reassigned uid " +
+                            conflictingUid + " to expired username '" + expiredName + "' before saving uid " +
+                            accountUid + " (rows updated: " + renamed + ").");
+
+    } catch(final SQLException e) {
+      PluginCore.log().debug("Unable to resolve username conflict for " + accountUid + ": " + e.getMessage(),
+                             DebugLevel.STANDARD);
+    }
+  }
+
+  private @NotNull String findAvailableExpiredUsername(@NotNull final SQLConnector sql,
+                                                       @NotNull final TNEDialect dialect,
+                                                       @NotNull final String username,
+                                                       @NotNull final String conflictingUid) throws SQLException {
+
+    String candidate = buildExpiredUsername(username, conflictingUid, null);
+
+    if(!usernameExists(sql, dialect, candidate)) return candidate;
+
+    for(int attempt = 1; attempt <= 9999; attempt++) {
+      candidate = buildExpiredUsername(username, conflictingUid, attempt);
+
+      if(!usernameExists(sql, dialect, candidate)) {
+        return candidate;
+      }
+    }
+
+    return buildExpiredUsername(username, conflictingUid, System.currentTimeMillis() % 10000);
+  }
+
+  private boolean usernameExists(@NotNull final SQLConnector sql,
+                                 @NotNull final TNEDialect dialect,
+                                 @NotNull final String username) throws SQLException {
+
+    try(final ResultSet result = sql.executeQuery(dialect.loadAccountByUsername(), new Object[]{ username })) {
+      return result.next();
+    }
+  }
+
+  private @NotNull String buildExpiredUsername(@NotNull final String username,
+                                               @NotNull final String conflictingUid,
+                                               @Nullable final Number attemptSuffix) {
+
+    final String suffix = conflictingUid.replace("-", "").substring(0, 8);
+    final String expireTag = (attemptSuffix == null)? "-expired-" + suffix :
+                             "-exp-" + suffix + "-" + attemptSuffix;
+    final int maxBaseLength = min(50 - expireTag.length(), username.length());
+
+    return username.substring(0, maxBaseLength) + expireTag;
+  }
+
+  private boolean accountPersisted(@NotNull final SQLConnector sql,
+                                   @NotNull final TNEDialect dialect,
+                                   @NotNull final String identifier) {
+
+    try(final ResultSet result = sql.executeQuery(dialect.loadAccount(), new Object[]{ identifier })) {
+      return result.next();
+
+    } catch(final SQLException e) {
+      PluginCore.log().debug("Unable to verify persisted account row for " + identifier + ": " + e.getMessage(),
+                             DebugLevel.STANDARD);
+      return false;
     }
   }
 

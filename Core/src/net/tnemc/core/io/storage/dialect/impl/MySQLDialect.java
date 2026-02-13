@@ -37,6 +37,10 @@ public class MySQLDialect implements TNEDialect {
   @Language("SQL")
   protected final String loadAccount;
   @Language("SQL")
+  protected final String loadAccountByUsername;
+  @Language("SQL")
+  protected final String expireAccountUsername;
+  @Language("SQL")
   protected final String deleteAccount;
   @Language("SQL")
   protected final String saveAccount;
@@ -84,6 +88,10 @@ public class MySQLDialect implements TNEDialect {
     this.loadAccounts = "SELECT BIN_TO_UUID(uid) AS uid, username, account_type, created, pin, status FROM " + prefix + "accounts";
 
     this.loadAccount = "SELECT username, account_type, created, pin, status FROM " + prefix + "accounts WHERE uid = UUID_TO_BIN(?)";
+
+    this.loadAccountByUsername = "SELECT BIN_TO_UUID(uid) AS uid FROM " + prefix + "accounts WHERE username = ?";
+
+    this.expireAccountUsername = "UPDATE " + prefix + "accounts SET username = ? WHERE uid = UUID_TO_BIN(?) AND username = ?";
 
     this.deleteAccount = "DELETE FROM " + prefix + "accounts WHERE uid = UUID_TO_BIN(?)";
 
@@ -307,6 +315,18 @@ public class MySQLDialect implements TNEDialect {
   public @Language("SQL") String saveAccount() {
 
     return saveAccount;
+  }
+
+  @Override
+  public @Language("SQL") String loadAccountByUsername() {
+
+    return loadAccountByUsername;
+  }
+
+  @Override
+  public @Language("SQL") String expireAccountUsername() {
+
+    return expireAccountUsername;
   }
 
   @Override

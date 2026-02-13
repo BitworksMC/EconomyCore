@@ -74,6 +74,14 @@ public interface TNEDialect extends Dialect {
   @Language("SQL")
   String loadAccount();
 
+  //account load by username
+  @Language("SQL")
+  String loadAccountByUsername();
+
+  //expire conflicting username for a specific uid
+  @Language("SQL")
+  String expireAccountUsername();
+
   //account save
   @Language("SQL")
   String saveAccount();
