@@ -116,7 +116,7 @@ public class SQLAccount implements Datable<Account> {
       PluginCore.log().debug("Account Insert Executed correctly: " + test + " - " + identifier, DebugLevel.DETAILED);
 
       if(!accountPersisted(sql, tne, account.getIdentifier().toString())) {
-        PluginCore.log().warn("Skipping dependent account table saves for " + account.getIdentifier() +
+        PluginCore.log().warning("Skipping dependent account table saves for " + account.getIdentifier() +
                               " (" + account.getName() + "): account row was not persisted. " +
                               "This usually means a unique username conflict with a different uid.");
         return;
@@ -189,7 +189,7 @@ public class SQLAccount implements Datable<Account> {
       final int renamed = sql.executeUpdate(dialect.expireAccountUsername(),
                                             new Object[]{ expiredName, conflictingUid, account.getName() });
 
-      PluginCore.log().warn("Detected username collision for '" + account.getName() + "': reassigned uid " +
+      PluginCore.log().warning("Detected username collision for '" + account.getName() + "': reassigned uid " +
                             conflictingUid + " to expired username '" + expiredName + "' before saving uid " +
                             accountUid + " (rows updated: " + renamed + ").");
 
