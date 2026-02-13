@@ -42,6 +42,12 @@ public class MariaOutdatedDialect implements TNEDialect {
   protected final String loadAccount;
 
   @Language("SQL")
+  protected final String loadAccountByUsername;
+
+  @Language("SQL")
+  protected final String expireAccountUsername;
+
+  @Language("SQL")
   protected final String deleteAccount;
 
   @Language("SQL")
@@ -106,6 +112,10 @@ public class MariaOutdatedDialect implements TNEDialect {
     this.loadAccounts = "SELECT uid AS uid, username, account_type, created, pin, status FROM " + prefix + "accounts";
 
     this.loadAccount = "SELECT username, account_type, created, pin, status FROM " + prefix + "accounts WHERE uid = ?";
+
+    this.loadAccountByUsername = "SELECT uid AS uid FROM " + prefix + "accounts WHERE username = ?";
+
+    this.expireAccountUsername = "UPDATE " + prefix + "accounts SET username = ? WHERE uid = ? AND username = ?";
 
     this.deleteAccount = "DELETE FROM " + prefix + "accounts WHERE uid = ?";
 
@@ -328,6 +338,18 @@ public class MariaOutdatedDialect implements TNEDialect {
   public @Language("SQL") String saveAccount() {
 
     return saveAccount;
+  }
+
+  @Override
+  public @Language("SQL") String loadAccountByUsername() {
+
+    return loadAccountByUsername;
+  }
+
+  @Override
+  public @Language("SQL") String expireAccountUsername() {
+
+    return expireAccountUsername;
   }
 
   @Override
