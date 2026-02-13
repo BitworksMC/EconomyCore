@@ -169,7 +169,7 @@ public class SQLReceipt implements Datable<Receipt> {
   @Override
   public void storeAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
-    if(connector instanceof SQLConnector && identifier != null) {
+    if(connector instanceof SQLConnector) {
 
       for(final Receipt receipt : TransactionManager.receipts().getReceipts().values()) {
         store(connector, receipt, identifier);
@@ -255,7 +255,7 @@ public class SQLReceipt implements Datable<Receipt> {
 
     HoldingsModifier modifier = null;
     //participant, participant_type, operation, region, currency AS currency, modifier  - uid/participant
-    try(final ResultSet result = sql.executeQuery(dialect.loadReceiptHolding(), new Object[]{
+    try(final ResultSet result = sql.executeQuery(dialect.loadModifiers(), new Object[]{
             receiptID.toString(), participant, type })) {
 
       if(result.next()) {
@@ -277,7 +277,7 @@ public class SQLReceipt implements Datable<Receipt> {
 
     //participant, ending, server, region, currency AS currency, holdings_type, holdings - uid/participant
     try(final ResultSet result = sql.executeQuery(dialect.loadReceiptHolding(), new Object[]{
-            receiptID.toString(), participant, ending })) {
+            receiptID.toString(), participant.toString(), ending })) {
 
       while(result.next()) {
 
