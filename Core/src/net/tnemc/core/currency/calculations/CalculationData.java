@@ -140,20 +140,22 @@ public class CalculationData<I> {
         final Collection<AbstractItemStack<Object>> enderLeft = PluginCore.server().calculations().giveItems(left, account.get().getPlayer().get().inventory().getInventory(true), currency.shulker(), currency.bundle());
 
         if(!enderLeft.isEmpty()) {
-
-          contains = contains - enderLeft.stream().findFirst().get().amount();
-
           drop(enderLeft, account.get());
+          if(!isFailedDrop()) {
+
+            contains = contains - countAmount(enderLeft);
+          }
         } else {
 
           final MessageData messageData = new MessageData("Messages.Money.EnderChest");
           account.get().getPlayer().ifPresent(player->player.message(messageData));
         }
       } else {
-
-        contains = contains - left.stream().findFirst().get().amount();
-
         drop(left, account.get());
+        if(!isFailedDrop()) {
+
+          contains = contains - countAmount(left);
+        }
       }
     }
 
@@ -171,12 +173,19 @@ public class CalculationData<I> {
     } else {
 
       failedDrop = PluginCore.server().calculations().drop(toDrop, player, true);
+      if(!failedDrop) {
 
-      final MessageData messageData = new MessageData("Messages.Money.Dropped");
-      account.getPlayer().ifPresent(player->player.message(messageData));
+        final MessageData messageData = new MessageData("Messages.Money.Dropped");
+        account.getPlayer().ifPresent(player->player.message(messageData));
 
-      dropped = true;
+        dropped = true;
+      }
     }
+  }
+
+  private int countAmount(final Collection<AbstractItemStack<Object>> stacks) {
+
+    return stacks.stream().mapToInt(AbstractItemStack::amount).sum();
   }
 
   public boolean isDropped() {
