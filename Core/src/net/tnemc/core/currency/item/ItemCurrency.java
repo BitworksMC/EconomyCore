@@ -48,8 +48,8 @@ public class ItemCurrency extends Currency {
     this.enderFill = true;
     this.importItem = true;
     this.blockCraft = false;
-    this.shulker = false;
-    this.bundle = false;
+    this.shulker = true;
+    this.bundle = true;
   }
 
   public Optional<ItemDenomination> getDenominationByMaterial(final String material) {
