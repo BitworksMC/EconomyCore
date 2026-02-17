@@ -113,7 +113,7 @@ Item:
   Shulker: true
 
   #Should items from bundles be used in holdings calculations
-  Bundle: true
+  Bundle: false
 
 #All configurations related to formatting.
 Formatting:

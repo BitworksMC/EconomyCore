@@ -166,20 +166,22 @@ public class CalculationData<I> {
 
   public void drop(final Collection<AbstractItemStack<Object>> toDrop, final PlayerAccount account) {
 
+    failedDrop = false;
+
     final CurrencyDropCallback currencyDrop = new CurrencyDropCallback(player, currency, toDrop);
     if(PluginCore.callbacks().call(currencyDrop)) {
       PluginCore.log().error("Cancelled currency drop through callback.", DebugLevel.STANDARD);
+      failedDrop = true;
+      return;
+    }
 
-    } else {
+    failedDrop = PluginCore.server().calculations().drop(toDrop, player, true);
+    if(!failedDrop) {
 
-      failedDrop = PluginCore.server().calculations().drop(toDrop, player, true);
-      if(!failedDrop) {
+      final MessageData messageData = new MessageData("Messages.Money.Dropped");
+      account.getPlayer().ifPresent(player->player.message(messageData));
 
-        final MessageData messageData = new MessageData("Messages.Money.Dropped");
-        account.getPlayer().ifPresent(player->player.message(messageData));
-
-        dropped = true;
-      }
+      dropped = true;
     }
   }
 
