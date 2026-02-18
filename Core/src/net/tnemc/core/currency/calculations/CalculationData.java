@@ -127,31 +127,42 @@ public class CalculationData<I> {
     int contains = (inventoryMaterials.getOrDefault(denomination.weight(), 0)) + amount;
 
     final AbstractItemStack<?> stack = TNECore.instance().denominationToStack((ItemDenomination)denomination).amount(amount);
-    final Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(Collections.singletonList((AbstractItemStack<Object>)stack), inventory, currency.shulker(), currency.bundle());
+    Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(Collections.singletonList((AbstractItemStack<Object>)stack), inventory, currency.shulker(), currency.bundle());
 
 
     final Optional<PlayerAccount> account = TNECore.eco().account().findPlayerAccount(player);
     if(!left.isEmpty() && account.isPresent()) {
 
+      left = tryShulkerOverflow(left, inventory, account.get());
+
       if(currency.isEnderFill()) {
 
-        //PluginCore.log().debug("Ender Fill: " + contains, DebugLevel.DETAILED);
-        //PluginCore.log().debug("Ender Fill: " + amount, DebugLevel.DETAILED);
-        final Collection<AbstractItemStack<Object>> enderLeft = PluginCore.server().calculations().giveItems(left, account.get().getPlayer().get().inventory().getInventory(true), currency.shulker(), currency.bundle());
+        if(account.get().getPlayer().isPresent()) {
 
-        if(!enderLeft.isEmpty()) {
+          final Object enderInventory = account.get().getPlayer().get().inventory().getInventory(true);
+          final Collection<AbstractItemStack<Object>> enderLeft = PluginCore.server().calculations().giveItems(left, enderInventory, currency.shulker(), currency.bundle());
 
-          contains = contains - enderLeft.stream().findFirst().get().amount();
+          left = tryShulkerOverflow(enderLeft, enderInventory, account.get());
 
-          drop(enderLeft, account.get());
+          if(!left.isEmpty()) {
+
+            contains = contains - getLeftoverAmount(left);
+
+            drop(left, account.get());
+          } else {
+
+            final MessageData messageData = new MessageData("Messages.Money.EnderChest");
+            account.get().getPlayer().ifPresent(player->player.message(messageData));
+          }
         } else {
 
-          final MessageData messageData = new MessageData("Messages.Money.EnderChest");
-          account.get().getPlayer().ifPresent(player->player.message(messageData));
+          contains = contains - getLeftoverAmount(left);
+
+          drop(left, account.get());
         }
       } else {
 
-        contains = contains - left.stream().findFirst().get().amount();
+        contains = contains - getLeftoverAmount(left);
 
         drop(left, account.get());
       }
@@ -160,6 +171,30 @@ public class CalculationData<I> {
     //PluginCore.log().debug("Weight: " + denomination.weight() + " - Amount: " + amount, DebugLevel.DETAILED);
 
     inventoryMaterials.put(denomination.weight(), contains);
+  }
+
+  private Collection<AbstractItemStack<Object>> tryShulkerOverflow(final Collection<AbstractItemStack<Object>> left,
+                                                                   final Object targetInventory,
+                                                                   final PlayerAccount account) {
+
+    if(left.isEmpty() || currency.shulker()) {
+      return left;
+    }
+
+    final Collection<AbstractItemStack<Object>> shulkerLeft = PluginCore.server().calculations().giveItems(left,
+                                                                                                             targetInventory,
+                                                                                                             true,
+                                                                                                             currency.bundle());
+    if(shulkerLeft.size() != left.size() || getLeftoverAmount(shulkerLeft) < getLeftoverAmount(left)) {
+      final MessageData messageData = new MessageData("Messages.Money.ShulkerBox");
+      account.getPlayer().ifPresent(player->player.message(messageData));
+    }
+    return shulkerLeft;
+  }
+
+  private int getLeftoverAmount(final Collection<AbstractItemStack<Object>> left) {
+
+    return left.stream().mapToInt(AbstractItemStack::amount).sum();
   }
 
   public void drop(final Collection<AbstractItemStack<Object>> toDrop, final PlayerAccount account) {
