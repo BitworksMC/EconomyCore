@@ -260,7 +260,7 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
       item.setImportItem(cur.getBoolean("Item.ImportItems", true));
       item.blockCraft(cur.getBoolean("Item.BlockCrafting", false));
       item.shulker(cur.getBoolean("Item.Shulker", true));
-      item.bundle(cur.getBoolean("Item.Bundle", true));
+      item.bundle(cur.getBoolean("Item.Bundle", false));
     }
 
     //Load our note configurations.
