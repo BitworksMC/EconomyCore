@@ -29,11 +29,14 @@ import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.io.message.MessageData;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -196,7 +199,123 @@ public class CalculationData<I> {
       }
     }
 
-    return remaining;
+    return tryInsertIntoBukkitShulkers(remaining, targetInventory);
+  }
+
+  private <T> Collection<AbstractItemStack<Object>> tryInsertIntoBukkitShulkers(final Collection<AbstractItemStack<Object>> left, final T targetInventory) {
+
+    if(left.isEmpty() || !currency.shulker()) {
+      return left;
+    }
+
+    try {
+      final Class<?> inventoryClass = Class.forName("org.bukkit.inventory.Inventory");
+      if(!inventoryClass.isInstance(targetInventory)) {
+        return left;
+      }
+
+      final Class<?> itemStackClass = Class.forName("org.bukkit.inventory.ItemStack");
+      final Class<?> itemMetaClass = Class.forName("org.bukkit.inventory.meta.ItemMeta");
+      final Class<?> blockStateClass = Class.forName("org.bukkit.block.BlockState");
+      final Class<?> blockStateMetaClass = Class.forName("org.bukkit.inventory.meta.BlockStateMeta");
+      final Class<?> containerClass = Class.forName("org.bukkit.block.Container");
+      final Class<?> materialClass = Class.forName("org.bukkit.Material");
+
+      final Method inventoryGetContents = inventoryClass.getMethod("getContents");
+      final Method inventorySetItem = inventoryClass.getMethod("setItem", int.class, itemStackClass);
+
+      final Method itemStackGetType = itemStackClass.getMethod("getType");
+      final Method itemStackHasMeta = itemStackClass.getMethod("hasItemMeta");
+      final Method itemStackGetMeta = itemStackClass.getMethod("getItemMeta");
+      final Method itemStackSetMeta = itemStackClass.getMethod("setItemMeta", itemMetaClass);
+      final Method itemStackGetAmount = itemStackClass.getMethod("getAmount");
+      final Method itemStackSetAmount = itemStackClass.getMethod("setAmount", int.class);
+      final Method itemStackGetMaxStack = itemStackClass.getMethod("getMaxStackSize");
+
+      final Method blockStateMetaGetState = blockStateMetaClass.getMethod("getBlockState");
+      final Method blockStateMetaSetState = blockStateMetaClass.getMethod("setBlockState", blockStateClass);
+      final Method blockStateUpdate = blockStateClass.getMethod("update");
+      final Method containerGetInventory = containerClass.getMethod("getInventory");
+
+      final Method materialValueOf = materialClass.getMethod("valueOf", String.class);
+      final Constructor<?> itemStackCtor = itemStackClass.getConstructor(materialClass, int.class);
+
+      final Collection<AbstractItemStack<Object>> remaining = new ArrayList<>();
+
+      final Object[] contents = (Object[])inventoryGetContents.invoke(targetInventory);
+      for(final AbstractItemStack<Object> abstractStack : left) {
+
+        int amountLeft = abstractStack.amount();
+        final Object material;
+        try {
+          material = materialValueOf.invoke(null, abstractStack.material().toUpperCase(Locale.ROOT));
+        } catch(final Exception ignored) {
+          remaining.add(abstractStack);
+          continue;
+        }
+
+        for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
+
+          final Object containerStack = contents[slot];
+          if(containerStack == null) continue;
+
+          final String typeName = itemStackGetType.invoke(containerStack).toString();
+          if(!typeName.equals("SHULKER_BOX") && !typeName.endsWith("_SHULKER_BOX")) continue;
+          if(!(Boolean)itemStackHasMeta.invoke(containerStack)) continue;
+
+          final Object meta = itemStackGetMeta.invoke(containerStack);
+          if(!blockStateMetaClass.isInstance(meta)) continue;
+
+          final Object blockState = blockStateMetaGetState.invoke(meta);
+          if(!containerClass.isInstance(blockState)) continue;
+
+          final Object shulkerInventory = containerGetInventory.invoke(blockState);
+          final Object[] shulkerContents = (Object[])inventoryGetContents.invoke(shulkerInventory);
+
+          for(int s = 0; s < shulkerContents.length && amountLeft > 0; s++) {
+
+            final Object shulkerStack = shulkerContents[s];
+            if(shulkerStack == null) continue;
+            if(!itemStackGetType.invoke(shulkerStack).equals(material)) continue;
+
+            final int stackAmount = (Integer)itemStackGetAmount.invoke(shulkerStack);
+            final int max = (Integer)itemStackGetMaxStack.invoke(shulkerStack);
+            final int space = max - stackAmount;
+            if(space <= 0) continue;
+
+            final int toAdd = Math.min(space, amountLeft);
+            itemStackSetAmount.invoke(shulkerStack, stackAmount + toAdd);
+            inventorySetItem.invoke(shulkerInventory, s, shulkerStack);
+            amountLeft -= toAdd;
+          }
+
+          for(int s = 0; s < shulkerContents.length && amountLeft > 0; s++) {
+
+            if(shulkerContents[s] != null) continue;
+
+            final int toAdd = Math.min(64, amountLeft);
+            final Object newItem = itemStackCtor.newInstance(material, toAdd);
+            inventorySetItem.invoke(shulkerInventory, s, newItem);
+            amountLeft -= toAdd;
+          }
+
+          blockStateMetaSetState.invoke(meta, blockState);
+          itemStackSetMeta.invoke(containerStack, meta);
+          inventorySetItem.invoke(targetInventory, slot, containerStack);
+          blockStateUpdate.invoke(blockState);
+        }
+
+        if(amountLeft > 0) {
+          remaining.add(abstractStack.amount(amountLeft));
+        }
+      }
+
+      return remaining;
+
+    } catch(final Throwable throwable) {
+      PluginCore.log().debug("Shulker insertion retry failed: " + throwable.getMessage(), DebugLevel.DEVELOPER);
+      return left;
+    }
   }
 
   public void drop(final Collection<AbstractItemStack<Object>> toDrop, final PlayerAccount account) {
