@@ -167,7 +167,7 @@ public class CalculationData<I> {
     inventoryMaterials.put(denomination.weight(), contains);
   }
 
-  private Collection<AbstractItemStack<Object>> giveItemsRetry(final Collection<AbstractItemStack<Object>> toGive, final I targetInventory) {
+  private <T> Collection<AbstractItemStack<Object>> giveItemsRetry(final Collection<AbstractItemStack<Object>> toGive, final T targetInventory) {
 
     Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(toGive,
                                                                                                targetInventory,
