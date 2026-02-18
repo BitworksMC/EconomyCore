@@ -30,7 +30,6 @@ import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.io.message.MessageData;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -178,33 +177,21 @@ public class CalculationData<I> {
       return left;
     }
 
-    final Collection<AbstractItemStack<Object>> remaining = new ArrayList<>();
-    for(final AbstractItemStack<Object> stack : left) {
+    PluginCore.log().debug("Container pass start. Leftover=" + countAmount(left)
+                             + " target=" + ((targetInventory == null)? "null" : targetInventory.getClass().getSimpleName()),
+                           DebugLevel.DEVELOPER);
 
-      int amountLeft = stack.amount();
-      while(amountLeft > 0) {
-
-        final int piece = Math.min(amountLeft, 64);
-        final Collection<AbstractItemStack<Object>> pieceLeft = PluginCore.server().calculations().giveItems(Collections.singletonList(stack.amount(piece)),
-                                                                                                                targetInventory,
-                                                                                                                currency.shulker(),
-                                                                                                                currency.bundle());
-        if(!pieceLeft.isEmpty()) {
-          remaining.addAll(pieceLeft);
-        }
-        amountLeft -= piece;
-      }
-    }
-
-    if(!remaining.isEmpty()) {
-      PluginCore.log().debug("Retry leftovers before container pass: " + countAmount(remaining)
-                               + " target=" + ((targetInventory == null)? "null" : targetInventory.getClass().getSimpleName()),
-                             DebugLevel.DEVELOPER);
-    }
-
-    return ((ItemCalculations<Object>)TNECore.instance().itemCalculations()).tryInsertIntoContainers(remaining,
+    final Collection<AbstractItemStack<Object>> remaining = ((ItemCalculations<Object>)TNECore.instance().itemCalculations()).tryInsertIntoContainers(left,
                                                                                                        targetInventory,
                                                                                                        currency);
+
+    if(remaining.isEmpty()) {
+      PluginCore.log().debug("Container pass inserted all leftovers.", DebugLevel.DEVELOPER);
+    } else {
+      PluginCore.log().debug("Container pass remaining after insert=" + countAmount(remaining), DebugLevel.DEVELOPER);
+    }
+
+    return remaining;
   }
 
   public void drop(final Collection<AbstractItemStack<Object>> toDrop, final PlayerAccount account) {

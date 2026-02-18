@@ -33,6 +33,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Locale;
 
 /**
@@ -64,6 +65,7 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
       }
 
       int amountLeft = abstractStack.amount();
+      final int originalAmount = amountLeft;
       final ItemStack[] contents = inventory.getContents();
       boolean sawShulker = false;
 
@@ -100,6 +102,8 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
           PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft + " material: " + insertion.getType().name(), DebugLevel.DEVELOPER);
         }
         remaining.add(abstractStack.amount(amountLeft));
+      } else {
+        PluginCore.log().debug("Shulker insert success amount=" + originalAmount + " material=" + insertion.getType().name(), DebugLevel.DEVELOPER);
       }
     }
 
@@ -143,38 +147,25 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
   private int addToInventory(final Inventory inventory, final ItemStack insertion, final int amount) {
 
     int amountLeft = amount;
-    final ItemStack[] contents = inventory.getContents();
 
-    for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
+    while(amountLeft > 0) {
 
-      final ItemStack stack = contents[slot];
-      if(stack == null || !stack.isSimilar(insertion)) {
-        continue;
-      }
-
-      final int max = stack.getMaxStackSize();
-      final int space = max - stack.getAmount();
-      if(space <= 0) {
-        continue;
-      }
-
-      final int toAdd = Math.min(space, amountLeft);
-      stack.setAmount(stack.getAmount() + toAdd);
-      inventory.setItem(slot, stack);
-      amountLeft -= toAdd;
-    }
-
-    for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
-
-      if(contents[slot] != null) {
-        continue;
-      }
-
-      final int toAdd = Math.min(insertion.getMaxStackSize(), amountLeft);
+      final int toTry = Math.min(insertion.getMaxStackSize(), amountLeft);
       final ItemStack toInsert = insertion.clone();
-      toInsert.setAmount(toAdd);
-      inventory.setItem(slot, toInsert);
-      amountLeft -= toAdd;
+      toInsert.setAmount(toTry);
+
+      final Map<Integer, ItemStack> overflow = inventory.addItem(toInsert);
+      if(overflow.isEmpty()) {
+        amountLeft -= toTry;
+        continue;
+      }
+
+      final int leftInOverflow = overflow.values().stream().mapToInt(ItemStack::getAmount).sum();
+      final int inserted = toTry - leftInOverflow;
+      if(inserted <= 0) {
+        break;
+      }
+      amountLeft -= inserted;
     }
 
     return amountLeft;
