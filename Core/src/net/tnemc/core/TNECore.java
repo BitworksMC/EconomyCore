@@ -104,7 +104,7 @@ public abstract class TNECore extends PluginEngine {
 
   public static final String DEFAULT_WORLD = "world-113";
   public static final String coreURL = "https://tnemc.net/files/module-version.xml";
-  public static final String version = "0.1.4.1";
+  public static final String version = "0.1.4.2";
   public static final String build = "SNAPSHOT-2";
   protected static TNECore instance;
 
