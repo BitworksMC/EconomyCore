@@ -19,11 +19,14 @@ package net.tnemc.core.currency.calculations;
  */
 
 import net.tnemc.core.currency.Denomination;
+import net.tnemc.core.currency.item.ItemCurrency;
+import net.tnemc.item.AbstractItemStack;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -211,5 +214,20 @@ public class ItemCalculations<I> {
   public void removeMaterials(final CalculationData<I> data, final Denomination denom, final Integer amount) {
 
     data.removeMaterials(denom, amount);
+  }
+
+  /**
+   * Platform hook used to place item payouts into nested containers (such as shulkers).
+   *
+   * @param left The stacks still left after normal insertion attempts.
+   * @param inventory The target inventory object.
+   * @param currency The item currency being processed.
+   * @return The stacks that still could not be inserted.
+   */
+  public Collection<AbstractItemStack<Object>> tryInsertIntoContainers(final Collection<AbstractItemStack<Object>> left,
+                                                                        final I inventory,
+                                                                        final ItemCurrency currency) {
+
+    return left;
   }
 }
