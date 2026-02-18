@@ -21,6 +21,8 @@ package net.tnemc.bukkit;
 import net.tnemc.core.currency.calculations.ItemCalculations;
 import net.tnemc.core.currency.item.ItemCurrency;
 import net.tnemc.item.AbstractItemStack;
+import net.tnemc.plugincore.PluginCore;
+import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
@@ -31,6 +33,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 
 /**
  * BukkitItemCalculations
@@ -53,14 +56,16 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
 
     for(final AbstractItemStack<Object> abstractStack : left) {
 
-      final Material material = Material.matchMaterial(abstractStack.material());
+      final Material material = resolveMaterial(abstractStack.material());
       if(material == null) {
+        PluginCore.log().debug("Shulker insert skip - unknown material: " + abstractStack.material(), DebugLevel.DEVELOPER);
         remaining.add(abstractStack);
         continue;
       }
 
       int amountLeft = abstractStack.amount();
       final ItemStack[] contents = inventory.getContents();
+      boolean sawShulker = false;
 
       for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
 
@@ -68,6 +73,8 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         if(containerStack == null || !isShulkerBox(containerStack.getType())) {
           continue;
         }
+
+        sawShulker = true;
 
         final ItemMeta itemMeta = containerStack.getItemMeta();
         if(!(itemMeta instanceof final BlockStateMeta blockStateMeta)) {
@@ -87,11 +94,29 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
       }
 
       if(amountLeft > 0) {
+        if(!sawShulker) {
+          PluginCore.log().debug("Shulker insert found no shulker boxes in target inventory.", DebugLevel.DEVELOPER);
+        } else {
+          PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft + " material: " + material.name(), DebugLevel.DEVELOPER);
+        }
         remaining.add(abstractStack.amount(amountLeft));
       }
     }
 
     return remaining;
+  }
+
+  private Material resolveMaterial(final String materialName) {
+
+    final Material direct = Material.matchMaterial(materialName);
+    if(direct != null) {
+      return direct;
+    }
+
+    final int namespace = materialName.indexOf(':');
+    final String normalized = (namespace > -1)? materialName.substring(namespace + 1) : materialName;
+
+    return Material.matchMaterial(normalized.toUpperCase(Locale.ROOT));
   }
 
   private boolean isShulkerBox(final Material material) {
