@@ -196,6 +196,12 @@ public class CalculationData<I> {
       }
     }
 
+    if(!remaining.isEmpty()) {
+      PluginCore.log().debug("Retry leftovers before container pass: " + countAmount(remaining)
+                               + " target=" + ((targetInventory == null)? "null" : targetInventory.getClass().getSimpleName()),
+                             DebugLevel.DEVELOPER);
+    }
+
     return ((ItemCalculations<Object>)TNECore.instance().itemCalculations()).tryInsertIntoContainers(remaining,
                                                                                                        targetInventory,
                                                                                                        currency);

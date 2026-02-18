@@ -56,8 +56,8 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
 
     for(final AbstractItemStack<Object> abstractStack : left) {
 
-      final Material material = resolveMaterial(abstractStack.material());
-      if(material == null) {
+      final ItemStack insertion = resolveInsertionStack(abstractStack);
+      if(insertion == null) {
         PluginCore.log().debug("Shulker insert skip - unknown material: " + abstractStack.material(), DebugLevel.DEVELOPER);
         remaining.add(abstractStack);
         continue;
@@ -86,7 +86,7 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
           continue;
         }
 
-        amountLeft = addToInventory(container.getInventory(), material, amountLeft);
+        amountLeft = addToInventory(container.getInventory(), insertion, amountLeft);
 
         blockStateMeta.setBlockState(blockState);
         containerStack.setItemMeta(blockStateMeta);
@@ -97,7 +97,7 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         if(!sawShulker) {
           PluginCore.log().debug("Shulker insert found no shulker boxes in target inventory.", DebugLevel.DEVELOPER);
         } else {
-          PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft + " material: " + material.name(), DebugLevel.DEVELOPER);
+          PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft + " material: " + insertion.getType().name(), DebugLevel.DEVELOPER);
         }
         remaining.add(abstractStack.amount(amountLeft));
       }
@@ -124,7 +124,23 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
     return material == Material.SHULKER_BOX || material.name().endsWith("_SHULKER_BOX");
   }
 
-  private int addToInventory(final Inventory inventory, final Material material, final int amount) {
+  private ItemStack resolveInsertionStack(final AbstractItemStack<Object> stack) {
+
+    final Object cached = stack.cacheLocale();
+    if(cached instanceof final ItemStack cachedStack) {
+      final ItemStack copy = cachedStack.clone();
+      copy.setAmount(1);
+      return copy;
+    }
+
+    final Material material = resolveMaterial(stack.material());
+    if(material == null) {
+      return null;
+    }
+    return new ItemStack(material, 1);
+  }
+
+  private int addToInventory(final Inventory inventory, final ItemStack insertion, final int amount) {
 
     int amountLeft = amount;
     final ItemStack[] contents = inventory.getContents();
@@ -132,7 +148,7 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
     for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
 
       final ItemStack stack = contents[slot];
-      if(stack == null || stack.getType() != material) {
+      if(stack == null || !stack.isSimilar(insertion)) {
         continue;
       }
 
@@ -154,8 +170,10 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         continue;
       }
 
-      final int toAdd = Math.min(material.getMaxStackSize(), amountLeft);
-      inventory.setItem(slot, new ItemStack(material, toAdd));
+      final int toAdd = Math.min(insertion.getMaxStackSize(), amountLeft);
+      final ItemStack toInsert = insertion.clone();
+      toInsert.setAmount(toAdd);
+      inventory.setItem(slot, toInsert);
       amountLeft -= toAdd;
     }
 
