@@ -50,8 +50,14 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
                                                                         final ItemCurrency currency) {
 
     if(left.isEmpty() || !currency.shulker()) {
+      PluginCore.log().debug("Shulker insert skip early. leftEmpty=" + left.isEmpty()
+                               + " shulkerEnabled=" + currency.shulker(), DebugLevel.DEVELOPER);
       return left;
     }
+
+    PluginCore.log().debug("Shulker insert start. inventoryType=" + inventory.getType()
+                             + " inventorySize=" + inventory.getSize()
+                             + " stackCount=" + left.size(), DebugLevel.DEVELOPER);
 
     final Collection<AbstractItemStack<Object>> remaining = new ArrayList<>();
 
@@ -64,10 +70,15 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         continue;
       }
 
+      PluginCore.log().debug("Shulker insert processing stack. material=" + insertion.getType().name()
+                               + " amount=" + abstractStack.amount()
+                               + " hasMeta=" + insertion.hasItemMeta(), DebugLevel.DEVELOPER);
+
       int amountLeft = abstractStack.amount();
       final int originalAmount = amountLeft;
       final ItemStack[] contents = inventory.getContents();
       boolean sawShulker = false;
+      int shulkerCount = 0;
 
       for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
 
@@ -77,6 +88,7 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         }
 
         sawShulker = true;
+        shulkerCount++;
 
         final ItemMeta itemMeta = containerStack.getItemMeta();
         if(!(itemMeta instanceof final BlockStateMeta blockStateMeta)) {
@@ -85,10 +97,18 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
 
         final BlockState blockState = blockStateMeta.getBlockState();
         if(!(blockState instanceof final Container container)) {
+          PluginCore.log().debug("Shulker insert slot=" + slot + " has BlockStateMeta but not a Container state.", DebugLevel.DEVELOPER);
           continue;
         }
 
+        PluginCore.log().debug("Shulker insert attempting slot=" + slot
+                                 + " shulkerInvSize=" + container.getInventory().getSize()
+                                 + " amountLeftBefore=" + amountLeft, DebugLevel.DEVELOPER);
+
         amountLeft = addToInventory(container.getInventory(), insertion, amountLeft);
+
+        PluginCore.log().debug("Shulker insert completed slot=" + slot
+                                 + " amountLeftAfter=" + amountLeft, DebugLevel.DEVELOPER);
 
         blockStateMeta.setBlockState(blockState);
         containerStack.setItemMeta(blockStateMeta);
@@ -99,13 +119,20 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
         if(!sawShulker) {
           PluginCore.log().debug("Shulker insert found no shulker boxes in target inventory.", DebugLevel.DEVELOPER);
         } else {
-          PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft + " material: " + insertion.getType().name(), DebugLevel.DEVELOPER);
+          PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft
+                                   + " material: " + insertion.getType().name()
+                                   + " shulkerCount=" + shulkerCount, DebugLevel.DEVELOPER);
         }
         remaining.add(abstractStack.amount(amountLeft));
       } else {
-        PluginCore.log().debug("Shulker insert success amount=" + originalAmount + " material=" + insertion.getType().name(), DebugLevel.DEVELOPER);
+        PluginCore.log().debug("Shulker insert success amount=" + originalAmount
+                                 + " material=" + insertion.getType().name()
+                                 + " shulkerCount=" + shulkerCount, DebugLevel.DEVELOPER);
       }
     }
+
+    PluginCore.log().debug("Shulker insert done. remainingStacks=" + remaining.size()
+                             + " remainingAmount=" + remaining.stream().mapToInt(AbstractItemStack::amount).sum(), DebugLevel.DEVELOPER);
 
     return remaining;
   }
@@ -147,8 +174,15 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
   private int addToInventory(final Inventory inventory, final ItemStack insertion, final int amount) {
 
     int amountLeft = amount;
+    int pass = 0;
+
+    PluginCore.log().debug("Shulker internal add start. material=" + insertion.getType().name()
+                             + " amount=" + amount
+                             + " invType=" + inventory.getType()
+                             + " invSize=" + inventory.getSize(), DebugLevel.DEVELOPER);
 
     while(amountLeft > 0) {
+      pass++;
 
       final int toTry = Math.min(insertion.getMaxStackSize(), amountLeft);
       final ItemStack toInsert = insertion.clone();
@@ -156,17 +190,25 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
 
       final Map<Integer, ItemStack> overflow = inventory.addItem(toInsert);
       if(overflow.isEmpty()) {
+        PluginCore.log().debug("Shulker internal add pass=" + pass + " inserted=" + toTry + " overflow=0", DebugLevel.DEVELOPER);
         amountLeft -= toTry;
         continue;
       }
 
       final int leftInOverflow = overflow.values().stream().mapToInt(ItemStack::getAmount).sum();
       final int inserted = toTry - leftInOverflow;
+      PluginCore.log().debug("Shulker internal add pass=" + pass
+                               + " tried=" + toTry
+                               + " inserted=" + inserted
+                               + " overflowAmount=" + leftInOverflow
+                               + " overflowSlots=" + overflow.keySet(), DebugLevel.DEVELOPER);
       if(inserted <= 0) {
         break;
       }
       amountLeft -= inserted;
     }
+
+    PluginCore.log().debug("Shulker internal add complete. left=" + amountLeft, DebugLevel.DEVELOPER);
 
     return amountLeft;
   }
