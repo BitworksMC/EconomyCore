@@ -147,6 +147,8 @@ public class CalculationData<I> {
           }
         } else {
 
+          contains = contains - countAmount(left);
+
           final MessageData messageData = new MessageData("Messages.Money.EnderChest");
           account.get().getPlayer().ifPresent(player->player.message(messageData));
         }
