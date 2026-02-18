@@ -109,7 +109,7 @@
         <dependency>
             <groupId>net.tnemc</groupId>
             <artifactId>BungeeCore</artifactId>
-            <version>0.1.4.1-SNAPSHOT-3</version>
+            <version>0.1.4.2</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
