@@ -30,6 +30,7 @@ import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.io.message.MessageData;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -127,7 +128,7 @@ public class CalculationData<I> {
     int contains = (inventoryMaterials.getOrDefault(denomination.weight(), 0)) + amount;
 
     final AbstractItemStack<?> stack = TNECore.instance().denominationToStack((ItemDenomination)denomination).amount(amount);
-    final Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(Collections.singletonList((AbstractItemStack<Object>)stack), inventory, currency.shulker(), currency.bundle());
+    final Collection<AbstractItemStack<Object>> left = giveItemsRetry(Collections.singletonList((AbstractItemStack<Object>)stack), inventory);
 
 
     final Optional<PlayerAccount> account = TNECore.eco().account().findPlayerAccount(player);
@@ -137,7 +138,7 @@ public class CalculationData<I> {
 
         //PluginCore.log().debug("Ender Fill: " + contains, DebugLevel.DETAILED);
         //PluginCore.log().debug("Ender Fill: " + amount, DebugLevel.DETAILED);
-        final Collection<AbstractItemStack<Object>> enderLeft = PluginCore.server().calculations().giveItems(left, account.get().getPlayer().get().inventory().getInventory(true), currency.shulker(), currency.bundle());
+        final Collection<AbstractItemStack<Object>> enderLeft = giveItemsRetry(left, account.get().getPlayer().get().inventory().getInventory(true));
 
         if(!enderLeft.isEmpty()) {
           drop(enderLeft, account.get());
@@ -164,6 +165,38 @@ public class CalculationData<I> {
     //PluginCore.log().debug("Weight: " + denomination.weight() + " - Amount: " + amount, DebugLevel.DETAILED);
 
     inventoryMaterials.put(denomination.weight(), contains);
+  }
+
+  private Collection<AbstractItemStack<Object>> giveItemsRetry(final Collection<AbstractItemStack<Object>> toGive, final I targetInventory) {
+
+    Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(toGive,
+                                                                                               targetInventory,
+                                                                                               currency.shulker(),
+                                                                                               currency.bundle());
+
+    if(left.isEmpty() || !currency.shulker()) {
+      return left;
+    }
+
+    final Collection<AbstractItemStack<Object>> remaining = new ArrayList<>();
+    for(final AbstractItemStack<Object> stack : left) {
+
+      int amountLeft = stack.amount();
+      while(amountLeft > 0) {
+
+        final int piece = Math.min(amountLeft, 64);
+        final Collection<AbstractItemStack<Object>> pieceLeft = PluginCore.server().calculations().giveItems(Collections.singletonList(stack.amount(piece)),
+                                                                                                                targetInventory,
+                                                                                                                currency.shulker(),
+                                                                                                                currency.bundle());
+        if(!pieceLeft.isEmpty()) {
+          remaining.addAll(pieceLeft);
+        }
+        amountLeft -= piece;
+      }
+    }
+
+    return remaining;
   }
 
   public void drop(final Collection<AbstractItemStack<Object>> toDrop, final PlayerAccount account) {
