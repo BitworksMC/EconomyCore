@@ -1,6 +1,6 @@
 # 💬 Support / Community Discord
 **Need help, have questions, or want to follow development? Join the Discord:**
-➡️ **https://discord.gg/g4GnvuMZpq**
+➡️ **https://discord.gg/cNEDdfaCpa**
 
 
 > ⚠️ **Fork Notice – Community Continuation**
@@ -14,14 +14,14 @@
 >
 > All original licensing (AGPLv3) and attributions are preserved.
 >
-> Join our [Discord](https://discord.gg/g4GnvuMZpq) for this forks support.
+> Join our [Discord](https://discord.gg/cNEDdfaCpa) for this forks support.
 
 
 # The New Economy
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/246101510dca4eb9a729ef178dae682c)](https://app.codacy.com/gh/TheNewEconomy/EconomyCore/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Build Status](https://ci.codemc.io/job/creatorfromhell/job/TNE/badge/icon)](https://ci.codemc.io/job/creatorfromhell/job/TNE/)
-  <a href="https://discord.gg/g4GnvuMZpq">
+  <a href="https://discord.gg/cNEDdfaCpa">
     <img src="https://img.shields.io/badge/Discord-Join%20Support%20Server-5865F2?logo=discord&logoColor=white" alt="Join Discord" />
   </a>
 
