@@ -85,7 +85,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -290,16 +292,57 @@ public abstract class TNECore extends PluginEngine {
 
   private boolean redisAuthRuntimePresent() {
 
-    final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-    return classPresent("redis.clients.authentication.core.Token", loader)
-           || classPresent("net.tnemc.libs.jedis.authentication.core.Token", loader);
+    for(final ClassLoader loader : candidateClassLoaders()) {
+      if(classPresent("redis.clients.authentication.core.Token", loader)
+         || classPresent("net.tnemc.libs.jedis.authentication.core.Token", loader)
+         || resourcePresent("redis/clients/authentication/core/Token.class", loader)
+         || resourcePresent("net/tnemc/libs/jedis/authentication/core/Token.class", loader)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private List<ClassLoader> candidateClassLoaders() {
+
+    final List<ClassLoader> loaders = new ArrayList<>();
+
+    addLoader(loaders, Thread.currentThread().getContextClassLoader());
+    addLoader(loaders, this.getClass().getClassLoader());
+    addLoader(loaders, TNECore.class.getClassLoader());
+    addLoader(loaders, PluginCore.class.getClassLoader());
+
+    return loaders;
+  }
+
+  private void addLoader(final List<ClassLoader> loaders, final ClassLoader loader) {
+
+    if(loader != null && !loaders.contains(loader)) {
+      loaders.add(loader);
+    }
   }
 
   private boolean classPresent(final String className, final ClassLoader loader) {
 
     try {
-      Class.forName(className, false, loader);
+      if(loader == null) {
+        Class.forName(className);
+      } else {
+        Class.forName(className, false, loader);
+      }
       return true;
+    } catch(final Throwable ignored) {
+      return false;
+    }
+  }
+
+  private boolean resourcePresent(final String resource, final ClassLoader loader) {
+
+    try {
+      if(loader == null) {
+        return ClassLoader.getSystemResource(resource) != null;
+      }
+      return loader.getResource(resource) != null;
     } catch(final Throwable ignored) {
       return false;
     }
