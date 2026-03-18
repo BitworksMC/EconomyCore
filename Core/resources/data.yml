@@ -3,7 +3,7 @@
 # License: https://github.com/TheNewEconomy/EconomyCore/blob/main/license.md
 Data:
 
-  config-version: 5
+  config-version: 6
 
   #Configurations related to syncing data across servers.
   Sync:
@@ -18,8 +18,16 @@ Data:
       #The time to reload, in minutes.
       Time: 120
 
-    #The data syncing method to utilize. Options: Bungee, Redis
-    Type: Bungee
+    #The data syncing method to utilize. Options: Redis
+    Type: Redis
+
+    #Security settings for cross-server sync payloads.
+    Security:
+
+      #Shared token attached to every sync payload. Must match on every server.
+      #Set to a long random value before deploying. Sync traffic is rejected
+      #until this is changed from CHANGE_ME.
+      Token: "CHANGE_ME"
 
     #Configurations related to config syncing.
     Config:
@@ -27,7 +35,7 @@ Data:
       #The pin for this server that should be used for sharing. This should be unique.
       SharingPin: "000000"
 
-      #Whether to sync configurations across bungee/velocity/redis.
+      #Whether to sync configurations across redis.
       Sync: true
 
       #The hub for this server. A hub is the server that should control the configurations for this

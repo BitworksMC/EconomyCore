@@ -24,7 +24,6 @@ import net.tnemc.core.account.Account;
 import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.account.holdings.HoldingsEntry;
 import net.tnemc.core.api.response.AccountAPIResponse;
-import net.tnemc.core.channel.SyncHandler;
 import net.tnemc.core.config.DataConfig;
 import net.tnemc.core.config.MainConfig;
 import net.tnemc.core.currency.Currency;
@@ -240,8 +239,6 @@ public class PlayerJoinHandler {
 
             TNECore.eco().setReloadTime(new Date().getTime());
           }
-        } else {
-          SyncHandler.send(acc.get().getIdentifier().toString(), acc.get().getName(), serverIP, serverPort);
         }
       }
     }

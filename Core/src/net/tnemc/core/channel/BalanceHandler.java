@@ -51,6 +51,7 @@ public class BalanceHandler extends ChannelMessageHandler {
 
     final ByteArrayDataOutput out = ByteStreams.newDataOutput();
     out.writeUTF(PluginCore.instance().getServerID().toString());
+    ChannelSecurity.writeToken(out);
     out.writeUTF(identifier);
     out.writeUTF(name);
     out.writeUTF(region);
@@ -65,6 +66,9 @@ public class BalanceHandler extends ChannelMessageHandler {
   public void handle(final ChannelBytesWrapper wrapper) {
 
     try {
+      if(!ChannelSecurity.validate(wrapper, "balance")) {
+        return;
+      }
 
       final String accountID = wrapper.readUTF();
       final String accountName = wrapper.readUTF();

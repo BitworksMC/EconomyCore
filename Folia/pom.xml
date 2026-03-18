@@ -116,6 +116,7 @@
                             <include>com.zaxxer:*</include>
                             <include>com.github.Revxrsal.Lamp:*</include>
                             <include>redis.clients:*</include>
+                            <include>redis.clients.authentication:*</include>
                             <include>org.apache:*</include>
                             <include>org.apache.commons:*</include>
                             <include>org.apache.commons.pool2:*</include>

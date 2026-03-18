@@ -35,5 +35,7 @@ hs_err_pid*
 /Sponge/target/maven-archiver/pom.properties
 /Sponge/target/
 /Folia/target/
+/Bungee/target/
+/Velocity/target/
 /.testserver/
 dependency-reduced-pom.xml

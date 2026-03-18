@@ -36,7 +36,7 @@ import net.tnemc.core.api.callback.transaction.PostTransactionCallback;
 import net.tnemc.core.api.callback.transaction.PreTransactionCallback;
 import net.tnemc.core.api.response.AccountAPIResponse;
 import net.tnemc.core.channel.BalanceHandler;
-import net.tnemc.core.channel.SyncHandler;
+import net.tnemc.core.channel.ChannelSecurity;
 import net.tnemc.core.command.parameters.PercentBigDecimal;
 import net.tnemc.core.command.parameters.resolver.AccountResolver;
 import net.tnemc.core.command.parameters.resolver.BigDecimalResolver;
@@ -85,7 +85,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -208,12 +210,13 @@ public abstract class TNECore extends PluginEngine {
   public void registerPluginChannels() {
 
     PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
-    PluginCore.instance().getChannelMessageManager().register(new SyncHandler());
     PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
   }
 
   @Override
   public void registerStorage() {
+
+    final String syncType = resolveSyncType();
 
     final StorageSettings settings = new StorageSettings(
             DataConfig.yaml().getString("Data.Database.File"),
@@ -229,13 +232,13 @@ public abstract class TNECore extends PluginEngine {
             DataConfig.yaml().getInt("Data.Pool.MaxSize"),
             DataConfig.yaml().getLong("Data.Pool.MaxLife"),
             DataConfig.yaml().getLong("Data.Pool.Timeout"),
-            DataConfig.yaml().getString("Data.Sync.Type")
+            syncType
     );
 
     JedisPool pool = null;
 
-    if(settings.proxyType().equalsIgnoreCase("redis")
-       || settings.proxyType().equalsIgnoreCase("jedis")) {
+    if(syncType.equalsIgnoreCase("redis")
+       || syncType.equalsIgnoreCase("jedis")) {
 
       final JedisPoolConfig config = new JedisPoolConfig();
       config.setMaxTotal(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MaxSize", 10));
@@ -277,9 +280,92 @@ public abstract class TNECore extends PluginEngine {
                            DataConfig.yaml().getBoolean("Data.Sync.Redis.SSL"));
     }
 
+    if(pool != null && !redisAuthRuntimePresent()) {
+      PluginCore.log().error("Redis auth runtime classes are missing from this build. Cross-server sync will be disabled for this startup.",
+                             DebugLevel.OFF);
+      pool = null;
+    }
 
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
                                       new TNEStorageProvider(), settings, pool);
+  }
+
+  private boolean redisAuthRuntimePresent() {
+
+    for(final ClassLoader loader : candidateClassLoaders()) {
+      if(classPresent("redis.clients.authentication.core.Token", loader)
+         || classPresent("net.tnemc.libs.jedis.authentication.core.Token", loader)
+         || resourcePresent("redis/clients/authentication/core/Token.class", loader)
+         || resourcePresent("net/tnemc/libs/jedis/authentication/core/Token.class", loader)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private List<ClassLoader> candidateClassLoaders() {
+
+    final List<ClassLoader> loaders = new ArrayList<>();
+
+    addLoader(loaders, Thread.currentThread().getContextClassLoader());
+    addLoader(loaders, this.getClass().getClassLoader());
+    addLoader(loaders, TNECore.class.getClassLoader());
+    addLoader(loaders, PluginCore.class.getClassLoader());
+
+    return loaders;
+  }
+
+  private void addLoader(final List<ClassLoader> loaders, final ClassLoader loader) {
+
+    if(loader != null && !loaders.contains(loader)) {
+      loaders.add(loader);
+    }
+  }
+
+  private boolean classPresent(final String className, final ClassLoader loader) {
+
+    try {
+      if(loader == null) {
+        Class.forName(className);
+      } else {
+        Class.forName(className, false, loader);
+      }
+      return true;
+    } catch(final Throwable ignored) {
+      return false;
+    }
+  }
+
+  private boolean resourcePresent(final String resource, final ClassLoader loader) {
+
+    try {
+      if(loader == null) {
+        return ClassLoader.getSystemResource(resource) != null;
+      }
+      return loader.getResource(resource) != null;
+    } catch(final Throwable ignored) {
+      return false;
+    }
+  }
+
+  private String resolveSyncType() {
+
+    final String configured = DataConfig.yaml().getString("Data.Sync.Type", "Redis");
+    if(configured != null && (configured.equalsIgnoreCase("redis")
+                              || configured.equalsIgnoreCase("jedis"))) {
+      return configured;
+    }
+
+    PluginCore.log().error("Data.Sync.Type \"" + configured + "\" is no longer supported. Falling back to Redis.", DebugLevel.OFF);
+    DataConfig.yaml().set("Data.Sync.Type", "Redis");
+
+    try {
+      DataConfig.yaml().save();
+    } catch(final IOException e) {
+      PluginCore.log().error("Unable to persist Data.Sync.Type migration to Redis.", e, DebugLevel.STANDARD);
+    }
+
+    return "Redis";
   }
 
   @Override
@@ -380,6 +466,14 @@ public abstract class TNECore extends PluginEngine {
       serverID = UUID.randomUUID();
     }
     PluginCore.instance().setServerID(serverID);
+
+    final String syncToken = ChannelSecurity.token();
+    if(syncToken.isEmpty()
+       || syncToken.equalsIgnoreCase("none")
+       || syncToken.equalsIgnoreCase("CHANGE_ME")) {
+      PluginCore.log().error("Data.Sync.Security.Token is not configured. Cross-server sync will be rejected until this is updated.",
+                             DebugLevel.OFF);
+    }
   }
 
   @Override
@@ -460,6 +554,10 @@ public abstract class TNECore extends PluginEngine {
 
     if(autoSaver != null) {
       autoSaver.cancel();
+    }
+
+    if(storage == null) {
+      return;
     }
 
     final Optional<Datable<?>> data = Optional.ofNullable(storage.getEngine().datables().get(Account.class));

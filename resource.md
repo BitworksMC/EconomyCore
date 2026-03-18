@@ -65,15 +65,8 @@ Vault, supports TNE!
 
 ## Cross-Server
 
-We support cross-server balance syncing through our velocity and bungee plugins, as well as Redis!
-
-### Bungee
-
-Download: [here](https://cdn.modrinth.com/data/bZ4eSWf0/versions/OTwQFFn1/TNE-BungeeCore-0.1.2.8-Release-1.jar)
-
-### Velocity
-
-Download: [here](https://cdn.modrinth.com/data/bZ4eSWf0/versions/prNGjbjv/TNE-VelocityCore-0.1.2.8-Release-1.jar)
+We support secure cross-server syncing through Redis. Proxy plugin-channel relays have been removed.
+Set `Data.Sync.Security.Token` to a non-default shared secret on every server.
 
 ## Updates
 
@@ -127,7 +120,7 @@ Convert your virtual currency into a physical money note using the /money note c
 
 ## Multi-platform
 
-Use Sponge? Sure. Paper? Why not? Both? Over Velocity? Definitely! Switch between, your TNE data
+Use Sponge? Sure. Paper? Why not? Both? Definitely! Switch between, your TNE data
 works
 for you no matter your platform. More platforms soon!
 
