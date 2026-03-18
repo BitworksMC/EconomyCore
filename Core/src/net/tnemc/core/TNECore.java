@@ -36,7 +36,7 @@ import net.tnemc.core.api.callback.transaction.PostTransactionCallback;
 import net.tnemc.core.api.callback.transaction.PreTransactionCallback;
 import net.tnemc.core.api.response.AccountAPIResponse;
 import net.tnemc.core.channel.BalanceHandler;
-import net.tnemc.core.channel.SyncHandler;
+import net.tnemc.core.channel.ChannelSecurity;
 import net.tnemc.core.command.parameters.PercentBigDecimal;
 import net.tnemc.core.command.parameters.resolver.AccountResolver;
 import net.tnemc.core.command.parameters.resolver.BigDecimalResolver;
@@ -208,12 +208,13 @@ public abstract class TNECore extends PluginEngine {
   public void registerPluginChannels() {
 
     PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
-    PluginCore.instance().getChannelMessageManager().register(new SyncHandler());
     PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
   }
 
   @Override
   public void registerStorage() {
+
+    final String syncType = resolveSyncType();
 
     final StorageSettings settings = new StorageSettings(
             DataConfig.yaml().getString("Data.Database.File"),
@@ -229,13 +230,13 @@ public abstract class TNECore extends PluginEngine {
             DataConfig.yaml().getInt("Data.Pool.MaxSize"),
             DataConfig.yaml().getLong("Data.Pool.MaxLife"),
             DataConfig.yaml().getLong("Data.Pool.Timeout"),
-            DataConfig.yaml().getString("Data.Sync.Type")
+            syncType
     );
 
     JedisPool pool = null;
 
-    if(settings.proxyType().equalsIgnoreCase("redis")
-       || settings.proxyType().equalsIgnoreCase("jedis")) {
+    if(syncType.equalsIgnoreCase("redis")
+       || syncType.equalsIgnoreCase("jedis")) {
 
       final JedisPoolConfig config = new JedisPoolConfig();
       config.setMaxTotal(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MaxSize", 10));
@@ -280,6 +281,26 @@ public abstract class TNECore extends PluginEngine {
 
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
                                       new TNEStorageProvider(), settings, pool);
+  }
+
+  private String resolveSyncType() {
+
+    final String configured = DataConfig.yaml().getString("Data.Sync.Type", "Redis");
+    if(configured != null && (configured.equalsIgnoreCase("redis")
+                              || configured.equalsIgnoreCase("jedis"))) {
+      return configured;
+    }
+
+    PluginCore.log().error("Data.Sync.Type \"" + configured + "\" is no longer supported. Falling back to Redis.", DebugLevel.OFF);
+    DataConfig.yaml().set("Data.Sync.Type", "Redis");
+
+    try {
+      DataConfig.yaml().save();
+    } catch(final IOException e) {
+      PluginCore.log().error("Unable to persist Data.Sync.Type migration to Redis.", e, DebugLevel.STANDARD);
+    }
+
+    return "Redis";
   }
 
   @Override
@@ -380,6 +401,14 @@ public abstract class TNECore extends PluginEngine {
       serverID = UUID.randomUUID();
     }
     PluginCore.instance().setServerID(serverID);
+
+    final String syncToken = ChannelSecurity.token();
+    if(syncToken.isEmpty()
+       || syncToken.equalsIgnoreCase("none")
+       || syncToken.equalsIgnoreCase("CHANGE_ME")) {
+      PluginCore.log().error("Data.Sync.Security.Token is not configured. Cross-server sync will be rejected until this is updated.",
+                             DebugLevel.OFF);
+    }
   }
 
   @Override

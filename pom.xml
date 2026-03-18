@@ -15,8 +15,6 @@
         <module>PaperCore</module>
         <module>Folia</module>
         <module>Sponge8</module>
-        <module>Bungee</module>
-        <module>Velocity</module>
         <module>Currency Templates</module>
         <module>TestCore</module>
     </modules>
