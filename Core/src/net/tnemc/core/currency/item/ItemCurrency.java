@@ -48,7 +48,7 @@ public class ItemCurrency extends Currency {
     this.enderFill = true;
     this.importItem = true;
     this.blockCraft = false;
-    this.shulker = false;
+    this.shulker = true;
     this.bundle = false;
   }
 
