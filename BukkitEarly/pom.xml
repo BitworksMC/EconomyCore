@@ -97,6 +97,7 @@
                             <include>net.kyori:examination-api</include>
                             <include>net.kyori:examination-string</include>
                             <include>redis.clients:*</include>
+                            <include>redis.clients.authentication:*</include>
                             <include>org.apache:*</include>
                             <include>org.apache.commons:*</include>
                             <include>org.apache.commons.pool2:*</include>

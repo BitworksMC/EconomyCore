@@ -121,6 +121,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>redis.clients.authentication</groupId>
+            <artifactId>redis-authx-core</artifactId>
+            <version>0.1.1-beta2</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>net.kyori</groupId>
             <artifactId>adventure-text-serializer-plain</artifactId>
             <version>${depend.adventure}</version>

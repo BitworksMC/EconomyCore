@@ -278,9 +278,31 @@ public abstract class TNECore extends PluginEngine {
                            DataConfig.yaml().getBoolean("Data.Sync.Redis.SSL"));
     }
 
+    if(pool != null && !redisAuthRuntimePresent()) {
+      PluginCore.log().error("Redis auth runtime classes are missing from this build. Cross-server sync will be disabled for this startup.",
+                             DebugLevel.OFF);
+      pool = null;
+    }
 
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
                                       new TNEStorageProvider(), settings, pool);
+  }
+
+  private boolean redisAuthRuntimePresent() {
+
+    final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    return classPresent("redis.clients.authentication.core.Token", loader)
+           || classPresent("net.tnemc.libs.jedis.authentication.core.Token", loader);
+  }
+
+  private boolean classPresent(final String className, final ClassLoader loader) {
+
+    try {
+      Class.forName(className, false, loader);
+      return true;
+    } catch(final Throwable ignored) {
+      return false;
+    }
   }
 
   private String resolveSyncType() {
@@ -489,6 +511,10 @@ public abstract class TNECore extends PluginEngine {
 
     if(autoSaver != null) {
       autoSaver.cancel();
+    }
+
+    if(storage == null) {
+      return;
     }
 
     final Optional<Datable<?>> data = Optional.ofNullable(storage.getEngine().datables().get(Account.class));

@@ -105,6 +105,7 @@
                             <include>com.zaxxer:*</include>
                             <include>io.github.revxrsal:*</include>
                             <include>redis.clients:*</include>
+                            <include>redis.clients.authentication:*</include>
                             <include>org.apache:*</include>
                             <include>org.apache.commons:*</include>
                             <include>org.apache.commons.pool2:*</include>
