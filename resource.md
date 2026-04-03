@@ -68,6 +68,10 @@ Vault, supports TNE!
 We support secure cross-server syncing through Redis. Proxy plugin-channel relays have been removed.
 Set `Data.Sync.Security.Token` to a non-default shared secret on every server.
 
+Legacy proxy bridge note: `TNE-VelocityCore-0.1.4.2.jar` is not a supported deployment path.
+That historical artifact does not include the generated `velocity-plugin.json` file Velocity needs
+to load a Java plugin, so it will fail during proxy startup.
+
 ## Updates
 
 We continue to develop updates for TNE for free, and fix bugs as they're reported.

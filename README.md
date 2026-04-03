@@ -58,6 +58,15 @@ Use TNE on the platform you want!
   Spigot server to your
   Sponge Server!
 
+## Proxy Bridge Status
+
+Velocity and Bungee bridge plugins are no longer part of the supported build.
+As of `0.1.4.3`, cross-server syncing is Redis-only and does not require a proxy plugin.
+
+If you are trying to use the historical `TNE-VelocityCore-0.1.4.2.jar`, do not place it in a
+Velocity `plugins/` directory. That legacy artifact does not contain the generated
+`velocity-plugin.json` descriptor required by Velocity and will be rejected during startup.
+
 ## Features
 
 Want minimal Features? Why not! Want all the features? That's an option too!
@@ -109,6 +118,8 @@ TNE has some minimum requirements that should be followed.
 - MySQL 8.0+ (if using MySQL for storage)
 - MariaDB 10.7.0+
 - Java 17+
+- Redis plus a shared `Data.Sync.Security.Token` on every backend server if you want cross-server
+  syncing
 
 ## Contributing
 
@@ -132,6 +143,5 @@ Thank you for your contributions!
 We have some organizations that provide open-source licenses to help support this project.
 
 <a href="https://www.ej-technologies.com/products/jprofiler/overview.html"><img align="left" width="200" height="200" src="jprofiler.svg"></a>
-
 
 
