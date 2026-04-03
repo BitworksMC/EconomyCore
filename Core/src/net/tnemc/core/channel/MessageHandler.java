@@ -48,6 +48,7 @@ public class MessageHandler extends ChannelMessageHandler {
 
     final ByteArrayDataOutput out = ByteStreams.newDataOutput();
     out.writeUTF(PluginCore.instance().getServerID().toString());
+    ChannelSecurity.writeToken(out);
     out.writeUTF(identifier.toString());
     out.writeUTF(MiniMessage.miniMessage().serialize(component));
     PluginCore.log().debug("Sending message: " + MiniMessage.miniMessage().serialize(component));
@@ -59,6 +60,9 @@ public class MessageHandler extends ChannelMessageHandler {
   public void handle(final ChannelBytesWrapper wrapper) {
 
     try {
+      if(!ChannelSecurity.validate(wrapper, "message")) {
+        return;
+      }
 
       final String uuid = wrapper.readUTF();
       final String message = wrapper.readUTF();
