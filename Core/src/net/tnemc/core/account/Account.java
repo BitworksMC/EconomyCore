@@ -52,6 +52,7 @@ public class Account extends ReceiptBox {
   protected String name;
   protected long creationDate;
   protected String pin;
+  protected volatile boolean dirty = true;
 
   protected Wallet wallet;
 
@@ -274,6 +275,7 @@ public class Account extends ReceiptBox {
   public void setName(final String name) {
 
     this.name = name;
+    markDirty();
   }
 
   public long getCreationDate() {
@@ -284,6 +286,7 @@ public class Account extends ReceiptBox {
   public void setCreationDate(final long creationDate) {
 
     this.creationDate = creationDate;
+    markDirty();
   }
 
   public String getPin() {
@@ -294,6 +297,7 @@ public class Account extends ReceiptBox {
   public void setPin(final String pin) {
 
     this.pin = pin;
+    markDirty();
   }
 
   public AccountStatus getStatus() {
@@ -304,6 +308,7 @@ public class Account extends ReceiptBox {
   public void setStatus(final AccountStatus status) {
 
     this.status = status;
+    markDirty();
   }
 
   public Wallet getWallet() {
@@ -314,5 +319,24 @@ public class Account extends ReceiptBox {
   public void setWallet(final Wallet wallet) {
 
     this.wallet = wallet;
+    markDirty();
+  }
+
+  public boolean isDirty() {
+
+    return dirty || (wallet != null && wallet.isDirty());
+  }
+
+  public void markDirty() {
+
+    this.dirty = true;
+  }
+
+  public void clearDirty() {
+
+    this.dirty = false;
+    if(wallet != null) {
+      wallet.clearDirty();
+    }
   }
 }

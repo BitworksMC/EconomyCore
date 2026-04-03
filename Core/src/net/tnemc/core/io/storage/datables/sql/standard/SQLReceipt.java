@@ -102,6 +102,7 @@ public class SQLReceipt implements Datable<Receipt> {
 
       storeParticipant(connector, receipt.getFrom(), receipt.getModifierFrom(), "from", receipt.getId().toString());
       storeParticipant(connector, receipt.getTo(), receipt.getModifierTo(), "to", receipt.getId().toString());
+      receipt.clearDirty();
     }
   }
 
@@ -172,7 +173,9 @@ public class SQLReceipt implements Datable<Receipt> {
     if(connector instanceof SQLConnector) {
 
       for(final Receipt receipt : TransactionManager.receipts().getReceipts().values()) {
-        store(connector, receipt, identifier);
+        if(receipt.isDirty()) {
+          store(connector, receipt, identifier);
+        }
       }
     }
   }
@@ -218,6 +221,7 @@ public class SQLReceipt implements Datable<Receipt> {
     receipt.setSource(ActionSource.create(result.getString("receipt_source"), result.getString("receipt_source_type")));
     receipt.setArchive(result.getBoolean("archive"));
     receipt.setVoided(result.getBoolean("voided"));
+    receipt.clearDirty();
 
     return receipt;
   }

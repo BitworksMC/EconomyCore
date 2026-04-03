@@ -85,6 +85,7 @@ public class SharedAccount extends Account {
     final Member member = members.getOrDefault(identifier, new Member(identifier));
     member.addPermission(permission, value);
     members.put(identifier, member);
+    markDirty();
   }
 
   /**
@@ -99,6 +100,7 @@ public class SharedAccount extends Account {
     final Member member = members.getOrDefault(identifier, new Member(identifier));
     member.addPermission(permission, value);
     members.put(identifier, member);
+    markDirty();
   }
 
   /**
@@ -109,7 +111,10 @@ public class SharedAccount extends Account {
    */
   public void removePermission(final UUID identifier, final Permission permission) {
 
-    findMember(identifier).ifPresent(mem->mem.removePermission(permission));
+    findMember(identifier).ifPresent(mem->{
+      mem.removePermission(permission);
+      markDirty();
+    });
   }
 
   /**
@@ -120,7 +125,10 @@ public class SharedAccount extends Account {
    */
   public void removePermission(final UUID identifier, final String permission) {
 
-    findMember(identifier).ifPresent(mem->mem.removePermission(permission));
+    findMember(identifier).ifPresent(mem->{
+      mem.removePermission(permission);
+      markDirty();
+    });
   }
 
   /**
@@ -178,5 +186,6 @@ public class SharedAccount extends Account {
   public void setOwner(final UUID owner) {
 
     this.owner = owner;
+    markDirty();
   }
 }

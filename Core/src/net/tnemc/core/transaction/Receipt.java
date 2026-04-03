@@ -49,6 +49,7 @@ public class Receipt {
   //Our active information that may be modified.
   private boolean archive = false;
   private boolean voided = false;
+  private volatile boolean dirty = true;
 
   public Receipt(final UUID id, final long time, final String type) {
 
@@ -99,7 +100,7 @@ public class Receipt {
     try {
       transaction.process((transactionResult->{
         if(transactionResult.isSuccessful()) {
-          this.voided = true;
+          setVoided(true);
         }
       }));
     } catch(InvalidTransactionException e) {
@@ -131,6 +132,7 @@ public class Receipt {
   public void setSource(final ActionSource source) {
 
     this.source = source;
+    markDirty();
   }
 
   public TransactionParticipant getFrom() {
@@ -141,6 +143,7 @@ public class Receipt {
   public void setFrom(final TransactionParticipant from) {
 
     this.from = from;
+    markDirty();
   }
 
   public TransactionParticipant getTo() {
@@ -151,6 +154,7 @@ public class Receipt {
   public void setTo(final TransactionParticipant to) {
 
     this.to = to;
+    markDirty();
   }
 
   public HoldingsModifier getModifierTo() {
@@ -161,6 +165,7 @@ public class Receipt {
   public void setModifierTo(final HoldingsModifier modifierTo) {
 
     this.modifierTo = modifierTo;
+    markDirty();
   }
 
   public HoldingsModifier getModifierFrom() {
@@ -171,6 +176,7 @@ public class Receipt {
   public void setModifierFrom(final HoldingsModifier modifierFrom) {
 
     this.modifierFrom = modifierFrom;
+    markDirty();
   }
 
   public boolean isArchive() {
@@ -181,6 +187,7 @@ public class Receipt {
   public void setArchive(final boolean archive) {
 
     this.archive = archive;
+    markDirty();
   }
 
   public boolean isVoided() {
@@ -191,5 +198,21 @@ public class Receipt {
   public void setVoided(final boolean voided) {
 
     this.voided = voided;
+    markDirty();
+  }
+
+  public boolean isDirty() {
+
+    return dirty;
+  }
+
+  public void markDirty() {
+
+    this.dirty = true;
+  }
+
+  public void clearDirty() {
+
+    this.dirty = false;
   }
 }

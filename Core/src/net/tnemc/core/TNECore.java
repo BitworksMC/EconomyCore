@@ -418,19 +418,20 @@ public abstract class TNECore extends PluginEngine {
   public void registerUpdateChecker() {
 
     if(MainConfig.yaml().getBoolean("Core.Update.Check")) {
-      this.updateChecker = new Updater();
-
       PluginCore.log().inform("Running version: " + version() + " Build: " + build());
+      PluginCore.log().inform("Build Stability: " + Updater.stability(version(), build()));
 
-      PluginCore.log().inform("Build Stability: " + this.updateChecker.stable());
+      PluginCore.server().scheduler().createDelayedTask(()->{
+        this.updateChecker = new Updater();
 
-      if(this.updateChecker.needsUpdate()) {
-        PluginCore.log().inform("Update Available! Latest: " + this.updateChecker.getBuild());
-      }
+        if(this.updateChecker.needsUpdate()) {
+          PluginCore.log().inform("Update Available! Latest: " + this.updateChecker.getBuild());
+        }
 
-      if(this.updateChecker.isEarlyBuild()) {
-        PluginCore.log().inform("Running pre-release version! Thanks for being a tester!");
-      }
+        if(this.updateChecker.isEarlyBuild()) {
+          PluginCore.log().inform("Running pre-release version! Thanks for being a tester!");
+        }
+      }, new ChoreTime(0), ChoreExecution.SECONDARY);
     }
   }
 
@@ -560,10 +561,11 @@ public abstract class TNECore extends PluginEngine {
       return;
     }
 
-    final Optional<Datable<?>> data = Optional.ofNullable(storage.getEngine().datables().get(Account.class));
-    if(data.isPresent()) {
-      data.get().storeAll(storage.getConnector(), null);
-    }
+    final Optional<Datable<?>> accountData = Optional.ofNullable(storage.getEngine().datables().get(Account.class));
+    accountData.ifPresent(datable->datable.storeAll(storage.getConnector(), null));
+
+    final Optional<Datable<?>> receiptData = Optional.ofNullable(storage.getEngine().datables().get(Receipt.class));
+    receiptData.ifPresent(datable->datable.storeAll(storage.getConnector(), null));
   }
 
   public MainConfig config() {

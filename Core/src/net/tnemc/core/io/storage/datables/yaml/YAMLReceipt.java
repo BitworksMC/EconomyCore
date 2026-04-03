@@ -168,6 +168,7 @@ public class YAMLReceipt implements Datable<Receipt> {
       return;
     }
     TNECore.yaml().remove(fileSrc);
+    receipt.clearDirty();
   }
 
   /**
@@ -181,7 +182,9 @@ public class YAMLReceipt implements Datable<Receipt> {
   public void storeAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
     for(final Receipt receipt : TransactionManager.receipts().getReceipts().values()) {
-      store(connector, receipt, identifier);
+      if(receipt.isDirty()) {
+        store(connector, receipt, identifier);
+      }
     }
   }
 
@@ -240,6 +243,7 @@ public class YAMLReceipt implements Datable<Receipt> {
 
           receipt.setArchive(yaml.getBoolean("archive"));
           receipt.setVoided(yaml.getBoolean("voided"));
+          receipt.clearDirty();
 
           return Optional.of(receipt);
         } else {

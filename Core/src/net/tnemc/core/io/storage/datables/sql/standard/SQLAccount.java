@@ -163,10 +163,11 @@ public class SQLAccount implements Datable<Account> {
         }
       }
 
+      TNECore.instance().storage().storeAll(account.getIdentifier().toString());
+      account.clearDirty();
+
       final AccountSaveCallback callback = new AccountSaveCallback(account);
       PluginCore.callbacks().call(callback);
-
-      TNECore.instance().storage().storeAll(account.getIdentifier().toString());
     }
   }
 
@@ -264,7 +265,9 @@ public class SQLAccount implements Datable<Account> {
 
     if(connector instanceof SQLConnector) {
       for(final Account account : TNECore.eco().account().getAccounts().values()) {
-        store(connector, account, account.getIdentifier().toString());
+        if(account.isDirty()) {
+          store(connector, account, account.getIdentifier().toString());
+        }
       }
     }
   }
@@ -309,7 +312,8 @@ public class SQLAccount implements Datable<Account> {
           final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,
                                                                                     result.getString("username"),
                                                                                     !(type.equalsIgnoreCase("player") ||
-                                                                                      type.equalsIgnoreCase("bedrock")));
+                                                                                      type.equalsIgnoreCase("bedrock")),
+                                                                                    true);
           if(response.getResponse().success()) {
 
             //load our basic account information
@@ -377,6 +381,8 @@ public class SQLAccount implements Datable<Account> {
         for(final HoldingsEntry entry : holdings) {
           account.getWallet().setHoldings(entry);
         }
+
+        account.clearDirty();
 
         final AccountLoadCallback callback = new AccountLoadCallback(account);
         PluginCore.callbacks().call(callback);

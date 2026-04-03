@@ -107,7 +107,8 @@ public class SerialAccount implements JSONAble<Account> {
       final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,
                                                                                 name,
                                                                                 !(type.equalsIgnoreCase("player") ||
-                                                                                  type.equalsIgnoreCase("bedrock")));
+                                                                                  type.equalsIgnoreCase("bedrock")),
+                                                                                true);
       if(response.getResponse().success()) {
 
         final Optional<Account> account = response.getAccount();
@@ -149,6 +150,7 @@ public class SerialAccount implements JSONAble<Account> {
             player.setLastOnline((Long)json.get("lastOnline"));
             player.setLanguage((String)json.get("language"));
           }
+          account.get().clearDirty();
           return account.get();
         }
       }

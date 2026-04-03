@@ -150,10 +150,6 @@ public class YAMLAccount implements Datable<Account> {
     try {
 
       yaml.save();
-
-      final AccountSaveCallback callback = new AccountSaveCallback(account);
-      PluginCore.callbacks().call(callback);
-
       yaml = null;
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue saving account file. Account: " + account.getName());
@@ -162,6 +158,10 @@ public class YAMLAccount implements Datable<Account> {
     TNECore.yaml().remove(file);
 
     TNECore.instance().storage().storeAll(account.getIdentifier().toString());
+    account.clearDirty();
+
+    final AccountSaveCallback callback = new AccountSaveCallback(account);
+    PluginCore.callbacks().call(callback);
   }
 
   /**
@@ -173,7 +173,9 @@ public class YAMLAccount implements Datable<Account> {
   public void storeAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
     for(final Account account : TNECore.eco().account().getAccounts().values()) {
-      store(connector, account, account.getIdentifier().toString());
+      if(account.isDirty()) {
+        store(connector, account, account.getIdentifier().toString());
+      }
     }
   }
 
@@ -239,7 +241,8 @@ public class YAMLAccount implements Datable<Account> {
           final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,
                                                                                     yaml.getString("Info.Name"),
                                                                                     !(type.equalsIgnoreCase("player") ||
-                                                                                      type.equalsIgnoreCase("bedrock")));
+                                                                                      type.equalsIgnoreCase("bedrock")),
+                                                                                    true);
           if(response.getResponse().success() && response.getAccount().isPresent()) {
 
             //load our basic account information
@@ -276,6 +279,8 @@ public class YAMLAccount implements Datable<Account> {
             for(final HoldingsEntry entry : holdings) {
               account.getWallet().setHoldings(entry);
             }
+
+            account.clearDirty();
 
             final AccountLoadCallback callback = new AccountLoadCallback(account);
             PluginCore.callbacks().call(callback);
