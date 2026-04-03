@@ -116,6 +116,7 @@ public class PlayerAccount extends Account {
   public void setLastOnline(final long lastOnline) {
 
     this.lastOnline = lastOnline;
+    markDirty();
   }
 
   public String getLanguage() {
@@ -126,5 +127,6 @@ public class PlayerAccount extends Account {
   public void setLanguage(final String language) {
 
     this.language = language;
+    markDirty();
   }
 }

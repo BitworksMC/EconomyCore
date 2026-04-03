@@ -57,7 +57,12 @@ public class Updater extends UpdateChecker {
   @Override
   public String stable() {
 
-    if(new Semver(PluginCore.engine().version() + "-" + PluginCore.engine().build(), Semver.SemverType.LOOSE).isStable()) {
+    return stability(PluginCore.engine().version(), PluginCore.engine().build());
+  }
+
+  public static String stability(final String version, final String build) {
+
+    if(new Semver(version + "-" + build, Semver.SemverType.LOOSE).isStable()) {
       return "Stable";
     }
     return "Not Stable";

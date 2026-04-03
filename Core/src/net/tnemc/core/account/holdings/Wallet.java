@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Wallet {
 
   private final Map<String, RegionHoldings> holdings = new ConcurrentHashMap<>();
+  private volatile boolean dirty = true;
 
   /**
    * Used to get the holdings based on specific specifications, or returns an empty optional if no
@@ -152,6 +153,7 @@ public class Wallet {
   public void deleteHoldings(final @NotNull String region) {
 
     holdings.remove(region);
+    dirty = true;
   }
 
   /**
@@ -164,6 +166,7 @@ public class Wallet {
 
     if(holdings.containsKey(region)) {
       holdings.get(region).getHoldings().remove(currency);
+      dirty = true;
     }
   }
 
@@ -180,6 +183,7 @@ public class Wallet {
 
     if(holdings.containsKey(region) && holdings.get(region).getHoldings().containsKey(currency)) {
       holdings.get(region).getHoldings().get(currency).getHoldings().remove(type.asID());
+      dirty = true;
     }
   }
 
@@ -187,6 +191,7 @@ public class Wallet {
   public void deleteAllHoldings() {
 
     holdings.clear();
+    dirty = true;
   }
 
   /**
@@ -264,5 +269,16 @@ public class Wallet {
     regionHoldings.setHoldingsEntry(entry, entry.getHandler());
 
     holdings.put(entry.getRegion(), regionHoldings);
+    dirty = true;
+  }
+
+  public boolean isDirty() {
+
+    return dirty;
+  }
+
+  public void clearDirty() {
+
+    dirty = false;
   }
 }
