@@ -86,8 +86,9 @@ public class TopPage<V> {
     int i = 0;
     while(it.hasNext()) {
       if(pos - 1 == i) {
-        data.addReplacement("$account", (String)it.next().getKey());
-        data.addReplacement("$balance", CurrencyFormatter.format(null, new HoldingsEntry(PluginCore.server().defaultWorld(), currency, it.next().getValue(), EconomyManager.NORMAL)));
+        final Map.Entry<V, BigDecimal> entry = it.next();
+        data.addReplacement("$account", (String)entry.getKey());
+        data.addReplacement("$balance", CurrencyFormatter.format(null, new HoldingsEntry(PluginCore.server().defaultWorld(), currency, entry.getValue(), EconomyManager.NORMAL)));
         return data;
       }
 
