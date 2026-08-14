@@ -62,6 +62,12 @@ Use TNE on the platform you want!
 
 Velocity and Bungee bridge plugins are no longer part of the supported build.
 As of `0.1.4.3`, cross-server syncing is Redis-only and does not require a proxy plugin.
+Starting with `0.1.4.4`, cross-server syncing is disabled by default. Configure `Data.Sync.Redis` and
+`Data.Sync.Security.Token`, then set `Data.Sync.Enabled` to `true` and restart the server to opt in.
+When it is disabled, TNE does not initialize Redis or register plugin messaging channels. Config
+version 7 also disables sync on upgraded installations, so existing Redis networks must explicitly
+opt back in once their settings have been verified. A default or missing security token keeps Redis
+disabled even if `Data.Sync.Enabled` is set to `true`.
 
 If you are trying to use the historical `TNE-VelocityCore-0.1.4.2.jar`, do not place it in a
 Velocity `plugins/` directory. That legacy artifact does not contain the generated
@@ -117,9 +123,9 @@ TNE has some minimum requirements that should be followed.
 
 - MySQL 8.0+ (if using MySQL for storage)
 - MariaDB 10.7.0+
-- Java 17+
+- Java 17+ for Bukkit builds and Java 21+ for Paper/Folia builds (Paper 26.2 itself requires Java 25+)
 - Redis plus a shared `Data.Sync.Security.Token` on every backend server if you want cross-server
-  syncing
+  syncing; opt in with `Data.Sync.Enabled: true`
 
 ## Contributing
 

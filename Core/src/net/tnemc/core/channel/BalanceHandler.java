@@ -49,6 +49,10 @@ public class BalanceHandler extends ChannelMessageHandler {
 
   public static void send(final String identifier, final String name, final String region, final UUID currency, final Identifier handler, final BigDecimal amount) {
 
+    if(!TNECore.syncEnabled()) {
+      return;
+    }
+
     final ByteArrayDataOutput out = ByteStreams.newDataOutput();
     out.writeUTF(PluginCore.instance().getServerID().toString());
     ChannelSecurity.writeToken(out);

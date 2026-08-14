@@ -152,7 +152,7 @@ public class DefaultCurrencySaver implements CurrencySaver {
     cur.set("Options.Disabled", false);
 
     MISCUtils.setComment(cur, "Options.Sync", "Should this currency be synced across servers when enabled?");
-    cur.set("Options.Sync", true);
+    cur.set("Options.Sync", currency.isSync());
 
     MISCUtils.setComment(cur, "Options.MaxBalance", "The maximum balance possible for this currency.");
     cur.set("Options.MaxBalance", currency.getMaxBalance().toPlainString());
@@ -239,11 +239,11 @@ public class DefaultCurrencySaver implements CurrencySaver {
       MISCUtils.setComment(cur, "Note.Item.Texture", "The base64 texture to use if the material is PLAYER_HEAD");
       cur.set("Note.Item.Texture", note.get().getTexture());
 
-      MISCUtils.setComment(cur, "Note.Item.Item.Enchantments", "All configurations relating to enchantment identification for the note item");
-      cur.set("Note.Item.Item.Enchantments", note.get().getEnchantments());
+      MISCUtils.setComment(cur, "Note.Item.Enchantments", "All configurations relating to enchantment identification for the note item");
+      cur.set("Note.Item.Enchantments", note.get().getEnchantments());
 
-      MISCUtils.setComment(cur, "Note.Item.Item.Flags", "All configurations relating to item flags identification for the note item");
-      cur.set("Note.Item.Item.Flags", note.get().getFlags());
+      MISCUtils.setComment(cur, "Note.Item.Flags", "All configurations relating to item flags identification for the note item");
+      cur.set("Note.Item.Flags", note.get().getFlags());
     }
 
     //Conversion

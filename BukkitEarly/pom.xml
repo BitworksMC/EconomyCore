@@ -169,7 +169,7 @@
         <dependency>
             <groupId>net.tnemc</groupId>
             <artifactId>BukkitCore</artifactId>
-            <version>0.1.4.3</version>
+            <version>0.1.4.4</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -177,7 +177,7 @@
     <parent>
         <groupId>net.tnemc</groupId>
         <artifactId>TNE</artifactId>
-        <version>0.1.4.3</version>
+        <version>0.1.4.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 </project>

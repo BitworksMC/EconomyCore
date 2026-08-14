@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>net.tnemc</groupId>
     <artifactId>TNE</artifactId>
-    <version>0.1.4.3</version>
+    <version>0.1.4.4</version>
     <packaging>pom</packaging>
     <name>The New Economy</name>
 
@@ -21,6 +21,8 @@
 
     <properties>
         <papi.version>2.11.6</papi.version>
+        <lamp.version>4.0.0-rc.17</lamp.version>
+        <tnil.version>0.2.0.0-SNAPSHOT-3</tnil.version>
         <tnml.version>1.7.0.1-SNAPSHOT-3</tnml.version>
         <tnpc.version>1.1.0.2-SNAPSHOT-6</tnpc.version>
         <tne.relocation>net.tnemc.libs</tne.relocation>
@@ -88,6 +90,10 @@
         <repository>
             <id>codemc-releases</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>codemc-creatorfromhell</id>
+            <url>https://repo.codemc.io/repository/creatorfromhell/</url>
         </repository>
     </repositories>
 

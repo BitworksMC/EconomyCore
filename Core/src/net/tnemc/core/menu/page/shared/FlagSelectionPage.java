@@ -122,7 +122,7 @@ public class FlagSelectionPage {
                                              final StringBuilder builder = new StringBuilder();
                                              for(final String flag : MenuManager.instance().getHelper().flags()) {
 
-                                               final String value = (String)viewer.get().dataOrDefault(menuName + "_" + flag, "Disabled");
+                                               final String value = (String)viewer.get().dataOrDefault(flagsID + "_" + flag, "Disabled");
                                                final boolean enabled = value.equalsIgnoreCase("enabled");
                                                if(enabled) {
 
@@ -150,7 +150,7 @@ public class FlagSelectionPage {
         final AbstractItemStack<?> enabledStack = PluginCore.server().stackBuilder().customName(Component.text(flagName + "(Enabled)")).of("GREEN_WOOL", 1);
 
         //ender chest icon
-        final StateIcon flag = new StateIcon(disabledStack, null, menuName + "_" + flagName, "DISABLED", (currentState)->{
+        final StateIcon flag = new StateIcon(disabledStack, null, flagsID + "_" + flagName, "DISABLED", (currentState)->{
           if(currentState.toUpperCase(Locale.ROOT).equals("ENABLED")) {
             return "DISABLED";
           }

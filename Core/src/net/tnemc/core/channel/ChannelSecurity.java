@@ -78,6 +78,11 @@ public final class ChannelSecurity {
     return configured.trim();
   }
 
+  public static boolean configured() {
+
+    return isConfigured(token());
+  }
+
   private static boolean isConfigured(final String token) {
 
     return !token.isEmpty()

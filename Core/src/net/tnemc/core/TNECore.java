@@ -75,6 +75,7 @@ import net.tnemc.plugincore.core.io.storage.Datable;
 import net.tnemc.plugincore.core.io.storage.StorageManager;
 import net.tnemc.plugincore.core.io.storage.engine.StorageSettings;
 import org.jetbrains.annotations.NotNull;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import revxrsal.commands.LampBuilderVisitor;
@@ -106,7 +107,7 @@ public abstract class TNECore extends PluginEngine {
 
   public static final String DEFAULT_WORLD = "world-113";
   public static final String coreURL = "https://tnemc.net/files/module-version.xml";
-  public static final String version = "0.1.4.3";
+  public static final String version = "0.1.4.4";
   public static final String build = "RELEASE";
   protected static TNECore instance;
 
@@ -120,6 +121,7 @@ public abstract class TNECore extends PluginEngine {
   private DataConfig data;
   private MessageConfig messageConfig;
   private Chore<?> autoSaver = null;
+  private boolean syncEnabledAtStartup = false;
 
   public TNECore() {
 
@@ -150,6 +152,16 @@ public abstract class TNECore extends PluginEngine {
   public static TNEAPI api() {
 
     return instance.api;
+  }
+
+  /**
+   * Whether Redis-backed cross-server synchronization is enabled.
+   *
+   * @return {@code true} only when synchronization has been explicitly enabled.
+   */
+  public static boolean syncEnabled() {
+
+    return instance != null && instance.syncEnabledAtStartup;
   }
 
   @Override
@@ -209,14 +221,21 @@ public abstract class TNECore extends PluginEngine {
   @Override
   public void registerPluginChannels() {
 
-    PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
-    PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
+    // Redis handlers are registered in registerStorage() after TNPC's legacy
+    // proxy-channel registration phase has finished. Cross-server sync no
+    // longer registers or relies on Bukkit plugin messaging channels.
   }
 
   @Override
   public void registerStorage() {
 
-    final String syncType = resolveSyncType();
+    final boolean syncEnabled = syncEnabled();
+    final String syncType = syncEnabled? resolveSyncType() : "Redis";
+
+    if(syncEnabled) {
+      PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
+      PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
+    }
 
     final StorageSettings settings = new StorageSettings(
             DataConfig.yaml().getString("Data.Database.File"),
@@ -237,8 +256,7 @@ public abstract class TNECore extends PluginEngine {
 
     JedisPool pool = null;
 
-    if(syncType.equalsIgnoreCase("redis")
-       || syncType.equalsIgnoreCase("jedis")) {
+    if(syncEnabled && syncType.equalsIgnoreCase("redis")) {
 
       final JedisPoolConfig config = new JedisPoolConfig();
       config.setMaxTotal(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MaxSize", 10));
@@ -283,7 +301,15 @@ public abstract class TNECore extends PluginEngine {
     if(pool != null && !redisAuthRuntimePresent()) {
       PluginCore.log().error("Redis auth runtime classes are missing from this build. Cross-server sync will be disabled for this startup.",
                              DebugLevel.OFF);
+      pool.close();
       pool = null;
+      this.syncEnabledAtStartup = false;
+    }
+
+    if(pool != null && !redisConnectionAvailable(pool)) {
+      pool.close();
+      pool = null;
+      this.syncEnabledAtStartup = false;
     }
 
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
@@ -301,6 +327,19 @@ public abstract class TNECore extends PluginEngine {
       }
     }
     return false;
+  }
+
+  private boolean redisConnectionAvailable(final JedisPool pool) {
+
+    try(final Jedis jedis = pool.getResource()) {
+      jedis.ping();
+      return true;
+    } catch(final Exception e) {
+      PluginCore.log().error("Unable to connect to Redis (" + e.getMessage()
+                             + "). Cross-server sync will be disabled for this startup.",
+                             DebugLevel.OFF);
+      return false;
+    }
   }
 
   private List<ClassLoader> candidateClassLoaders() {
@@ -352,8 +391,8 @@ public abstract class TNECore extends PluginEngine {
 
     final String configured = DataConfig.yaml().getString("Data.Sync.Type", "Redis");
     if(configured != null && (configured.equalsIgnoreCase("redis")
-                              || configured.equalsIgnoreCase("jedis"))) {
-      return configured;
+                               || configured.equalsIgnoreCase("jedis"))) {
+      return "Redis";
     }
 
     PluginCore.log().error("Data.Sync.Type \"" + configured + "\" is no longer supported. Falling back to Redis.", DebugLevel.OFF);
@@ -438,6 +477,17 @@ public abstract class TNECore extends PluginEngine {
   @Override
   public void postConfigs() {
 
+    this.syncEnabledAtStartup = DataConfig.yaml().getBoolean("Data.Sync.Enabled", false);
+    if(this.syncEnabledAtStartup && !ChannelSecurity.configured()) {
+      PluginCore.log().error("Data.Sync.Security.Token is not configured. Redis will not be initialized until a non-default token is set.",
+                             DebugLevel.OFF);
+      this.syncEnabledAtStartup = false;
+    }
+
+    PluginCore.log().inform("Cross-server synchronization is "
+                            + ((this.syncEnabledAtStartup)? "enabled; Redis will be initialized."
+                               : "disabled; Redis will not be initialized."));
+
     if(!this.economyManager.currency().load(PluginCore.directory(), false)) {
       return;
     }
@@ -468,13 +518,6 @@ public abstract class TNECore extends PluginEngine {
     }
     PluginCore.instance().setServerID(serverID);
 
-    final String syncToken = ChannelSecurity.token();
-    if(syncToken.isEmpty()
-       || syncToken.equalsIgnoreCase("none")
-       || syncToken.equalsIgnoreCase("CHANGE_ME")) {
-      PluginCore.log().error("Data.Sync.Security.Token is not configured. Cross-server sync will be rejected until this is updated.",
-                             DebugLevel.OFF);
-    }
   }
 
   @Override

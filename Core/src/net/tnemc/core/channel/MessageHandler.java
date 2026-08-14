@@ -46,6 +46,10 @@ public class MessageHandler extends ChannelMessageHandler {
 
   public static void send(final UUID identifier, final Component component) {
 
+    if(!TNECore.syncEnabled()) {
+      return;
+    }
+
     final ByteArrayDataOutput out = ByteStreams.newDataOutput();
     out.writeUTF(PluginCore.instance().getServerID().toString());
     ChannelSecurity.writeToken(out);
