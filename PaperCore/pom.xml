@@ -189,10 +189,6 @@
                             <shadedPattern>${tne.relocation}.lamp</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>revxrsal</pattern>
-                            <shadedPattern>${tne.relocation}.lamp</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>redis.clients</pattern>
                             <shadedPattern>${tne.relocation}.jedis</shadedPattern>
                         </relocation>

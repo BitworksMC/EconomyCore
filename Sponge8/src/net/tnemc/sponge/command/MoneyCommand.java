@@ -70,7 +70,7 @@ public class MoneyCommand {
   @Usage("Money.Convert.Arguments")
   @Description("Money.Convert.Description")
   @CommandPermission("tne.money.convert")
-  public void onConvert(final SpongeCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("currency") final Currency currency, final Currency fromCurrency) {
+  public void onConvert(final SpongeCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("to") final Currency currency, @Default("") @Named("from") final Currency fromCurrency) {
 
     net.tnemc.core.command.MoneyCommand.onConvert(new SpongeCMDSource(sender), amount, currency, fromCurrency);
   }
@@ -151,7 +151,7 @@ public class MoneyCommand {
   @Subcommand({ "request" })
   @Usage("Money.Request.Arguments")
   @Description("Money.Request.Description")
-  @CommandPermission("tne.money.Request")
+  @CommandPermission("tne.money.request")
   public void onRequest(final SpongeCommandActor sender, final Account player, @Named("amount") final ParseMoney amount, @Default("") @Named("currency") final Currency currency) {
 
     net.tnemc.core.command.MoneyCommand.onRequest(new SpongeCMDSource(sender), player, amount, currency);

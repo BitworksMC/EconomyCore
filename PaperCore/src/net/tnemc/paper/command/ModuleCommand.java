@@ -78,7 +78,7 @@ public class ModuleCommand {
   @Usage("Module.List.Arguments")
   //@DefaultFor({ "module", "mod" })
   @Description("Module.List.Description")
-  @CommandPermission("tne.list.available")
+  @CommandPermission("tne.module.list")
   public void onList(final BukkitCommandActor sender) {
 
     net.tnemc.core.command.ModuleCommand.onList(new PaperCMDSource(sender));

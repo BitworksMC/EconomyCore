@@ -72,7 +72,7 @@ public class TransactionCommand {
   @Subcommand({ "info", "i", "about", "brief" })
   @Usage("Transaction.Info.Arguments")
   @Description("Transaction.Info.Description")
-  @CommandPermission("tne.info.history")
+  @CommandPermission("tne.transaction.info")
   public void info(final BukkitCommandActor sender, final UUID uuid) {
 
     net.tnemc.core.command.TransactionCommand.info(new BukkitCMDSource(sender), uuid);
@@ -81,7 +81,7 @@ public class TransactionCommand {
   @Subcommand({ "void", "retract", "undo" })
   @Usage("Transaction.Void.Arguments")
   @Description("Transaction.Void.Description")
-  @CommandPermission("tne.void.history")
+  @CommandPermission("tne.transaction.void")
   public void voidT(final BukkitCommandActor sender, final Account account, final UUID uuid) {
 
     net.tnemc.core.command.TransactionCommand.voidT(new BukkitCMDSource(sender), account, uuid);

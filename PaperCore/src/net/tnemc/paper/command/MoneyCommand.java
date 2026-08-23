@@ -81,7 +81,7 @@ public class MoneyCommand {
   @Usage("Money.Convert.Arguments")
   @Description("Money.Convert.Description")
   @CommandPermission("tne.money.convert")
-  public void onConvert(final BukkitCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("currency") final Currency currency, @Named("currency") final Currency from) {
+  public void onConvert(final BukkitCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("to") final Currency currency, @Default("") @Named("from") final Currency from) {
 
     net.tnemc.core.command.MoneyCommand.onConvert(new PaperCMDSource(sender), amount, currency, from);
   }
@@ -162,7 +162,7 @@ public class MoneyCommand {
   @Subcommand({ "request" })
   @Usage("Money.Request.Arguments")
   @Description("Money.Request.Description")
-  @CommandPermission("tne.money.Request")
+  @CommandPermission("tne.money.request")
   public void onRequest(final BukkitCommandActor sender, @Named("account") final Account player, @Named("amount") final ParseMoney amount, @Default("") @Named("currency") final Currency currency) {
 
     net.tnemc.core.command.MoneyCommand.onRequest(new PaperCMDSource(sender), player, amount, currency);

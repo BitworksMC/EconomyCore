@@ -112,6 +112,8 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <amount> <to currency> [from currency]
   public static void onConvert(final CmdSource<?> sender, final PercentBigDecimal amount, final Currency currency, final Currency fromCurrency) {
 
+    final Currency resolvedFrom = (fromCurrency == null)? TNECore.eco().currency().defaultCurrency(BaseCommand.region(sender)) : fromCurrency;
+
     final Optional<PlayerProvider> player = sender.player();
     if(EconomyManager.limitCurrency() && player.isPresent()) {
       if(!player.get().hasPermission("tne.money.convert.to." + currency.getIdentifier())) {
@@ -122,10 +124,10 @@ public class MoneyCommand extends BaseCommand {
         return;
       }
 
-      if(!player.get().hasPermission("tne.money.convert.from." + fromCurrency.getIdentifier())) {
+      if(!player.get().hasPermission("tne.money.convert.from." + resolvedFrom.getIdentifier())) {
         final MessageData data = new MessageData("Messages.Account.BlockedAction");
         data.addReplacement("$action", "convert from");
-        data.addReplacement("$currency", fromCurrency.getDisplay());
+        data.addReplacement("$currency", resolvedFrom.getDisplay());
         sender.message(data);
         return;
       }
@@ -136,7 +138,7 @@ public class MoneyCommand extends BaseCommand {
       return;
     }
 
-    if(currency.getUid().equals(fromCurrency.getUid())) {
+    if(currency.getUid().equals(resolvedFrom.getUid())) {
       sender.message(new MessageData("Messages.Money.ConvertSame"));
       return;
     }
@@ -149,7 +151,7 @@ public class MoneyCommand extends BaseCommand {
       return;
     }
 
-    final Optional<BigDecimal> converted = fromCurrency.convertValue(currency.getIdentifier(), amount.value());
+    final Optional<BigDecimal> converted = resolvedFrom.convertValue(currency.getIdentifier(), amount.value());
     if(converted.isEmpty()) {
       final MessageData data = new MessageData("Messages.Money.NoConversion");
       data.addReplacement("$converted", currency.getIdentifier());
@@ -163,7 +165,7 @@ public class MoneyCommand extends BaseCommand {
     );
 
     final HoldingsModifier modifierFrom = new HoldingsModifier(BaseCommand.region(sender),
-                                                               fromCurrency.getUid(),
+                                                               resolvedFrom.getUid(),
                                                                amount.value().setScale(currency.getDecimalPlaces(), RoundingMode.DOWN).negate()
     );
 
@@ -677,7 +679,14 @@ public class MoneyCommand extends BaseCommand {
       return;
     }
 
-    final Optional<PlayerProvider> provider = PluginCore.server().findPlayer(((PlayerAccount)account).getUUID());
+    if(!(account instanceof PlayerAccount playerAccount)) {
+      final MessageData data = new MessageData("Messages.General.NoPlayer");
+      data.addReplacement("$player", account.getName());
+      sender.message(data);
+      return;
+    }
+
+    final Optional<PlayerProvider> provider = PluginCore.server().findPlayer(playerAccount.getUUID());
     if(provider.isEmpty()) {
       final MessageData data = new MessageData("Messages.General.NoPlayer");
       data.addReplacement("$player", account.getName());
@@ -799,7 +808,6 @@ public class MoneyCommand extends BaseCommand {
 
         });
         sender.message(msg);
-        return;
       }
     }
   }
