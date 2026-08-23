@@ -24,6 +24,7 @@ import net.tnemc.plugincore.PluginCore;
 import org.jetbrains.annotations.NotNull;
 import revxrsal.commands.autocomplete.SuggestionProvider;
 import revxrsal.commands.command.CommandActor;
+import revxrsal.commands.exception.CommandErrorException;
 import revxrsal.commands.node.ExecutionContext;
 import revxrsal.commands.parameter.ParameterType;
 import revxrsal.commands.stream.MutableStringStream;
@@ -67,14 +68,14 @@ public class AccountResolver implements ParameterType<CommandActor, Account> {
         break;
     }
 
-    if(!TNECore.eco().account().excluded(value)) {
+    if(value != null && !TNECore.eco().account().excluded(value)) {
 
       final Optional<Account> account = TNECore.eco().account().findAccount(value);
       if(account.isPresent()) {
         return account.get();
       }
     }
-    return null;
+    throw new CommandErrorException("Unable to locate account '" + String.valueOf(value) + "'.");
   }
 
   @Override

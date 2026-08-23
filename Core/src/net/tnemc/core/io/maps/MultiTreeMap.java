@@ -23,7 +23,6 @@ import net.tnemc.core.manager.top.TopPage;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,7 @@ import java.util.TreeMap;
 public class MultiTreeMap<V> {
 
   private final TreeMap<BigDecimal, List<V>> map = new TreeMap<>(Collections.reverseOrder());
-  private final Map<Integer, TopPage<V>> pageMap = new HashMap<>();
+  private final Map<Integer, TopPage<V>> pageMap = new TreeMap<>();
 
   private final int perPage;
 
@@ -72,6 +71,7 @@ public class MultiTreeMap<V> {
 
   public void sort() {
 
+    pageMap.clear();
     int page = 1;
     TopPage<V> pageEntry = new TopPage<>(page);
     for(final Map.Entry<BigDecimal, List<V>> entry : map.entrySet()) {
@@ -95,8 +95,9 @@ public class MultiTreeMap<V> {
         pageEntry = new TopPage<>(page);
       }
     }
-    pageMap.put(pageEntry.getPage(), pageEntry);
-    pageEntry = null;
+    if(!pageEntry.getValues().isEmpty() || pageMap.isEmpty()) {
+      pageMap.put(pageEntry.getPage(), pageEntry);
+    }
     map.clear();
   }
 
@@ -104,7 +105,7 @@ public class MultiTreeMap<V> {
 
     for(final TopPage<V> page : pageMap.values()) {
       if(page.getValues().containsKey(search)) {
-        return (((page.getPage() - 1) * perPage) + new LinkedList<>(page.getValues().keySet()).indexOf(search));
+        return (((page.getPage() - 1) * perPage) + new LinkedList<>(page.getValues().keySet()).indexOf(search) + 1);
       }
     }
     return -1;
@@ -112,6 +113,7 @@ public class MultiTreeMap<V> {
 
   public TopPage<V> getValues(int page) {
 
+    if(page < 1) page = 1;
     if(page > pageMap.size()) page = 1;
 
     return pageMap.get(page);

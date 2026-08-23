@@ -956,13 +956,6 @@ public class MoneyCommand extends BaseCommand {
 
     final Optional<Account> senderAccount = BaseCommand.account(sender, "top");
 
-    if(senderAccount.isEmpty()) {
-      final MessageData data = new MessageData("Messages.General.NoPlayer");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
     if(player.isPresent() && TNECore.eco().region().getDisabledRegions().contains(player.get().world())) {
 
       final MessageData regionMSG = new MessageData("Messages.General.Disabled");
@@ -970,12 +963,11 @@ public class MoneyCommand extends BaseCommand {
       return;
     }
 
-    if(refresh && !senderAccount.get().isPlayer() || refresh && senderAccount.get().isPlayer() && ((PlayerAccount)senderAccount.get()).getPlayer().isPresent()
-                                                     && ((PlayerAccount)senderAccount.get()).getPlayer().get().hasPermission("tne.money.top.refresh")) {
+    if(refresh && (player.isEmpty() || player.get().hasPermission("tne.money.top.refresh"))) {
 
       TopManager.instance().load();
     }
-    final int max = TNECore.eco().getTopManager().page(currency.getUid());
+    final int max = Math.max(1, TNECore.eco().getTopManager().page(currency.getUid()));
 
     if(page < 1) page = 1;
     if(page > max) page = max;
@@ -993,7 +985,7 @@ public class MoneyCommand extends BaseCommand {
         final MessageData en = new MessageData("Messages.Money.TopEntry");
         en.addReplacement("$pos", (adjusted + i));
         en.addReplacement("$player", entry.getKey());
-        en.addReplacement("$amount", CurrencyFormatter.format(senderAccount.get(), new HoldingsEntry(TNECore.eco().region().defaultRegion(), currency.getUid(), entry.getValue(), EconomyManager.NORMAL)));
+        en.addReplacement("$amount", CurrencyFormatter.format(senderAccount.orElse(null), new HoldingsEntry(TNECore.eco().region().defaultRegion(), currency.getUid(), entry.getValue(), EconomyManager.NORMAL)));
         sender.message(en);
 
         i++;

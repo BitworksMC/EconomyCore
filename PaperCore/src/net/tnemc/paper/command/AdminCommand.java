@@ -33,7 +33,7 @@ import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
 import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 import net.tnemc.plugincore.core.io.message.MessageData;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.Nullable;

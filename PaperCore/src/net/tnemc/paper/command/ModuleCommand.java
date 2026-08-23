@@ -20,7 +20,7 @@ package net.tnemc.paper.command;
 
 import net.tnemc.core.TNECore;
 import net.tnemc.core.command.BaseCommand;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;

@@ -21,7 +21,7 @@ package net.tnemc.paper.command;
 import net.tnemc.core.account.Account;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.parser.ParseMoney;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;

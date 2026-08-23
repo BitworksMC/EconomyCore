@@ -52,19 +52,19 @@ public class AwayHistory {
 
   public NavigableMap<Long, UUID> getPage(int page) {
 
+    if(page < 1) page = 1;
     if(page > maxPages()) page = 1;
 
     final NavigableMap<Long, UUID> values = new TreeMap<>();
-    final int start = ((page * 5) - 5) + 1;
-    final int end = start + 5;
+    final int start = (page - 1) * 5;
 
-    final int i = 1;
+    int i = 0;
     for(final Map.Entry<Long, UUID> entry : receipts.entrySet()) {
-      if(i < start) continue;
+      if(i++ < start) continue;
 
       values.put(entry.getKey(), entry.getValue());
 
-      if(i >= end) break;
+      if(values.size() >= 5) break;
     }
     return values;
   }

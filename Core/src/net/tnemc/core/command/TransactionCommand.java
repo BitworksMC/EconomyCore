@@ -97,12 +97,13 @@ public class TransactionCommand {
       return;
     }
 
+    final int selectedPage = Math.min(Math.max(page, 1), sorted.maxPages());
     final MessageData heading = new MessageData("Messages.Transaction.History");
-    heading.addReplacement("$page", String.valueOf(page));
+    heading.addReplacement("$page", String.valueOf(selectedPage));
     heading.addReplacement("$page_top", String.valueOf(sorted.maxPages()));
     sender.message(heading);
 
-    for(final Map.Entry<Long, UUID> entry : sorted.getPage(page).entrySet()) {
+    for(final Map.Entry<Long, UUID> entry : sorted.getPage(selectedPage).entrySet()) {
 
       final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
       if(receipt.isPresent()) {

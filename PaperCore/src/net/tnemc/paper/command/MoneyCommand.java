@@ -26,7 +26,7 @@ import net.tnemc.core.command.parameters.resolver.annotation.EnderSupport;
 import net.tnemc.core.command.parameters.resolver.annotation.InventorySupport;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.parser.ParseMoney;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;
@@ -73,12 +73,6 @@ public class MoneyCommand {
   @Description("Money.Balance.Description")
   @CommandPermission("tne.money.balance")
   public void onBalance(final BukkitCommandActor sender, @Default("") @Named("currency") final Currency currency, @Default(DEFAULT_WORLD) @Named("region") final String region) {
-
-    System.out.println("Currency: " + currency);
-
-    if(currency == null) {
-      System.out.println("Currency is null");
-    }
 
     net.tnemc.core.command.MoneyCommand.onBalance(new PaperCMDSource(sender), currency, region);
   }
