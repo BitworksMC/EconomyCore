@@ -142,61 +142,80 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
   public void storeAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
     final Optional<Account> account = TNECore.eco().account().findAccount(identifier);
-    if(account.isPresent()) {
+    if(account.isEmpty()) {
+      return;
+    }
 
-      PluginCore.log().inform("Saving holdings for: " + identifier, DebugLevel.STANDARD);
+    PluginCore.log().inform("Saving holdings for: " + identifier, DebugLevel.STANDARD);
+    final String file = "accounts/" + identifier + ".yml";
+    waitForFile(file);
+    TNECore.yaml().add(file);
 
-      //check if our file is in use.
-      final String file = "accounts/" + identifier + ".yml";
-      while(TNECore.yaml().inUse(file)) {
-        try {
-          Thread.sleep(1000);
-        } catch(final InterruptedException ignore) {
-        }
-      }
+    final File accFile = new File(PluginCore.directory(), file);
+    if(!ensureFile(accFile, identifier)) {
+      return;
+    }
+    final YamlDocument yaml = loadDocument(accFile, identifier);
+    if(yaml == null) {
+      return;
+    }
+    writeHoldings(yaml, account.get());
+    saveDocument(yaml, identifier);
+    TNECore.yaml().remove(file);
+  }
 
-      TNECore.yaml().add(file);
+  private void waitForFile(final String file) {
 
-      final File accFile = new File(PluginCore.directory(), file);
-      if(!accFile.exists()) {
-        try {
-          accFile.createNewFile();
-        } catch(final IOException ignore) {
-
-          PluginCore.log().error("Issue creating account file. Account: " + identifier);
-          return;
-        }
-      }
-
-
-      YamlDocument yaml = null;
+    while(TNECore.yaml().inUse(file)) {
       try {
-        yaml = YamlDocument.create(accFile);
-      } catch(final IOException ignore) {
+        Thread.sleep(1000);
+      } catch(final InterruptedException ignore) { }
+    }
+  }
 
-        PluginCore.log().error("Issue loading account file. Account: " + identifier, DebugLevel.OFF);
-        return;
-      }
+  private boolean ensureFile(final File accFile, final String identifier) {
 
-      for(final Map.Entry<String, RegionHoldings> region : account.get().getWallet().getHoldings().entrySet()) {
-        for(final Map.Entry<UUID, CurrencyHoldings> currency : region.getValue().getHoldings().entrySet()) {
-          for(final HoldingsEntry entry : account.get().getHoldings(region.getKey(), currency.getKey())) {
+    if(accFile.exists()) {
+      return true;
+    }
+    try {
+      accFile.createNewFile();
+      return true;
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue creating account file. Account: " + identifier);
+      return false;
+    }
+  }
 
-            yaml.set("Holdings." + MainConfig.yaml().getString("Core.Server.Name")
-                     + "." + entry.getRegion() + "." + entry.getCurrency().toString() + "."
-                     + entry.getHandler().asID(), entry.getAmount().toPlainString());
-          }
+  private YamlDocument loadDocument(final File accFile, final String identifier) {
+
+    try {
+      return YamlDocument.create(accFile);
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue loading account file. Account: " + identifier, DebugLevel.OFF);
+      return null;
+    }
+  }
+
+  private void writeHoldings(final YamlDocument yaml, final Account account) {
+
+    for(final Map.Entry<String, RegionHoldings> region : account.getWallet().getHoldings().entrySet()) {
+      for(final Map.Entry<UUID, CurrencyHoldings> currency : region.getValue().getHoldings().entrySet()) {
+        for(final HoldingsEntry entry : account.getHoldings(region.getKey(), currency.getKey())) {
+          yaml.set("Holdings." + MainConfig.yaml().getString("Core.Server.Name") + "."
+                   + entry.getRegion() + "." + entry.getCurrency() + "." + entry.getHandler().asID(),
+                   entry.getAmount().toPlainString());
         }
       }
+    }
+  }
 
-      try {
-        yaml.save();
-        yaml = null;
-      } catch(final IOException ignore) {
-        PluginCore.log().error("Issue saving account holdings to file. Account: " + identifier, DebugLevel.OFF);
-      }
+  private void saveDocument(final YamlDocument yaml, final String identifier) {
 
-      TNECore.yaml().remove(file);
+    try {
+      yaml.save();
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue saving account holdings to file. Account: " + identifier, DebugLevel.OFF);
     }
   }
 
@@ -232,80 +251,83 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
   public Collection<HoldingsEntry> loadAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
     final Collection<HoldingsEntry> holdings = new ArrayList<>();
+    if(identifier == null) {
+      return holdings;
+    }
+    final File accFile = new File(PluginCore.directory(), "accounts/" + identifier + ".yml");
+    if(!accFile.exists()) {
+      PluginCore.log().error("Null account file passed to YAMLAccount.load. Account: " + identifier, DebugLevel.OFF);
+      return holdings;
+    }
 
-    if(identifier != null) {
-      final File accFile = new File(PluginCore.directory(), "accounts/" + identifier + ".yml");
-      if(!accFile.exists()) {
-
-        PluginCore.log().error("Null account file passed to YAMLAccount.load. Account: " + identifier, DebugLevel.OFF);
-        return holdings;
+    try(final FileInputStream fis = new FileInputStream(accFile)) {
+      final YamlDocument yaml = YamlDocument.create(fis);
+      if(yaml != null && yaml.contains("Holdings")) {
+        readServers(yaml, yaml.getSection("Holdings"), holdings);
       }
-
-      try {
-
-        try(final FileInputStream fis = new FileInputStream(accFile)) {
-
-          final YamlDocument yaml = YamlDocument.create(fis);
-
-          //region, currency, amount, type
-          if(yaml != null) {
-
-            //Holdings.Server.Region.Currency.Handler: Balance
-            if(yaml.contains("Holdings")) {
-              final Section main = yaml.getSection("Holdings");
-              for(final Object serverObj : main.getKeys()) {
-
-                final String server = (String)serverObj;
-                if(!main.contains(server) || !main.isSection(server)) {
-                  continue;
-                }
-
-                for(final Object regionObj : main.getSection(server).getKeys()) {
-
-                  final String region = (String)regionObj;
-                  if(!main.contains(server + "." + region) || !main.isSection(server + "." + region)) {
-                    continue;
-                  }
-
-                  for(final Object currencyObj : main.getSection(server + "." + region).getKeys()) {
-
-
-                    final String currency = (String)currencyObj;
-                    if(TNECore.eco().currency().find(currency).isEmpty()) {
-                      EconomyManager.invalidCurrencies().add(currency);
-                    }
-
-                    if(!main.contains(server + "." + region + "." + currency) || !main.isSection(server + "." + region + "." + currency)) {
-                      continue;
-                    }
-
-                    for(final Object handlerObj : main.getSection(server + "." + region + "." + currency).getKeys()) {
-
-                      final String handler = (String)handlerObj;
-                      final String amount = yaml.getString("Holdings." + server + "." + region + "." + currency + "." + handler, "0.0");
-
-                      //region, currency, amount, type
-                      final HoldingsEntry entry = new HoldingsEntry(region,
-                                                                    UUID.fromString(currency),
-                                                                    new BigDecimal(amount),
-                                                                    Identifier.fromID(handler)
-                      );
-
-                      PluginCore.log().debug("YAMLHoldings-loadAll-Entry ID:" + entry.getHandler(), DebugLevel.DEVELOPER);
-                      PluginCore.log().debug("YAMLHoldings-loadAll-Entry AMT:" + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);
-                      holdings.add(entry);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      } catch(final IOException ignore) {
-
-        PluginCore.log().error("Issue loading account file. Account: " + identifier, DebugLevel.OFF);
-      }
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue loading account file. Account: " + identifier, DebugLevel.OFF);
     }
     return holdings;
+  }
+
+  private void readServers(final YamlDocument yaml, final Section main,
+                           final Collection<HoldingsEntry> holdings) {
+
+    for(final Object serverObj : main.getKeys()) {
+      final String server = (String)serverObj;
+      if(!main.contains(server) || !main.isSection(server)) {
+        continue;
+      }
+      readRegions(yaml, main, holdings, server);
+    }
+  }
+
+  private void readRegions(final YamlDocument yaml, final Section main,
+                           final Collection<HoldingsEntry> holdings, final String server) {
+
+    for(final Object regionObj : main.getSection(server).getKeys()) {
+      final String region = (String)regionObj;
+      final String path = server + "." + region;
+      if(!main.contains(path) || !main.isSection(path)) {
+        continue;
+      }
+      readCurrencies(yaml, main, holdings, server, region);
+    }
+  }
+
+  private void readCurrencies(final YamlDocument yaml, final Section main,
+                              final Collection<HoldingsEntry> holdings, final String server,
+                              final String region) {
+
+    final String regionPath = server + "." + region;
+    for(final Object currencyObj : main.getSection(regionPath).getKeys()) {
+      final String currency = (String)currencyObj;
+      if(TNECore.eco().currency().find(currency).isEmpty()) {
+        EconomyManager.invalidCurrencies().add(currency);
+      }
+      final String currencyPath = regionPath + "." + currency;
+      if(!main.contains(currencyPath) || !main.isSection(currencyPath)) {
+        continue;
+      }
+      readHandlers(yaml, main, holdings, server, region, currency);
+    }
+  }
+
+  private void readHandlers(final YamlDocument yaml, final Section main,
+                            final Collection<HoldingsEntry> holdings, final String server,
+                            final String region, final String currency) {
+
+    final String path = server + "." + region + "." + currency;
+    for(final Object handlerObj : main.getSection(path).getKeys()) {
+      final String handler = (String)handlerObj;
+      final String amount = yaml.getString("Holdings." + path + "." + handler, "0.0");
+      final HoldingsEntry entry = new HoldingsEntry(region, UUID.fromString(currency),
+                                                    new BigDecimal(amount), Identifier.fromID(handler));
+      PluginCore.log().debug("YAMLHoldings-loadAll-Entry ID:" + entry.getHandler(), DebugLevel.DEVELOPER);
+      PluginCore.log().debug("YAMLHoldings-loadAll-Entry AMT:"
+                             + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);
+      holdings.add(entry);
+    }
   }
 }

@@ -1,6 +1,6 @@
 #General Data
 name: TheNewEconomy
-version: 0.1.4.3
+version: 0.1.5.0
 description: The original feature-packed economy plugin for Minecraft.
 author: creatorfromhell
 api-version: 1.13
@@ -79,14 +79,17 @@ permissions:
       tne.admin.extract: true
       tne.admin.id: true
       tne.admin.menu: true
+      tne.admin.old: true
       tne.admin.purge: true
       tne.admin.recreate: true
       tne.admin.reload: true
+      tne.admin.reloaddb: true
       tne.admin.report: true
       tne.admin.reset: true
       tne.admin.restore: true
       tne.admin.save: true
       tne.admin.status: true
+      tne.admin.towny: true
       tne.admin.upload: true
       tne.admin.version: true
   tne.admin:
@@ -122,6 +125,9 @@ permissions:
   tne.admin.menu:
     description: Allows access to the TNE Action Menu.
     default: op
+  tne.admin.old:
+    description: Allows restoring data using the legacy restoration path.
+    default: op
   tne.admin.purge:
     description: Allows deleting all player accounts with the default balance.
     default: op
@@ -130,6 +136,9 @@ permissions:
     default: op
   tne.admin.reload:
     description: Allows reloading of all configuration.
+    default: op
+  tne.admin.reloaddb:
+    description: Allows reloading data from storage.
     default: op
   tne.admin.report:
     description: Allows filing a bug report.
@@ -145,6 +154,9 @@ permissions:
     default: op
   tne.admin.status:
     description: Allows viewing and controlling of any player's account status
+    default: op
+  tne.admin.towny:
+    description: Allows realigning legacy Towny economy data.
     default: op
   tne.admin.upload:
     description: Allows uploading TNE debug info and logs to Pastebin.
@@ -232,6 +244,8 @@ permissions:
     description: Grants full access to all module commands.
     children:
       tne.module: true
+      tne.module.available: true
+      tne.module.download: true
       tne.module.info: true
       tne.module.list: true
       tne.module.load: true
@@ -239,6 +253,12 @@ permissions:
       tne.module.unload: true
   tne.module:
     description: Allows use of the module command.
+    default: op
+  tne.module.available:
+    description: Allows viewing modules available for download.
+    default: op
+  tne.module.download:
+    description: Allows downloading a module.
     default: op
   tne.module.info:
     description: Allows viewing info of a module.
@@ -263,12 +283,23 @@ permissions:
       tne.money.consolidate: true
       tne.money.consolidate.other: true
       tne.money.convert: true
+      tne.money.deposit: true
       tne.money.give: true
+      tne.money.giveall: true
+      tne.money.givenote: true
+      tne.money.mybal: true
       tne.money.note: true
+      tne.money.other: true
       tne.money.pay: true
+      tne.money.request: true
       tne.money.set: true
+      tne.money.setall: true
+      tne.money.switch: true
+      tne.money.switch.override: true
       tne.money.take: true
       tne.money.top: true
+      tne.money.top.refresh: true
+      tne.money.withdraw: true
   tne.money:
     description: Allows use of the money command.
     default: true
@@ -284,23 +315,56 @@ permissions:
   tne.money.convert:
     description: Allows converting between currencies.
     default: true
+  tne.money.deposit:
+    description: Allows depositing item currency into a virtual balance.
+    default: true
   tne.money.give:
     description: Allows giving new money to any player.
     default: op
+  tne.money.giveall:
+    description: Allows giving new money to every account.
+    default: op
+  tne.money.givenote:
+    description: Allows giving physical currency notes to another account.
+    default: op
+  tne.money.mybal:
+    description: Allows opening the personal balance menu.
+    default: true
   tne.money.note:
     description: Allows creating a physical bank note from a currency.
+    default: true
+  tne.money.other:
+    description: Allows checking another account's balance.
     default: true
   tne.money.pay:
     description: Allows paying money to a player.
     default: true
+  tne.money.request:
+    description: Allows requesting money from a player.
+    default: true
   tne.money.set:
     description: Allows setting balance of any player.
+    default: op
+  tne.money.setall:
+    description: Allows setting the balance of every account.
+    default: op
+  tne.money.switch:
+    description: Allows switching the account used for money commands.
+    default: true
+  tne.money.switch.override:
+    description: Allows switching to another player's account.
     default: op
   tne.money.take:
     description: Allows removing money from any player.
     default: op
   tne.money.top:
     description: Allows viewing the list of players sorted by their balance.
+    default: op
+  tne.money.top.refresh:
+    description: Allows refreshing the cached balance top.
+    default: op
+  tne.money.withdraw:
+    description: Allows withdrawing virtual balance into item currency.
     default: op
   tne.sign.*:
     description: Grants full access to all sign module functionality.

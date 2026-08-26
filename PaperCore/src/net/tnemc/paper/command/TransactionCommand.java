@@ -20,7 +20,7 @@ package net.tnemc.paper.command;
 
 import net.tnemc.core.account.Account;
 import net.tnemc.core.command.BaseCommand;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;
@@ -72,7 +72,7 @@ public class TransactionCommand {
   @Subcommand({ "info", "i", "about", "brief" })
   @Usage("Transaction.Info.Arguments")
   @Description("Transaction.Info.Description")
-  @CommandPermission("tne.info.history")
+  @CommandPermission("tne.transaction.info")
   public void info(final BukkitCommandActor sender, final UUID uuid) {
 
     net.tnemc.core.command.TransactionCommand.info(new PaperCMDSource(sender), uuid);
@@ -81,8 +81,8 @@ public class TransactionCommand {
   @Subcommand({ "void", "retract", "undo" })
   @Usage("Transaction.Void.Arguments")
   @Description("Transaction.Void.Description")
-  @CommandPermission("tne.void.history")
-  public void voidT(final BukkitCommandActor sender, final Account account, final UUID uuid) {
+  @CommandPermission("tne.transaction.void")
+  public void voidT(final BukkitCommandActor sender, final UUID uuid, @Default("SELF_ACCOUNT") final Account account) {
 
     net.tnemc.core.command.TransactionCommand.voidT(new PaperCMDSource(sender), account, uuid);
   }

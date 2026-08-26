@@ -173,37 +173,34 @@ public class FormatSelectionPage {
                                          .build());
 
 
-      final String[] stringSet = CurrencyFormatter.rules().keySet().toArray(new String[CurrencyFormatter.rules().size()]);
+      addFormatRules(callback, id, start, items);
+    }
+  }
 
-      final LinkedList<Component> lore = new LinkedList<>();
-      lore.add(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Format.Add"), id));
-      lore.add(Component.text("Placeholder"));
+  private void addFormatRules(final PageOpenCallback callback, final UUID id, final int start,
+                              final int items) {
 
-      int slot = 9;
-      for(int i = start; i < start + items; i++) {
-        if(stringSet.length <= i) {
-          break;
-        }
+    final String[] stringSet = CurrencyFormatter.rules().keySet().toArray(new String[CurrencyFormatter.rules().size()]);
+    final LinkedList<Component> lore = new LinkedList<>();
+    lore.add(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Format.Add"), id));
+    lore.add(Component.text("Placeholder"));
 
-        final FormatRule rule = CurrencyFormatter.rules().get(stringSet[i]);
-
-        if(!rule.includeInMenu()) {
-          continue;
-        }
-
-        //reset lore to include description for each rule.
-        lore.set(1, Component.text(rule.description()));
-
-        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PAPER", 1)
-                                                           .customName(Component.text(rule.name()))
-                                                           .lore(lore))
-                                           .withActions(new SwitchPageAction(menuName, menuPage))
-                                           .withClick((click)->formatAddClick(click, rule.name()))
-                                           .withSlot(slot)
-                                           .build());
-
-        slot++;
+    int slot = 9;
+    for(int i = start; i < start + items; i++) {
+      if(stringSet.length <= i) {
+        break;
       }
+      final FormatRule rule = CurrencyFormatter.rules().get(stringSet[i]);
+      if(!rule.includeInMenu()) {
+        continue;
+      }
+      lore.set(1, Component.text(rule.description()));
+      callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PAPER", 1)
+                                                         .customName(Component.text(rule.name())).lore(lore))
+                                         .withActions(new SwitchPageAction(menuName, menuPage))
+                                         .withClick(click->formatAddClick(click, rule.name()))
+                                         .withSlot(slot).build());
+      slot++;
     }
   }
 

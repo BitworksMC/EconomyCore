@@ -79,7 +79,7 @@ public class EnchantmentSelectionPage {
     if(viewer.isPresent()) {
 
       final UUID id = viewer.get().uuid();
-      final int page = (Integer)viewer.get().dataOrDefault(menuName + "_ENCHANTMENT_SELECTION_PAGE", 1);
+      final int page = (Integer)viewer.get().dataOrDefault(enchantPageID, 1);
       final int items = (menuRows - 1) * 9;
       final int start = ((page - 1) * items);
       final int maxPages = (MenuManager.instance().getHelper().enchantments().size() / items) + (((MenuManager.instance().getHelper().enchantments().size() % items) > 0)? 1 : 0);
@@ -92,14 +92,14 @@ public class EnchantmentSelectionPage {
         callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)
                                                            .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))
                                                            .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))
-                                           .withActions(new DataAction(menuName + "_ENCHANTMENT_SELECTION_PAGE", prev), new SwitchPageAction(menuName, menuPage))
+                                           .withActions(new DataAction(enchantPageID, prev), new SwitchPageAction(menuName, menuPage))
                                            .withSlot(0)
                                            .build());
 
         callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)
                                                            .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))
                                                            .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))
-                                           .withActions(new DataAction(menuName + "_ENCHANTMENT_SELECTION_PAGE", next), new SwitchPageAction(menuName, menuPage))
+                                           .withActions(new DataAction(enchantPageID, next), new SwitchPageAction(menuName, menuPage))
                                            .withSlot(8)
                                            .build());
       }
@@ -121,7 +121,7 @@ public class EnchantmentSelectionPage {
                                              final StringBuilder builder = new StringBuilder();
                                              for(final String enchant : MenuManager.instance().getHelper().enchantments()) {
 
-                                               final String value = (String)viewer.get().dataOrDefault(menuName + "_" + enchant, "Disabled");
+                                               final String value = (String)viewer.get().dataOrDefault(enchantsID + "_" + enchant, "Disabled");
                                                final boolean enabled = value.equalsIgnoreCase("enabled");
                                                if(enabled) {
 
@@ -148,7 +148,7 @@ public class EnchantmentSelectionPage {
         final AbstractItemStack<?> enabledStack = PluginCore.server().stackBuilder().customName(Component.text(enchantment + "(Enabled)")).of("GREEN_WOOL", 1);
 
         //ender chest icon
-        final StateIcon enchant = new StateIcon(disabledStack, null, menuName + "_" + enchantment, "DISABLED", (currentState)->{
+        final StateIcon enchant = new StateIcon(disabledStack, null, enchantsID + "_" + enchantment, "DISABLED", (currentState)->{
           if(currentState.toUpperCase(Locale.ROOT).equals("ENABLED")) {
             return "DISABLED";
           }

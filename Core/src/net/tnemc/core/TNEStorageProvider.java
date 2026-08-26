@@ -71,9 +71,13 @@ public class TNEStorageProvider implements StorageProvider {
   public void initialize(final String engine) {
 
     final String prefix = DataConfig.yaml().getString("Data.Database.Prefix");
+    configureEngine(engine, prefix, mariaDriverAvailable());
+    registerDatables();
+  }
+
+  private boolean mariaDriverAvailable() {
 
     boolean maria = false;
-
     try {
       Class.forName("org.mariadb.jdbc.Driver");
       maria = true;
@@ -83,60 +87,57 @@ public class TNEStorageProvider implements StorageProvider {
       Class.forName("org.mariadb.jdbc.MariaDbDataSource");
       maria = true;
     } catch(final Exception ignore) { }
+    return maria;
+  }
+
+  private void configureEngine(final String engine, final String prefix, final boolean maria) {
 
     switch(engine.toLowerCase()) {
-      case "mysql" -> {
-
-        if(maria) {
-          this.engine = new MariaDB(prefix, new MariaDialect(prefix));
-          this.connector = new SQLConnector();
-          break;
-        }
-        this.engine = new MySQL(prefix, new MySQLDialect(prefix));
-        this.connector = new SQLConnector();
-      }
-      case "maria", "mariadb" -> {
-
-        if(maria) {
-          this.engine = new MariaDB(prefix, new MariaDialect(prefix));
-          this.connector = new SQLConnector();
-          break;
-        }
-
-        this.engine = new MySQL(prefix, new MariaDialect(prefix));
-        this.connector = new SQLConnector();
-      }
-      case "maria-outdated" -> {
-        PluginCore.log().warning("Using outdated database! Please note: Official Support for this version of TNE is limited.", DebugLevel.OFF);
-
-        if(maria) {
-          this.engine = new MariaDB(prefix, new MariaOutdatedDialect(prefix));
-          this.connector = new SQLConnector();
-          break;
-        }
-
-        this.engine = new MySQL(prefix, new MariaOutdatedDialect(prefix));
-        this.connector = new SQLConnector();
-      }
+      case "mysql" -> configureMySql(prefix, maria);
+      case "maria", "mariadb" -> configureMaria(prefix, maria);
+      case "maria-outdated" -> configureOutdatedMaria(prefix, maria);
       case "postgre" -> {
         this.engine = new PostgreSQL(new MySQLDialect(prefix));
         this.connector = new SQLConnector();
       }
-      case "mysql-revamp" -> {
-        if(maria) {
-          this.engine = new MariaDB(prefix, new MySQLRevampDialect(prefix));
-          this.connector = new SQLConnector();
-          break;
-        }
-
-        this.engine = new MySQL(prefix, new MySQLRevampDialect(prefix));
-        this.connector = new SQLConnector();
-      }
+      case "mysql-revamp" -> configureRevampedMySql(prefix, maria);
       default -> {
         this.engine = new YAML();
         this.connector = new YAMLConnector();
       }
     }
+  }
+
+  private void configureMySql(final String prefix, final boolean maria) {
+
+    this.engine = maria? new MariaDB(prefix, new MariaDialect(prefix))
+                       : new MySQL(prefix, new MySQLDialect(prefix));
+    this.connector = new SQLConnector();
+  }
+
+  private void configureMaria(final String prefix, final boolean maria) {
+
+    this.engine = maria? new MariaDB(prefix, new MariaDialect(prefix))
+                       : new MySQL(prefix, new MariaDialect(prefix));
+    this.connector = new SQLConnector();
+  }
+
+  private void configureOutdatedMaria(final String prefix, final boolean maria) {
+
+    PluginCore.log().warning("Using outdated database! Please note: Official Support for this version of TNE is limited.", DebugLevel.OFF);
+    this.engine = maria? new MariaDB(prefix, new MariaOutdatedDialect(prefix))
+                       : new MySQL(prefix, new MariaOutdatedDialect(prefix));
+    this.connector = new SQLConnector();
+  }
+
+  private void configureRevampedMySql(final String prefix, final boolean maria) {
+
+    this.engine = maria? new MariaDB(prefix, new MySQLRevampDialect(prefix))
+                       : new MySQL(prefix, new MySQLRevampDialect(prefix));
+    this.connector = new SQLConnector();
+  }
+
+  private void registerDatables() {
 
     final Datable<Account> account = (this.engine instanceof StandardSQL)? new SQLAccount() : new YAMLAccount();
     final Datable<HoldingsEntry> entry = (this.engine instanceof StandardSQL)? new SQLHoldings() : new YAMLHoldings();

@@ -133,84 +133,16 @@ public class AccountManager {
   public AccountAPIResponse createAccount(final String identifier, final String name, final boolean nonPlayer, final boolean skipDB) {
 
     PluginCore.log().debug("Create Account Called! ID: " + identifier + " Name: " + name);
-    if(name.contains("§")) {
-      PluginCore.log().debug("==== AccountAPIResponse with color code! ====", DebugLevel.DEVELOPER);
+    logColorCodeStack(name);
 
-      final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-      for(int i = 0; i < elements.length; i++) {
-        final StackTraceElement s = elements[i];
-        PluginCore.log().debug("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":" + s.getLineNumber() + ")", DebugLevel.DEVELOPER);
-      }
-      PluginCore.log().debug("==== End Stack Print ====", DebugLevel.DEVELOPER);
+    final AccountAPIResponse existing = findExistingAccount(identifier, name);
+    if(existing != null) {
+      return existing;
     }
 
-    if(identifier != null && accounts.containsKey(identifier)) {
-      PluginCore.log().debug("Account Exists Already. ID: " + identifier);
-
-      return new AccountAPIResponse(accounts.get(identifier), AccountResponse.ALREADY_EXISTS);
-    }
-
-    final Optional<UUIDPair> pair = uuidProvider.retrieve(name);
-    if(MainConfig.yaml().getBoolean("Core.Offline", false) && pair.isPresent() && accounts.containsKey(pair.get().getIdentifier().toString())) {
-      PluginCore.log().debug("Offline Account Exists Already. ID: " + identifier);
-
-      return new AccountAPIResponse(accounts.get(pair.get().getIdentifier().toString()), AccountResponse.ALREADY_EXISTS);
-    }
-
-    Account account;
-
-    if(!nonPlayer && UUIDProvider.validate(name)) {
-      try {
-
-        if(identifier == null) {
-          //Throw NPE if identifier is null to push down to our catch block.
-          PluginCore.log().debug("Tried to createAccount for player using null identifier. Name: " + name);
-          throw new NullPointerException("Tried to createAccount for player using null identifier.");
-        }
-
-        final UUID id = UUID.fromString(identifier);
-        account = new PlayerAccount(id, name);
-
-        uuidProvider.store(new UUIDPair(id, name));
-      } catch(final Exception ignore) {
-
-        //Our identifier is an invalid UUID, let's search for it.
-        final Optional<UUID> id = PluginCore.server().fromName(name);
-
-        if(id.isPresent()) {
-          account = new PlayerAccount(id.get(), name);
-
-          uuidProvider.store(new UUIDPair(id.get(), name));
-        } else {
-
-          return new AccountAPIResponse(null, AccountResponse.CREATION_FAILED);
-        }
-      }
-    } else if(!nonPlayer && name.startsWith(MainConfig.yaml().getString("Core.Server.Geyser", ".")) || !nonPlayer && PluginCore.server().online(name)) {
-
-      //This is most definitely a geyser player, they're online but not of valid names
-      try {
-
-        if(identifier == null) {
-          //Throw NPE if identifier is null to push down to our catch block.
-          PluginCore.log().debug("Tried to createAccount for player using null identifier. Name: " + name);
-          throw new NullPointerException("Tried to createAccount for player using null identifier.");
-        }
-
-        final UUID id = UUID.fromString(identifier);
-        account = new GeyserAccount(id, name);
-
-        uuidProvider.store(new UUIDPair(id, name));
-      } catch(final Exception ignore) {
-        return new AccountAPIResponse(null, AccountResponse.CREATION_FAILED);
-      }
-    } else {
-      final Optional<SharedAccount> nonPlayerAccount = createNonPlayerAccount(identifier, name);
-
-      if(nonPlayerAccount.isEmpty()) {
-        return new AccountAPIResponse(null, AccountResponse.CREATION_FAILED);
-      }
-      account = nonPlayerAccount.get();
+    final Account account = createAccountObject(identifier, name, nonPlayer);
+    if(account == null) {
+      return new AccountAPIResponse(null, AccountResponse.CREATION_FAILED);
     }
 
     final AccountCreateCallback callback = new AccountCreateCallback(account);
@@ -220,18 +152,99 @@ public class AccountManager {
 
     PluginCore.log().debug("Adding account to Accounts Map. ID: " + identifier + " Name: " + name);
     accounts.put(account.getIdentifier().toString(), account);
-
     if(!skipDB) {
       TNECore.instance().storage().store(account, account.getIdentifier().toString());
     }
+    storeIdentifier(account);
+    PluginCore.log().debug("Created Account: " + account.getIdentifier() + " Name: " + account.getName());
+    return new AccountAPIResponse(account, AccountResponse.CREATED);
+  }
+
+  private void logColorCodeStack(final String name) {
+
+    if(name.contains("§")) {
+      PluginCore.log().debug("==== AccountAPIResponse with color code! ====", DebugLevel.DEVELOPER);
+      final StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+      for(final StackTraceElement s : elements) {
+        PluginCore.log().debug("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":" + s.getLineNumber() + ")", DebugLevel.DEVELOPER);
+      }
+      PluginCore.log().debug("==== End Stack Print ====", DebugLevel.DEVELOPER);
+    }
+  }
+
+  private AccountAPIResponse findExistingAccount(final String identifier, final String name) {
+
+    if(identifier != null && accounts.containsKey(identifier)) {
+      PluginCore.log().debug("Account Exists Already. ID: " + identifier);
+      return new AccountAPIResponse(accounts.get(identifier), AccountResponse.ALREADY_EXISTS);
+    }
+
+    final Optional<UUIDPair> pair = uuidProvider.retrieve(name);
+    if(MainConfig.yaml().getBoolean("Core.Offline", false) && pair.isPresent() && accounts.containsKey(pair.get().getIdentifier().toString())) {
+      PluginCore.log().debug("Offline Account Exists Already. ID: " + identifier);
+      return new AccountAPIResponse(accounts.get(pair.get().getIdentifier().toString()), AccountResponse.ALREADY_EXISTS);
+    }
+    return null;
+  }
+
+  private Account createAccountObject(final String identifier, final String name, final boolean nonPlayer) {
+
+    if(!nonPlayer && UUIDProvider.validate(name)) {
+      return createPlayerAccount(identifier, name);
+    }
+    if(!nonPlayer && (name.startsWith(MainConfig.yaml().getString("Core.Server.Geyser", "."))
+                      || PluginCore.server().online(name))) {
+      return createGeyserAccount(identifier, name);
+    }
+    return createNonPlayerAccount(identifier, name).orElse(null);
+  }
+
+  private Account createPlayerAccount(final String identifier, final String name) {
+
+    try {
+      final UUID id = requireIdentifier(identifier, name);
+      final Account account = new PlayerAccount(id, name);
+      uuidProvider.store(new UUIDPair(id, name));
+      return account;
+    } catch(final Exception ignore) {
+      final Optional<UUID> id = PluginCore.server().fromName(name);
+      if(id.isPresent()) {
+        final Account account = new PlayerAccount(id.get(), name);
+        uuidProvider.store(new UUIDPair(id.get(), name));
+        return account;
+      }
+      return null;
+    }
+  }
+
+  private Account createGeyserAccount(final String identifier, final String name) {
+
+    try {
+      final UUID id = requireIdentifier(identifier, name);
+      final Account account = new GeyserAccount(id, name);
+      uuidProvider.store(new UUIDPair(id, name));
+      return account;
+    } catch(final Exception ignore) {
+      return null;
+    }
+  }
+
+  private UUID requireIdentifier(final String identifier, final String name) {
+
+    if(identifier == null) {
+      PluginCore.log().debug("Tried to createAccount for player using null identifier. Name: " + name);
+      throw new NullPointerException("Tried to createAccount for player using null identifier.");
+    }
+    return UUID.fromString(identifier);
+  }
+
+  private void storeIdentifier(final Account account) {
 
     try {
       uuidProvider.store(new UUIDPair(account.getIdentifier(), account.getName()));
     } catch(final Exception ignore) {
-      //identifier isn't an uuid, so it'll be a string, most likely a non-player.
+      // The identifier is likely a non-player string rather than a UUID.
     }
-    PluginCore.log().debug("Created Account: " + account.getIdentifier().toString() + " Name: " + account.getName());
-    return new AccountAPIResponse(account, AccountResponse.CREATED);
   }
 
   /**

@@ -26,7 +26,7 @@ import net.tnemc.core.command.parameters.resolver.annotation.EnderSupport;
 import net.tnemc.core.command.parameters.resolver.annotation.InventorySupport;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.parser.ParseMoney;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;
@@ -74,12 +74,6 @@ public class MoneyCommand {
   @CommandPermission("tne.money.balance")
   public void onBalance(final BukkitCommandActor sender, @Default("") @Named("currency") final Currency currency, @Default(DEFAULT_WORLD) @Named("region") final String region) {
 
-    System.out.println("Currency: " + currency);
-
-    if(currency == null) {
-      System.out.println("Currency is null");
-    }
-
     net.tnemc.core.command.MoneyCommand.onBalance(new PaperCMDSource(sender), currency, region);
   }
 
@@ -87,7 +81,7 @@ public class MoneyCommand {
   @Usage("Money.Convert.Arguments")
   @Description("Money.Convert.Description")
   @CommandPermission("tne.money.convert")
-  public void onConvert(final BukkitCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("currency") final Currency currency, @Named("currency") final Currency from) {
+  public void onConvert(final BukkitCommandActor sender, @Named("amount") final PercentBigDecimal amount, @Named("to") final Currency currency, @Default("") @Named("from") final Currency from) {
 
     net.tnemc.core.command.MoneyCommand.onConvert(new PaperCMDSource(sender), amount, currency, from);
   }
@@ -168,7 +162,7 @@ public class MoneyCommand {
   @Subcommand({ "request" })
   @Usage("Money.Request.Arguments")
   @Description("Money.Request.Description")
-  @CommandPermission("tne.money.Request")
+  @CommandPermission("tne.money.request")
   public void onRequest(final BukkitCommandActor sender, @Named("account") final Account player, @Named("amount") final ParseMoney amount, @Default("") @Named("currency") final Currency currency) {
 
     net.tnemc.core.command.MoneyCommand.onRequest(new PaperCMDSource(sender), player, amount, currency);

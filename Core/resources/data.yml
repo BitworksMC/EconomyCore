@@ -3,10 +3,16 @@
 # License: https://github.com/TheNewEconomy/EconomyCore/blob/main/license.md
 Data:
 
-  config-version: 6
+  config-version: 7
 
   #Configurations related to syncing data across servers.
   Sync:
+
+    #Master switch for Redis-backed cross-server syncing.
+    #Redis is not initialized and no sync messages are sent unless this is true
+    #and Data.Sync.Security.Token has been changed from its default value.
+    #Changing this setting requires a full server restart.
+    Enabled: false
 
     #DB reload configurations.
     Reload:
@@ -35,8 +41,8 @@ Data:
       #The pin for this server that should be used for sharing. This should be unique.
       SharingPin: "000000"
 
-      #Whether to sync configurations across redis.
-      Sync: true
+      #Whether to sync configurations across Redis after global syncing is enabled.
+      Sync: false
 
       #The hub for this server. A hub is the server that should control the configurations for this
       #server. Set to "none" to use the local configurations. Otherwise, you'll set this to the hub

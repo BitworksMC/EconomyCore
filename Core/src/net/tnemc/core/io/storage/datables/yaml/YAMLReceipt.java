@@ -87,32 +87,50 @@ public class YAMLReceipt implements Datable<Receipt> {
   @Override
   public void store(final StorageConnector<?> connector, @NotNull final Receipt receipt, @Nullable final String identifier) {
 
-
-    final String fileSrc = "transactions/" + receipt.getId().toString() + ".yml";
+    final String fileSrc = "transactions/" + receipt.getId() + ".yml";
     TNECore.yaml().add(fileSrc);
-
-    final File file = new File(PluginCore.directory(), "transactions/" + receipt.getId().toString() + ".yml");
-    if(!file.exists()) {
-      try {
-        if(!file.createNewFile()) {
-          PluginCore.log().error("Issue creating transaction file. Transaction: " + receipt.getId().toString());
-          return;
-        }
-      } catch(final IOException ignore) {
-
-        PluginCore.log().error("Issue creating transaction file. Transaction: " + receipt.getId().toString());
-        return;
-      }
-    }
-
-    YamlDocument yaml = null;
-    try {
-      yaml = YamlDocument.create(file);
-    } catch(final IOException ignore) {
-
-      PluginCore.log().error("Issue loading transaction file. Transaction: " + receipt.getId().toString());
+    final File file = new File(PluginCore.directory(), fileSrc);
+    if(!ensureFile(file, receipt)) {
       return;
     }
+
+    final YamlDocument yaml = loadDocument(file, receipt);
+    if(yaml == null) {
+      return;
+    }
+    writeReceipt(yaml, receipt);
+    if(!saveDocument(yaml, receipt)) {
+      return;
+    }
+    TNECore.yaml().remove(fileSrc);
+    receipt.clearDirty();
+  }
+
+  private boolean ensureFile(final File file, final Receipt receipt) {
+
+    if(file.exists()) {
+      return true;
+    }
+    try {
+      if(file.createNewFile()) {
+        return true;
+      }
+    } catch(final IOException ignore) { }
+    PluginCore.log().error("Issue creating transaction file. Transaction: " + receipt.getId());
+    return false;
+  }
+
+  private YamlDocument loadDocument(final File file, final Receipt receipt) {
+
+    try {
+      return YamlDocument.create(file);
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue loading transaction file. Transaction: " + receipt.getId());
+      return null;
+    }
+  }
+
+  private void writeReceipt(final YamlDocument yaml, final Receipt receipt) {
 
     yaml.set("id", receipt.getId().toString());
     yaml.set("time", receipt.getTime());
@@ -121,54 +139,45 @@ public class YAMLReceipt implements Datable<Receipt> {
     yaml.set("source.name", receipt.getSource().name());
     yaml.set("archive", receipt.isArchive());
     yaml.set("voided", receipt.isVoided());
+    writeParticipant(yaml, "from", receipt.getFrom(), receipt.getModifierFrom());
+    writeParticipant(yaml, "to", receipt.getTo(), receipt.getModifierTo());
+  }
 
-    if(receipt.getFrom() != null && receipt.getModifierFrom() != null) {
-      yaml.set("from.id", receipt.getFrom().getId().toString());
-      yaml.set("from.tax", receipt.getFrom().getTax().toPlainString());
+  private void writeParticipant(final YamlDocument yaml, final String prefix,
+                                final TransactionParticipant participant, final HoldingsModifier modifier) {
 
-      for(final HoldingsEntry entry : receipt.getFrom().getStartingBalances()) {
-        yaml.set("from.starting." + entry.getRegion() + "." + entry.getCurrency().toString() + "." + entry.getHandler().asID(), entry.getAmount().toPlainString());
-      }
-
-      for(final HoldingsEntry entry : receipt.getFrom().getEndingBalances()) {
-        yaml.set("from.ending." + entry.getRegion() + "." + entry.getCurrency().toString() + "." + entry.getHandler().asID(), entry.getAmount().toPlainString());
-      }
-
-      yaml.set("from.modifier.region", receipt.getModifierFrom().getRegion());
-      yaml.set("from.modifier.currency", receipt.getModifierFrom().getCurrency().toString());
-      yaml.set("from.modifier.modifier", receipt.getModifierFrom().getModifier().toPlainString());
-      yaml.set("from.modifier.operation", receipt.getModifierFrom().getOperation().name());
+    if(participant == null || modifier == null) {
+      return;
     }
-
-    if(receipt.getTo() != null && receipt.getModifierTo() != null) {
-
-      yaml.set("to.id", receipt.getTo().getId().toString());
-      yaml.set("to.tax", receipt.getTo().getTax().toPlainString());
-
-      for(final HoldingsEntry entry : receipt.getTo().getStartingBalances()) {
-        yaml.set("to.starting." + entry.getRegion() + "." + entry.getCurrency().toString() + "." + entry.getHandler().asID(), entry.getAmount().toPlainString());
-      }
-
-      for(final HoldingsEntry entry : receipt.getTo().getEndingBalances()) {
-        yaml.set("to.ending." + entry.getRegion() + "." + entry.getCurrency().toString() + "." + entry.getHandler().asID(), entry.getAmount().toPlainString());
-      }
-
-      yaml.set("to.modifier.region", receipt.getModifierTo().getRegion());
-      yaml.set("to.modifier.currency", receipt.getModifierTo().getCurrency().toString());
-      yaml.set("to.modifier.modifier", receipt.getModifierTo().getModifier().toPlainString());
-      yaml.set("to.modifier.operation", receipt.getModifierTo().getOperation().name());
+    yaml.set(prefix + ".id", participant.getId().toString());
+    yaml.set(prefix + ".tax", participant.getTax().toPlainString());
+    for(final HoldingsEntry entry : participant.getStartingBalances()) {
+      writeBalance(yaml, prefix + ".starting", entry);
     }
+    for(final HoldingsEntry entry : participant.getEndingBalances()) {
+      writeBalance(yaml, prefix + ".ending", entry);
+    }
+    yaml.set(prefix + ".modifier.region", modifier.getRegion());
+    yaml.set(prefix + ".modifier.currency", modifier.getCurrency().toString());
+    yaml.set(prefix + ".modifier.modifier", modifier.getModifier().toPlainString());
+    yaml.set(prefix + ".modifier.operation", modifier.getOperation().name());
+  }
+
+  private void writeBalance(final YamlDocument yaml, final String prefix, final HoldingsEntry entry) {
+
+    yaml.set(prefix + "." + entry.getRegion() + "." + entry.getCurrency() + "."
+             + entry.getHandler().asID(), entry.getAmount().toPlainString());
+  }
+
+  private boolean saveDocument(final YamlDocument yaml, final Receipt receipt) {
 
     try {
       yaml.save();
-
-      yaml = null;
+      return true;
     } catch(final IOException ignore) {
-      PluginCore.log().error("Issue saving transaction file. Transaction: " + receipt.getId().toString());
-      return;
+      PluginCore.log().error("Issue saving transaction file. Transaction: " + receipt.getId());
+      return false;
     }
-    TNECore.yaml().remove(fileSrc);
-    receipt.clearDirty();
   }
 
   /**

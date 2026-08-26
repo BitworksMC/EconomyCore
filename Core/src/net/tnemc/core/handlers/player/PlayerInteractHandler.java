@@ -58,78 +58,100 @@ public class PlayerInteractHandler {
   public HandlerResponse handle(final PlayerProvider provider, final AbstractItemStack<?> item) {
 
     final HandlerResponse response = new HandlerResponse("", false);
-
     final Optional<Account> account = TNECore.eco().account().findAccount(provider.identifier());
-    if(account.isPresent() && (account.get() instanceof PlayerAccount) && item.customName().isPresent()
-       && Component.EQUALS.test(item.customName().get().customName(), Component.text(MessageConfig.yaml().getString("Messages.Note.Name")))) {
-
-      String currency = null;
-      String region = null;
-      String amount = null;
-
-      final String curCompare = MessageConfig.yaml().getString("Messages.Note.Currency").split(":")[0];
-      final String regionCompare = MessageConfig.yaml().getString("Messages.Note.Region").split(":")[0];
-      final String amtCompare = MessageConfig.yaml().getString("Messages.Note.Amount").split(":")[0];
-
-      final Optional<? extends LoreComponent<? extends AbstractItemStack<?>, ?>> loreOptional = item.lore();
-
-      if(loreOptional.isPresent()) {
-
-        for(final Component component : loreOptional.get().lore()) {
-          //TODO: Fix
-          final String[] info = component.toString().split(":");
-          if(info.length < 2) continue;
-
-
-          if(info[0].contains(curCompare)) {
-            currency = info[1].split("\"")[0].trim();
-          } else if(info[0].contains(regionCompare)) {
-            region = info[1].split("\"")[0].trim();
-          } else if(info[0].contains(amtCompare)) {
-            amount = info[1].split("\"")[0].trim();
-          }
-
-        }
-      }
-
-      if(currency == null || region == null || amount == null) return response;
-
-
-      final Optional<Currency> curObj = TNECore.eco().currency().find(currency);
-      if(curObj.isEmpty() || curObj.get().getNote().isEmpty()) return response;
-
-      final BigDecimal value = new BigDecimal(amount);
-
-      final HoldingsModifier modifier = new HoldingsModifier(region, curObj.get().getUid(), value);
-
-      final Transaction transaction = new Transaction("note")
-              .from(account.get(), modifier)
-              .processor(EconomyManager.baseProcessor())
-              .source(new PlayerSource(provider.identifier()));
-
-      try {
-        final TransactionResult result = transaction.process();
-
-        if(!result.isSuccessful()) {
-          provider.message(new MessageData(result.getMessage()));
-          return response;
-        }
-
-        if(result.getReceipt().isPresent()) {
-
-          PluginCore.server().calculations().removeItem(curObj.get().getNote().get().stack(currency, region, value), provider.identifier());
-
-          final MessageData claimed = new MessageData("Messages.Note.Claimed");
-          claimed.addReplacement("$currency", currency);
-          claimed.addReplacement("$amount", amount);
-          provider.message(claimed);
-          return response;
-        }
-      } catch(final InvalidTransactionException e) {
-        e.printStackTrace();
-      }
-      provider.message(new MessageData("Messages.Note.Failed"));
+    if(!isRedeemableNote(account, item)) {
+      return response;
     }
+
+    final NoteData data = readNoteData(item);
+    if(!data.complete()) {
+      return response;
+    }
+    redeemNote(provider, account.get(), data, response);
     return response;
+  }
+
+  private boolean isRedeemableNote(final Optional<Account> account, final AbstractItemStack<?> item) {
+
+    return account.isPresent() && account.get() instanceof PlayerAccount && item.customName().isPresent()
+           && Component.EQUALS.test(item.customName().get().customName(),
+                                    Component.text(MessageConfig.yaml().getString("Messages.Note.Name")));
+  }
+
+  private NoteData readNoteData(final AbstractItemStack<?> item) {
+
+    String currency = null;
+    String region = null;
+    String amount = null;
+    final String curCompare = MessageConfig.yaml().getString("Messages.Note.Currency").split(":")[0];
+    final String regionCompare = MessageConfig.yaml().getString("Messages.Note.Region").split(":")[0];
+    final String amtCompare = MessageConfig.yaml().getString("Messages.Note.Amount").split(":")[0];
+    final Optional<? extends LoreComponent<? extends AbstractItemStack<?>, ?>> loreOptional = item.lore();
+
+    if(loreOptional.isEmpty()) {
+      return new NoteData(null, null, null);
+    }
+    for(final Component component : loreOptional.get().lore()) {
+      final String[] info = component.toString().split(":");
+      if(info.length < 2) {
+        continue;
+      }
+      final String value = info[1].split("\"")[0].trim();
+      if(info[0].contains(curCompare)) {
+        currency = value;
+      } else if(info[0].contains(regionCompare)) {
+        region = value;
+      } else if(info[0].contains(amtCompare)) {
+        amount = value;
+      }
+    }
+    return new NoteData(currency, region, amount);
+  }
+
+  private void redeemNote(final PlayerProvider provider, final Account account, final NoteData data,
+                          final HandlerResponse response) {
+
+    final Optional<Currency> currency = TNECore.eco().currency().find(data.currency());
+    if(currency.isEmpty() || currency.get().getNote().isEmpty()) {
+      return;
+    }
+
+    final BigDecimal value = new BigDecimal(data.amount());
+    final HoldingsModifier modifier = new HoldingsModifier(data.region(), currency.get().getUid(), value);
+    final Transaction transaction = new Transaction("note").from(account, modifier)
+            .processor(EconomyManager.baseProcessor()).source(new PlayerSource(provider.identifier()));
+    try {
+      final TransactionResult result = transaction.process();
+      if(!result.isSuccessful()) {
+        provider.message(new MessageData(result.getMessage()));
+        return;
+      }
+      if(result.getReceipt().isPresent()) {
+        claimNote(provider, currency.get(), data, value);
+        return;
+      }
+    } catch(final InvalidTransactionException e) {
+      e.printStackTrace();
+    }
+    provider.message(new MessageData("Messages.Note.Failed"));
+  }
+
+  private void claimNote(final PlayerProvider provider, final Currency currency, final NoteData data,
+                         final BigDecimal value) {
+
+    PluginCore.server().calculations().removeItem(
+            currency.getNote().get().stack(data.currency(), data.region(), value), provider.identifier());
+    final MessageData claimed = new MessageData("Messages.Note.Claimed");
+    claimed.addReplacement("$currency", data.currency());
+    claimed.addReplacement("$amount", data.amount());
+    provider.message(claimed);
+  }
+
+  private record NoteData(String currency, String region, String amount) {
+
+    private boolean complete() {
+
+      return currency != null && region != null && amount != null;
+    }
   }
 }

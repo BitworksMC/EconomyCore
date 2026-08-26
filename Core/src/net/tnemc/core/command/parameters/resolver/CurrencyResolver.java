@@ -23,6 +23,7 @@ import net.tnemc.core.currency.Currency;
 import org.jetbrains.annotations.NotNull;
 import revxrsal.commands.autocomplete.SuggestionProvider;
 import revxrsal.commands.command.CommandActor;
+import revxrsal.commands.exception.CommandErrorException;
 import revxrsal.commands.node.ExecutionContext;
 import revxrsal.commands.parameter.ParameterType;
 import revxrsal.commands.stream.MutableStringStream;
@@ -44,8 +45,13 @@ public class CurrencyResolver implements ParameterType<CommandActor, Currency> {
 
     final String value = input.readString();
 
+    // An empty default means "use the region's default currency" and is handled by the command.
+    if(value == null || value.isBlank()) {
+      return null;
+    }
+
     final Optional<Currency> currency = TNECore.eco().currency().find(value);
-    return currency.orElse(null);
+    return currency.orElseThrow(()->new CommandErrorException("Unable to locate currency '" + value + "'."));
   }
 
   @Override

@@ -26,6 +26,7 @@ import net.tnemc.core.currency.Currency;
 import net.tnemc.core.manager.TransactionManager;
 import net.tnemc.core.menu.icons.actions.PageSwitchWithClose;
 import net.tnemc.core.transaction.Receipt;
+import net.tnemc.core.transaction.TransactionParticipant;
 import net.tnemc.item.providers.SkullProfile;
 import net.tnemc.menu.core.builder.IconBuilder;
 import net.tnemc.menu.core.callbacks.page.PageOpenCallback;
@@ -104,109 +105,10 @@ public class TransactionInfoPage {
                                              .withSlot(8)
                                              .build());
 
-          if(receipt.get().getModifierTo() != null && receipt.get().getTo() != null) {
-
-            final HoldingsModifier modifier = receipt.get().getModifierTo();
-            final Optional<Account> to = receipt.get().getTo().asAccount();
-
-            final String name = (to.isPresent())? to.get().getName() : "No Name";
-            SkullProfile profile = null;
-            try {
-
-              if(to.isPresent() && to.get() instanceof final PlayerAccount playerAccount) {
-                profile = new SkullProfile();
-
-                if(PluginCore.server().playedBefore(playerAccount.getUUID())) {
-                  profile.uuid(playerAccount.getUUID());
-                }
-              }
-
-            } catch(final Exception ignore) { }
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)
-                                                               .profile(profile)
-                                                               .customName(Component.text(name))
-                                                               .lore(Collections.singletonList(Component.text("To Account"))))
-                                               .withSlot(24)
-                                               .build());
-
-            final Currency cur = TNECore.eco().currency().findOrDefault(modifier.getCurrency());
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of(cur.getIconMaterial(), 1)
-                                                               .customName(Component.text(cur.getIdentifier()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Currency"))))
-                                               .withSlot(27)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("MAP", 1)
-                                                               .customName(Component.text(modifier.getRegion()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Region"))))
-                                               .withSlot(28)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GOLD_INGOT", 1)
-                                                               .customName(Component.text(modifier.getModifier().toPlainString()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Amount"))))
-                                               .withSlot(29)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("REDSTONE_TORCH", 1)
-                                                               .customName(Component.text(modifier.getOperation().name()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Operation"))))
-                                               .withSlot(30)
-                                               .build());
-          }
-
-          if(receipt.get().getModifierFrom() != null && receipt.get().getFrom() != null) {
-
-            final HoldingsModifier modifier = receipt.get().getModifierFrom();
-            final Optional<Account> from = receipt.get().getFrom().asAccount();
-
-            final String name = (from.isPresent())? from.get().getName() : "No Name";
-            SkullProfile profile = null;
-            try {
-
-              if(from.isPresent() && from.get() instanceof final PlayerAccount playerAccount) {
-                profile = new SkullProfile();
-
-                if(PluginCore.server().playedBefore(playerAccount.getUUID())) {
-                  profile.uuid(playerAccount.getUUID());
-                }
-              }
-
-            } catch(final Exception ignore) { }
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)
-                                                               .profile(profile)
-                                                               .customName(Component.text(name))
-                                                               .lore(Collections.singletonList(Component.text("From Account"))))
-                                               .withSlot(19)
-                                               .build());
-
-            final Currency cur = TNECore.eco().currency().findOrDefault(modifier.getCurrency());
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of(cur.getIconMaterial(), 1)
-                                                               .customName(Component.text(cur.getIdentifier()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Currency"))))
-                                               .withSlot(32)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("MAP", 1)
-                                                               .customName(Component.text(modifier.getRegion()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Region"))))
-                                               .withSlot(33)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GOLD_INGOT", 1)
-                                                               .customName(Component.text(modifier.getModifier().toPlainString()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Amount"))))
-                                               .withSlot(34)
-                                               .build());
-
-            callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("REDSTONE_TORCH", 1)
-                                                               .customName(Component.text(modifier.getOperation().name()))
-                                                               .lore(Collections.singletonList(Component.text("Modifier Operation"))))
-                                               .withSlot(35)
-                                               .build());
-          }
+          addParticipant(callback, receipt.get().getTo(), receipt.get().getModifierTo(), "To Account",
+                         24, 27, 28, 29, 30);
+          addParticipant(callback, receipt.get().getFrom(), receipt.get().getModifierFrom(), "From Account",
+                         19, 32, 33, 34, 35);
 
           //barrier icons
           callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("WHITE_GLASS_PANE", 1)
@@ -245,5 +147,54 @@ public class TransactionInfoPage {
       } catch(final Exception ignore) {
       }
     }
+  }
+
+  private void addParticipant(final PageOpenCallback callback, final TransactionParticipant participant,
+                              final HoldingsModifier modifier, final String accountLabel,
+                              final int accountSlot, final int currencySlot, final int regionSlot,
+                              final int amountSlot, final int operationSlot) {
+
+    if(participant == null || modifier == null) {
+      return;
+    }
+    final Optional<Account> account = participant.asAccount();
+    final String name = account.isPresent()? account.get().getName() : "No Name";
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)
+                                                       .profile(skullProfile(account))
+                                                       .customName(Component.text(name))
+                                                       .lore(Collections.singletonList(Component.text(accountLabel))))
+                                       .withSlot(accountSlot).build());
+
+    final Currency currency = TNECore.eco().currency().findOrDefault(modifier.getCurrency());
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of(currency.getIconMaterial(), 1)
+                                                       .customName(Component.text(currency.getIdentifier()))
+                                                       .lore(Collections.singletonList(Component.text("Modifier Currency"))))
+                                       .withSlot(currencySlot).build());
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("MAP", 1)
+                                                       .customName(Component.text(modifier.getRegion()))
+                                                       .lore(Collections.singletonList(Component.text("Modifier Region"))))
+                                       .withSlot(regionSlot).build());
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GOLD_INGOT", 1)
+                                                       .customName(Component.text(modifier.getModifier().toPlainString()))
+                                                       .lore(Collections.singletonList(Component.text("Modifier Amount"))))
+                                       .withSlot(amountSlot).build());
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("REDSTONE_TORCH", 1)
+                                                       .customName(Component.text(modifier.getOperation().name()))
+                                                       .lore(Collections.singletonList(Component.text("Modifier Operation"))))
+                                       .withSlot(operationSlot).build());
+  }
+
+  private SkullProfile skullProfile(final Optional<Account> account) {
+
+    try {
+      if(account.isPresent() && account.get() instanceof final PlayerAccount playerAccount) {
+        final SkullProfile profile = new SkullProfile();
+        if(PluginCore.server().playedBefore(playerAccount.getUUID())) {
+          profile.uuid(playerAccount.getUUID());
+        }
+        return profile;
+      }
+    } catch(final Exception ignore) { }
+    return null;
   }
 }

@@ -24,6 +24,7 @@ import net.tnemc.plugincore.PluginCore;
 import org.jetbrains.annotations.NotNull;
 import revxrsal.commands.autocomplete.SuggestionProvider;
 import revxrsal.commands.command.CommandActor;
+import revxrsal.commands.exception.CommandErrorException;
 import revxrsal.commands.node.ExecutionContext;
 import revxrsal.commands.parameter.ParameterType;
 import revxrsal.commands.stream.MutableStringStream;
@@ -47,7 +48,19 @@ public class AccountResolver implements ParameterType<CommandActor, Account> {
   @Override
   public Account parse(@NotNull final MutableStringStream input, @NotNull final ExecutionContext<CommandActor> context) {
 
-    String value = input.readString();
+    final String value = resolveAlias(input.readString(), context);
+
+    if(value != null && !TNECore.eco().account().excluded(value)) {
+
+      final Optional<Account> account = TNECore.eco().account().findAccount(value);
+      if(account.isPresent()) {
+        return account.get();
+      }
+    }
+    throw new CommandErrorException("Unable to locate account '" + String.valueOf(value) + "'.");
+  }
+
+  private String resolveAlias(String value, final ExecutionContext<CommandActor> context) {
 
     switch(value.toLowerCase()) {
       case "self_account":
@@ -66,15 +79,7 @@ public class AccountResolver implements ParameterType<CommandActor, Account> {
       default:
         break;
     }
-
-    if(!TNECore.eco().account().excluded(value)) {
-
-      final Optional<Account> account = TNECore.eco().account().findAccount(value);
-      if(account.isPresent()) {
-        return account.get();
-      }
-    }
-    return null;
+    return value;
   }
 
   @Override

@@ -75,6 +75,7 @@ import net.tnemc.plugincore.core.io.storage.Datable;
 import net.tnemc.plugincore.core.io.storage.StorageManager;
 import net.tnemc.plugincore.core.io.storage.engine.StorageSettings;
 import org.jetbrains.annotations.NotNull;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import revxrsal.commands.LampBuilderVisitor;
@@ -106,7 +107,7 @@ public abstract class TNECore extends PluginEngine {
 
   public static final String DEFAULT_WORLD = "world-113";
   public static final String coreURL = "https://tnemc.net/files/module-version.xml";
-  public static final String version = "0.1.4.3";
+  public static final String version = "0.1.5.0";
   public static final String build = "RELEASE";
   protected static TNECore instance;
 
@@ -120,6 +121,7 @@ public abstract class TNECore extends PluginEngine {
   private DataConfig data;
   private MessageConfig messageConfig;
   private Chore<?> autoSaver = null;
+  private boolean syncEnabledAtStartup = false;
 
   public TNECore() {
 
@@ -150,6 +152,16 @@ public abstract class TNECore extends PluginEngine {
   public static TNEAPI api() {
 
     return instance.api;
+  }
+
+  /**
+   * Whether Redis-backed cross-server synchronization is enabled.
+   *
+   * @return {@code true} only when synchronization has been explicitly enabled.
+   */
+  public static boolean syncEnabled() {
+
+    return instance != null && instance.syncEnabledAtStartup;
   }
 
   @Override
@@ -209,81 +221,32 @@ public abstract class TNECore extends PluginEngine {
   @Override
   public void registerPluginChannels() {
 
-    PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
-    PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
+    // Redis handlers are registered in registerStorage() after TNPC's legacy
+    // proxy-channel registration phase has finished. Cross-server sync no
+    // longer registers or relies on Bukkit plugin messaging channels.
   }
 
   @Override
   public void registerStorage() {
 
-    final String syncType = resolveSyncType();
-
-    final StorageSettings settings = new StorageSettings(
-            DataConfig.yaml().getString("Data.Database.File"),
-            DataConfig.yaml().getString("Data.Database.SQL.Host"),
-            DataConfig.yaml().getInt("Data.Database.SQL.Port"),
-            DataConfig.yaml().getString("Data.Database.SQL.DB"),
-            DataConfig.yaml().getString("Data.Database.SQL.User"),
-            DataConfig.yaml().getString("Data.Database.SQL.Password"),
-            DataConfig.yaml().getString("Data.Database.Prefix"),
-            DataConfig.yaml().getBoolean("Data.Database.SQL.PublicKey"),
-            DataConfig.yaml().getBoolean("Data.Database.SQL.SSL"),
-            "TNE",
-            DataConfig.yaml().getInt("Data.Pool.MaxSize"),
-            DataConfig.yaml().getLong("Data.Pool.MaxLife"),
-            DataConfig.yaml().getLong("Data.Pool.Timeout"),
-            syncType
-    );
-
-    JedisPool pool = null;
-
-    if(syncType.equalsIgnoreCase("redis")
-       || syncType.equalsIgnoreCase("jedis")) {
-
-      final JedisPoolConfig config = new JedisPoolConfig();
-      config.setMaxTotal(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MaxSize", 10));
-      config.setMaxIdle(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MaxIdle", 10));
-      config.setMinIdle(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.MinIdle", 1));
-      config.setMaxWait(Duration.ofMillis(DataConfig.yaml().getLong("Data.Sync.Redis.Pool.MaxWait", 10000L)));
-      config.setBlockWhenExhausted(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.BlockWhenExhausted", true));
-      config.setTimeBetweenEvictionRuns(Duration.ofMillis(DataConfig.yaml().getLong("Data.Sync.Redis.Pool.TimeBetweenEvictionRunsMillis", 30000L)));
-      config.setMinEvictableIdleTime(Duration.ofMillis(DataConfig.yaml().getLong("Data.Sync.Redis.Pool.MinEvictableIdleTimeMillis", 300000L)));
-      config.setSoftMinEvictableIdleTime(Duration.ofMillis(DataConfig.yaml().getLong("Data.Sync.Redis.Pool.SoftMinEvictableIdleTimeMillis", 60000L)));
-      config.setNumTestsPerEvictionRun(DataConfig.yaml().getInt("Data.Sync.Redis.Pool.NumTestsPerEvictionRun", 3));
-      config.setTestOnCreate(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.TestOnCreate", true));
-      config.setTestWhileIdle(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.TestWhileIdle", true));
-      config.setTestOnBorrow(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.TestOnBorrow", true));
-      config.setTestOnReturn(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.TestOnReturn", false));
-      config.setLifo(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.Lifo", true));
-      config.setJmxEnabled(DataConfig.yaml().getBoolean("Data.Sync.Redis.Pool.JmxEnabled", false));
-      config.setJmxNamePrefix(DataConfig.yaml().getString("Data.Sync.Redis.Pool.JmxNamePrefix", "tne_redis_pool"));
-      config.setJmxNameBase(DataConfig.yaml().getString("Data.Sync.Redis.Pool.JmxNameBase", "pool"));
-
-      String redisUser = (DataConfig.yaml().contains("Data.Sync.Redis.User"))? DataConfig.yaml().getString("Data.Sync.Redis.User") : null;
-      if(redisUser != null && redisUser.equalsIgnoreCase("none")
-         || redisUser != null && redisUser.isBlank()) {
-        redisUser = null;
-      }
-
-      String redisPass = (DataConfig.yaml().contains("Data.Sync.Redis.Password"))? DataConfig.yaml().getString("Data.Sync.Redis.Password") : null;
-      if(redisPass != null && redisPass.equalsIgnoreCase("none")
-         || redisPass != null && redisPass.isBlank()) {
-        redisPass = null;
-      }
-
-      pool = new JedisPool(config, DataConfig.yaml().getString("Data.Sync.Redis.Host"),
-                           DataConfig.yaml().getInt("Data.Sync.Redis.Port"),
-                           DataConfig.yaml().getInt("Data.Sync.Redis.Timeout"),
-                           redisUser,
-                           redisPass,
-                           DataConfig.yaml().getInt("Data.Sync.Redis.Index"),
-                           DataConfig.yaml().getBoolean("Data.Sync.Redis.SSL"));
-    }
+    final boolean syncEnabled = syncEnabled();
+    final String syncType = syncEnabled? resolveSyncType() : "Redis";
+    final TNECoreSupport.StorageRegistration registration = TNECoreSupport.prepareStorage(syncEnabled, syncType);
+    final StorageSettings settings = registration.settings();
+    JedisPool pool = registration.pool();
 
     if(pool != null && !redisAuthRuntimePresent()) {
       PluginCore.log().error("Redis auth runtime classes are missing from this build. Cross-server sync will be disabled for this startup.",
                              DebugLevel.OFF);
+      pool.close();
       pool = null;
+      this.syncEnabledAtStartup = false;
+    }
+
+    if(pool != null && !redisConnectionAvailable(pool)) {
+      pool.close();
+      pool = null;
+      this.syncEnabledAtStartup = false;
     }
 
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
@@ -301,6 +264,19 @@ public abstract class TNECore extends PluginEngine {
       }
     }
     return false;
+  }
+
+  private boolean redisConnectionAvailable(final JedisPool pool) {
+
+    try(final Jedis jedis = pool.getResource()) {
+      jedis.ping();
+      return true;
+    } catch(final Exception e) {
+      PluginCore.log().error("Unable to connect to Redis (" + e.getMessage()
+                             + "). Cross-server sync will be disabled for this startup.",
+                             DebugLevel.OFF);
+      return false;
+    }
   }
 
   private List<ClassLoader> candidateClassLoaders() {
@@ -352,8 +328,8 @@ public abstract class TNECore extends PluginEngine {
 
     final String configured = DataConfig.yaml().getString("Data.Sync.Type", "Redis");
     if(configured != null && (configured.equalsIgnoreCase("redis")
-                              || configured.equalsIgnoreCase("jedis"))) {
-      return configured;
+                               || configured.equalsIgnoreCase("jedis"))) {
+      return "Redis";
     }
 
     PluginCore.log().error("Data.Sync.Type \"" + configured + "\" is no longer supported. Falling back to Redis.", DebugLevel.OFF);
@@ -438,6 +414,17 @@ public abstract class TNECore extends PluginEngine {
   @Override
   public void postConfigs() {
 
+    this.syncEnabledAtStartup = DataConfig.yaml().getBoolean("Data.Sync.Enabled", false);
+    if(this.syncEnabledAtStartup && !ChannelSecurity.configured()) {
+      PluginCore.log().error("Data.Sync.Security.Token is not configured. Redis will not be initialized until a non-default token is set.",
+                             DebugLevel.OFF);
+      this.syncEnabledAtStartup = false;
+    }
+
+    PluginCore.log().inform("Cross-server synchronization is "
+                            + ((this.syncEnabledAtStartup)? "enabled; Redis will be initialized."
+                               : "disabled; Redis will not be initialized."));
+
     if(!this.economyManager.currency().load(PluginCore.directory(), false)) {
       return;
     }
@@ -468,13 +455,6 @@ public abstract class TNECore extends PluginEngine {
     }
     PluginCore.instance().setServerID(serverID);
 
-    final String syncToken = ChannelSecurity.token();
-    if(syncToken.isEmpty()
-       || syncToken.equalsIgnoreCase("none")
-       || syncToken.equalsIgnoreCase("CHANGE_ME")) {
-      PluginCore.log().error("Data.Sync.Security.Token is not configured. Cross-server sync will be rejected until this is updated.",
-                             DebugLevel.OFF);
-    }
   }
 
   @Override
@@ -597,50 +577,6 @@ public abstract class TNECore extends PluginEngine {
 
   public AbstractItemStack<?> denominationToStack(final ItemDenomination denomination, final int amount) {
 
-    AbstractItemStack<?> stack = PluginCore.server().stackBuilder().of(denomination.material(), amount).debug(false);
-
-    if(!denomination.enchantments().isEmpty()) {
-      stack = stack.enchant(denomination.enchantments());
-    }
-
-    if(!denomination.flags().isEmpty()) {
-      stack = stack.flags(denomination.flags());
-    }
-
-    if(!denomination.getLore().isEmpty()) {
-      stack = stack.lore(denomination.getLore());
-    }
-
-    if(denomination.getDamage() > 0) {
-      stack = stack.damage(denomination.getDamage());
-    }
-
-    if(!denomination.getName().isEmpty()) {
-      stack = stack.customName(MiniMessage.miniMessage().deserialize(denomination.getName()));
-    }
-
-    if(denomination.getCustomModel() > -1) {
-      stack = stack.modelDataOld(denomination.getCustomModel());
-    }
-
-    if(!denomination.provider().equalsIgnoreCase("vanilla")) {
-      stack = stack.setItemProvider(denomination.provider()).setProviderItemID(denomination.providerID());
-    }
-
-    if(!denomination.itemModel().isEmpty()) {
-      stack = stack.itemModel(denomination.itemModel());
-    }
-
-    if(!denomination.modelBooleans().isEmpty() || !denomination.modelStrings().isEmpty()
-       || !denomination.modelColours().isEmpty() || !denomination.modelFloats().isEmpty()) {
-
-      stack = stack.modelData(denomination.modelColours(), denomination.modelFloats(),
-                              denomination.modelBooleans(), denomination.modelStrings());
-    }
-
-    if(denomination.maxStack() > 0) {
-      stack = stack.maxStackSize(denomination.maxStack());
-    }
-    return stack;
+    return TNECoreSupport.denominationToStack(denomination, amount);
   }
 }

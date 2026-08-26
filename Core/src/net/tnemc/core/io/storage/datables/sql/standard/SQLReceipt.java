@@ -116,7 +116,7 @@ public class SQLReceipt implements Datable<Receipt> {
       sql.executeUpdate(tne.saveParticipant(),
                         new Object[]{
                                 identifier,
-                                participant.getId(),
+                                participant.getId().toString(),
                                 type,
                                 participant.getTax()
                         });
@@ -134,7 +134,7 @@ public class SQLReceipt implements Datable<Receipt> {
       sql.executeUpdate(tne.saveModifier(),
                         new Object[]{
                                 identifier,
-                                participant.getId(),
+                                participant.getId().toString(),
                                 type,
                                 modifier.getOperation().name(),
                                 modifier.getRegion(),
@@ -260,7 +260,7 @@ public class SQLReceipt implements Datable<Receipt> {
     HoldingsModifier modifier = null;
     //participant, participant_type, operation, region, currency AS currency, modifier  - uid/participant
     try(final ResultSet result = sql.executeQuery(dialect.loadModifiers(), new Object[]{
-            receiptID.toString(), participant, type })) {
+            receiptID.toString(), participant.toString(), type })) {
 
       if(result.next()) {
 

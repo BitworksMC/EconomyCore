@@ -50,6 +50,7 @@ import net.tnemc.menu.core.icon.action.impl.ChatAction;
 import net.tnemc.menu.core.icon.action.impl.RunnableAction;
 import net.tnemc.menu.core.icon.action.impl.SwitchPageAction;
 import net.tnemc.menu.core.icon.impl.StateIcon;
+import net.tnemc.menu.core.manager.MenuManager;
 import net.tnemc.menu.core.viewer.MenuViewer;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.PlayerProvider;
@@ -457,36 +458,72 @@ public class MyEcoMenu extends Menu {
     addPage(currencyNoteMaterialPage);
 
     final Page currencyNoteEnchantPage = new PageBuilder(CURRENCY_NOTE_ENCHANTS_PAGE).build();
-    currencyNoteEnchantPage.setOpen((open->new EnchantmentSelectionPage("CURRENCY_NOTE_ENCHANTS", this.name, this.name, CURRENCY_NOTE_ENCHANTS_PAGE, CURRENCY_NOTE_EDIT_PAGE, "CURRENCY_NOTE_ENCHANTS_PAGE", this.rows, (selection)->{
+    currencyNoteEnchantPage.setOpen((open->{
       if(open.getPlayer().viewer().isPresent()) {
 
-        final Optional<Object> currencyOpt = open.getPlayer().viewer().get().findData(ACTIVE_CURRENCY);
+        final MenuViewer viewer = open.getPlayer().viewer().get();
+        final Optional<Object> currencyOpt = viewer.findData(ACTIVE_CURRENCY);
         if(currencyOpt.isPresent()) {
 
           final Currency currencyObject = (Currency)currencyOpt.get();
-          if(currencyObject.getNote().isPresent()) {
-            currencyObject.getNote().get().setEnchantments(Arrays.asList(selection.getValue().split(",")));
-          }
+          currencyObject.getNote().ifPresent(note->{
+            for(final String enchantment : MenuManager.instance().getHelper().enchantments()) {
+              viewer.addData("CURRENCY_NOTE_ENCHANTS_" + enchantment,
+                             note.getEnchantments().contains(enchantment)? "ENABLED" : "DISABLED");
+            }
+          });
         }
       }
-    }).handle(open)));
+
+      new EnchantmentSelectionPage("CURRENCY_NOTE_ENCHANTS", this.name, this.name, CURRENCY_NOTE_ENCHANTS_PAGE, CURRENCY_NOTE_EDIT_PAGE, "CURRENCY_NOTE_ENCHANTS_PAGE", this.rows, (selection)->{
+        if(open.getPlayer().viewer().isPresent()) {
+
+          final Optional<Object> currencyOpt = open.getPlayer().viewer().get().findData(ACTIVE_CURRENCY);
+          if(currencyOpt.isPresent()) {
+
+            final Currency currencyObject = (Currency)currencyOpt.get();
+            currencyObject.getNote().ifPresent(note->note.setEnchantments(selection.getValue().isBlank()
+                                                                          ? Collections.emptyList()
+                                                                          : Arrays.asList(selection.getValue().split(","))));
+          }
+        }
+      }).handle(open);
+    }));
     addPage(currencyNoteEnchantPage);
 
     final Page currencyNoteFlagPage = new PageBuilder(CURRENCY_NOTE_FLAGS_PAGE).build();
-    currencyNoteFlagPage.setOpen((open->new FlagSelectionPage("CURRENCY_NOTE_FLAGS", this.name, this.name, CURRENCY_NOTE_FLAGS_PAGE, CURRENCY_NOTE_EDIT_PAGE, "CURRENCY_NOTE_FLAGS_PAGE", this.rows, (selection)->{
-
+    currencyNoteFlagPage.setOpen((open->{
       if(open.getPlayer().viewer().isPresent()) {
 
-        final Optional<Object> currencyOpt = open.getPlayer().viewer().get().findData(ACTIVE_CURRENCY);
+        final MenuViewer viewer = open.getPlayer().viewer().get();
+        final Optional<Object> currencyOpt = viewer.findData(ACTIVE_CURRENCY);
         if(currencyOpt.isPresent()) {
 
           final Currency currencyObject = (Currency)currencyOpt.get();
-          if(currencyObject.getNote().isPresent()) {
-            currencyObject.getNote().get().setFlags(Arrays.asList(selection.getValue().split(",")));
-          }
+          currencyObject.getNote().ifPresent(note->{
+            for(final String flag : MenuManager.instance().getHelper().flags()) {
+              viewer.addData("CURRENCY_NOTE_FLAGS_" + flag,
+                             note.getFlags().contains(flag)? "ENABLED" : "DISABLED");
+            }
+          });
         }
       }
-    }).handle(open)));
+
+      new FlagSelectionPage("CURRENCY_NOTE_FLAGS", this.name, this.name, CURRENCY_NOTE_FLAGS_PAGE, CURRENCY_NOTE_EDIT_PAGE, "CURRENCY_NOTE_FLAGS_PAGE", this.rows, (selection)->{
+
+        if(open.getPlayer().viewer().isPresent()) {
+
+          final Optional<Object> currencyOpt = open.getPlayer().viewer().get().findData(ACTIVE_CURRENCY);
+          if(currencyOpt.isPresent()) {
+
+            final Currency currencyObject = (Currency)currencyOpt.get();
+            currencyObject.getNote().ifPresent(note->note.setFlags(selection.getValue().isBlank()
+                                                                   ? Collections.emptyList()
+                                                                   : Arrays.asList(selection.getValue().split(","))));
+          }
+        }
+      }).handle(open);
+    }));
     addPage(currencyNoteFlagPage);
 
     final Page noteFeePage = new PageBuilder(CURRENCY_NOTE_FEE_SELECTION_PAGE).build();
@@ -557,37 +594,65 @@ public class MyEcoMenu extends Menu {
     addPage(denominationMaterialPage);
 
     final Page denominationEnchantPage = new PageBuilder(DENOMINATION_ENCHANTS_PAGE).build();
-    denominationEnchantPage.setOpen((open->new EnchantmentSelectionPage("DENOMINATION_ENCHANTS", this.name, this.name, DENOMINATION_ENCHANTS_PAGE, DENOMINATION_EDIT_PAGE, "DENOMINATION_ENCHANTS_PAGE", this.rows, (selection)->{
-
+    denominationEnchantPage.setOpen((open->{
       if(open.getPlayer().viewer().isPresent()) {
 
-        final Optional<Object> denomOpt = open.getPlayer().viewer().get().findData(ACTIVE_DENOMINATION);
-        if(denomOpt.isPresent()) {
+        final MenuViewer viewer = open.getPlayer().viewer().get();
+        final Optional<Object> denomOpt = viewer.findData(ACTIVE_DENOMINATION);
+        if(denomOpt.isPresent() && denomOpt.get() instanceof final ItemDenomination itemDenomination) {
 
-          final Denomination denomObj = (Denomination)denomOpt.get();
-          if(denomObj instanceof final ItemDenomination itemDenomination && !selection.getValue().isEmpty()) {
-            itemDenomination.enchantments(Arrays.asList(selection.getValue().split(",")));
+          for(final String enchantment : MenuManager.instance().getHelper().enchantments()) {
+            viewer.addData("DENOMINATION_ENCHANTS_" + enchantment,
+                           itemDenomination.enchantments().contains(enchantment)? "ENABLED" : "DISABLED");
           }
         }
       }
-    }).handle(open)));
+
+      new EnchantmentSelectionPage("DENOMINATION_ENCHANTS", this.name, this.name, DENOMINATION_ENCHANTS_PAGE, DENOMINATION_EDIT_PAGE, "DENOMINATION_ENCHANTS_PAGE", this.rows, (selection)->{
+
+        if(open.getPlayer().viewer().isPresent()) {
+
+          final Optional<Object> denomOpt = open.getPlayer().viewer().get().findData(ACTIVE_DENOMINATION);
+          if(denomOpt.isPresent() && denomOpt.get() instanceof final ItemDenomination itemDenomination) {
+
+            itemDenomination.enchantments(selection.getValue().isBlank()
+                                           ? Collections.emptyList()
+                                           : Arrays.asList(selection.getValue().split(",")));
+          }
+        }
+      }).handle(open);
+    }));
     addPage(denominationEnchantPage);
 
     final Page denominationFlagPage = new PageBuilder(DENOMINATION_FLAGS_PAGE).build();
-    denominationFlagPage.setOpen((open->new FlagSelectionPage("DENOMINATION_FLAGS", this.name, this.name, DENOMINATION_FLAGS_PAGE, DENOMINATION_EDIT_PAGE, "DENOMINATION_FLAGS_PAGE", this.rows, (selection)->{
-
+    denominationFlagPage.setOpen((open->{
       if(open.getPlayer().viewer().isPresent()) {
 
-        final Optional<Object> denomOpt = open.getPlayer().viewer().get().findData(ACTIVE_DENOMINATION);
-        if(denomOpt.isPresent()) {
+        final MenuViewer viewer = open.getPlayer().viewer().get();
+        final Optional<Object> denomOpt = viewer.findData(ACTIVE_DENOMINATION);
+        if(denomOpt.isPresent() && denomOpt.get() instanceof final ItemDenomination itemDenomination) {
 
-          final Denomination denomObj = (Denomination)denomOpt.get();
-          if(denomObj instanceof final ItemDenomination itemDenomination && !selection.getValue().isEmpty()) {
-            itemDenomination.flags(Arrays.asList(selection.getValue().split(",")));
+          for(final String flag : MenuManager.instance().getHelper().flags()) {
+            viewer.addData("DENOMINATION_FLAGS_" + flag,
+                           itemDenomination.flags().contains(flag)? "ENABLED" : "DISABLED");
           }
         }
       }
-    }).handle(open)));
+
+      new FlagSelectionPage("DENOMINATION_FLAGS", this.name, this.name, DENOMINATION_FLAGS_PAGE, DENOMINATION_EDIT_PAGE, "DENOMINATION_FLAGS_PAGE", this.rows, (selection)->{
+
+        if(open.getPlayer().viewer().isPresent()) {
+
+          final Optional<Object> denomOpt = open.getPlayer().viewer().get().findData(ACTIVE_DENOMINATION);
+          if(denomOpt.isPresent() && denomOpt.get() instanceof final ItemDenomination itemDenomination) {
+
+            itemDenomination.flags(selection.getValue().isBlank()
+                                   ? Collections.emptyList()
+                                   : Arrays.asList(selection.getValue().split(",")));
+          }
+        }
+      }).handle(open);
+    }));
     addPage(denominationFlagPage);
 
     final Page denominationWeightPage = new PageBuilder(DENOMINATION_WEIGHT_SELECTION_PAGE).build();

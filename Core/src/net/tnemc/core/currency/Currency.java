@@ -134,6 +134,7 @@ public class Currency {
     cloned.maxBalance = original.maxBalance;
     cloned.minBalance = original.minBalance;
     cloned.negativeSupport = original.negativeSupport;
+    cloned.sync = original.sync;
     cloned.uid = original.uid;
     cloned.iconMaterial = original.iconMaterial;
     cloned.type = original.type;

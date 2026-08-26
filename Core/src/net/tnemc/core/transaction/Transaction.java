@@ -123,85 +123,17 @@ public class Transaction {
   public Transaction from(final Account account, final HoldingsModifier modifier) {
 
     final List<HoldingsEntry> balances = account.getHoldings(modifier.getRegion(), modifier.getCurrency(), modifier.getType());
-
-    if(balances.isEmpty()) {
-      balances.add(new HoldingsEntry(modifier.getRegion(), modifier.getCurrency(),
-                                     BigDecimal.ZERO, EconomyManager.NORMAL));
-    }
-
+    ensureBalance(balances, modifier);
     this.from = new TransactionParticipant(account.getIdentifier(), balances);
-
-    final Optional<TransactionType> type = TNECore.eco().transaction().findType(this.type);
-
-    final BigDecimal tax = (type.isPresent() && type.get().fromTax().isPresent())? type.get().fromTax().get()
-            .calculateTax(modifier.getModifier()) : BigDecimal.ZERO;
-
-    BigDecimal working = null;
-    final boolean take = (modifier.getModifier().compareTo(BigDecimal.ZERO) < 0);
-
-    if(take) {
-      if(modifier.isPercent()) {
-
-        BigDecimal total = BigDecimal.ZERO;
-        for(final HoldingsEntry entry : balances) {
-          total = total.add(entry.getAmount());
-        }
-        working = modifier.modify(total);
-        total = null;
-      } else {
-        working = modifier.getModifier().multiply(new BigDecimal(-1));
-      }
-    }
-
-    boolean done = false;
-
+    final BigDecimal tax = calculateFromTax(modifier);
+    final BalanceState state = createBalanceState(balances, modifier);
     for(int i = 0; i < balances.size(); i++) {
       final HoldingsEntry entry = balances.get(i);
-      final HoldingsEntry ending;
-
       PluginCore.log().debug("entry bal: " + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);
       PluginCore.log().debug("entry bal: " + entry.getRegion(), DebugLevel.DEVELOPER);
-
-      if(!done) {
-        if(!take) {
-
-          ending = entry.modifyGrab(modifier).modifyGrab(tax.negate());
-
-          PluginCore.log().debug("End: " + ending.getAmount().toPlainString(), DebugLevel.DEVELOPER);
-          PluginCore.log().debug("End: " + ending.getRegion(), DebugLevel.DEVELOPER);
-          done = true;
-        } else {
-
-          PluginCore.log().debug("Working: " + working.toPlainString(), DebugLevel.DEVELOPER);
-
-          if(entry.getAmount().compareTo(working) >= 0) {
-            PluginCore.log().debug("Value: " + working.toPlainString(), DebugLevel.DEVELOPER);
-
-            ending = entry.modifyGrab(working.multiply(new BigDecimal(-1))).modifyGrab(tax.negate());
-            PluginCore.log().debug("break out since we are good to go with this entry", DebugLevel.DEVELOPER);
-            done = true;
-          } else {
-
-            if(i == (balances.size() - 1)) {
-              ending = entry.modifyGrab(working.multiply(new BigDecimal(-1)));
-
-            } else {
-              PluginCore.log().debug("Keep Working", DebugLevel.DEVELOPER);
-              ending = entry.modifyGrab(entry.getAmount().multiply(new BigDecimal(-1)));
-              working = working.subtract(entry.getAmount());
-            }
-          }
-        }
-      } else {
-        ending = entry;
-      }
-      this.from.getEndingBalances().add(ending);
+      this.from.getEndingBalances().add(calculateEnding(entry, i, balances.size(), modifier, tax, state));
     }
-
-    working = null;
-
     this.from.setTax(tax);
-
     this.modifierFrom = modifier;
     return this;
   }
@@ -232,90 +164,96 @@ public class Transaction {
   public Transaction to(final Account account, final HoldingsModifier modifier) {
 
     final List<HoldingsEntry> balances = account.getHoldings(modifier.getRegion(), modifier.getCurrency(), modifier.getType());
+    ensureBalance(balances, modifier);
+    this.to = new TransactionParticipant(account.getIdentifier(), balances);
+    final BigDecimal tax = calculateToTax(modifier);
+    final BalanceState state = createBalanceState(balances, modifier);
+    for(int i = 0; i < balances.size(); i++) {
+      if(state.done) {
+        break;
+      }
+      final HoldingsEntry entry = balances.get(i);
+      PluginCore.log().debug("entry bal: " + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);
+      PluginCore.log().debug("entry bal: " + entry.getRegion(), DebugLevel.DEVELOPER);
+      this.to.getEndingBalances().add(calculateEnding(entry, i, balances.size(), modifier, tax, state));
+    }
+    this.to.setTax(tax);
+    this.modifierTo = modifier;
+    return this;
+  }
+
+  private void ensureBalance(final List<HoldingsEntry> balances, final HoldingsModifier modifier) {
 
     if(balances.isEmpty()) {
       balances.add(new HoldingsEntry(modifier.getRegion(), modifier.getCurrency(),
                                      BigDecimal.ZERO, EconomyManager.NORMAL));
     }
+  }
 
-    this.to = new TransactionParticipant(account.getIdentifier(), balances);
+  private BigDecimal calculateFromTax(final HoldingsModifier modifier) {
 
     final Optional<TransactionType> type = TNECore.eco().transaction().findType(this.type);
+    return type.isPresent() && type.get().fromTax().isPresent()
+           ? type.get().fromTax().get().calculateTax(modifier.getModifier()) : BigDecimal.ZERO;
+  }
 
-    final BigDecimal tax = (type.isPresent() && type.get().toTax().isPresent())? type.get().toTax().get()
-            .calculateTax(modifier.getModifier()) : BigDecimal.ZERO;
+  private BigDecimal calculateToTax(final HoldingsModifier modifier) {
 
-    BigDecimal working = null;
-    final boolean take = (modifier.getModifier().compareTo(BigDecimal.ZERO) < 0);
+    final Optional<TransactionType> type = TNECore.eco().transaction().findType(this.type);
+    return type.isPresent() && type.get().toTax().isPresent()
+           ? type.get().toTax().get().calculateTax(modifier.getModifier()) : BigDecimal.ZERO;
+  }
 
-    if(take) {
-      if(modifier.isPercent()) {
+  private BalanceState createBalanceState(final List<HoldingsEntry> balances,
+                                          final HoldingsModifier modifier) {
 
-        BigDecimal total = BigDecimal.ZERO;
-        for(final HoldingsEntry entry : balances) {
-          total = total.add(entry.getAmount());
-        }
-        working = modifier.modify(total);
-        total = null;
-      } else {
-        working = modifier.getModifier().multiply(new BigDecimal(-1));
-      }
+    final boolean take = modifier.getModifier().compareTo(BigDecimal.ZERO) < 0;
+    if(!take) {
+      return new BalanceState(null, false);
+    }
+    if(!modifier.isPercent()) {
+      return new BalanceState(modifier.getModifier().multiply(new BigDecimal(-1)), true);
     }
 
-    boolean done = false;
+    BigDecimal total = BigDecimal.ZERO;
+    for(final HoldingsEntry entry : balances) {
+      total = total.add(entry.getAmount());
+    }
+    return new BalanceState(modifier.modify(total), true);
+  }
 
-    for(int i = 0; i < balances.size(); i++) {
-      final HoldingsEntry entry = balances.get(i);
-      final HoldingsEntry ending;
+  private HoldingsEntry calculateEnding(final HoldingsEntry entry, final int index, final int size,
+                                        final HoldingsModifier modifier, final BigDecimal tax,
+                                        final BalanceState state) {
 
-      PluginCore.log().debug("entry bal: " + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);
-      PluginCore.log().debug("entry bal: " + entry.getRegion(), DebugLevel.DEVELOPER);
-
-      //TODO Test this.
-      if(done) break;
-
-      if(!done) {
-        if(!take) {
-
-          ending = entry.modifyGrab(modifier).modifyGrab(tax.negate());
-
-          PluginCore.log().debug("End: " + ending.getAmount().toPlainString(), DebugLevel.DEVELOPER);
-          PluginCore.log().debug("End: " + ending.getRegion(), DebugLevel.DEVELOPER);
-          done = true;
-        } else {
-
-          PluginCore.log().debug("Working: " + working.toPlainString(), DebugLevel.DEVELOPER);
-
-          if(entry.getAmount().compareTo(working) >= 0) {
-            PluginCore.log().debug("Value: " + working.toPlainString(), DebugLevel.DEVELOPER);
-
-            ending = entry.modifyGrab(working.multiply(new BigDecimal(-1))).modifyGrab(tax.negate());
-            PluginCore.log().debug("break out since we are good to go with this entry", DebugLevel.DEVELOPER);
-            done = true;
-          } else {
-
-            if(i == (balances.size() - 1)) {
-              ending = entry.modifyGrab(working.multiply(new BigDecimal(-1)));
-
-            } else {
-              PluginCore.log().debug("Keep Working", DebugLevel.DEVELOPER);
-              ending = entry.modifyGrab(entry.getAmount().multiply(new BigDecimal(-1)));
-              working = working.subtract(entry.getAmount());
-            }
-          }
-        }
-      } else {
-        ending = entry;
-      }
-      this.to.getEndingBalances().add(ending);
+    if(state.done) {
+      return entry;
+    }
+    if(!state.take) {
+      final HoldingsEntry ending = entry.modifyGrab(modifier).modifyGrab(tax.negate());
+      PluginCore.log().debug("End: " + ending.getAmount().toPlainString(), DebugLevel.DEVELOPER);
+      PluginCore.log().debug("End: " + ending.getRegion(), DebugLevel.DEVELOPER);
+      state.done = true;
+      return ending;
     }
 
-    working = null;
+    PluginCore.log().debug("Working: " + state.working.toPlainString(), DebugLevel.DEVELOPER);
+    if(entry.getAmount().compareTo(state.working) >= 0) {
+      PluginCore.log().debug("Value: " + state.working.toPlainString(), DebugLevel.DEVELOPER);
+      final HoldingsEntry ending = entry.modifyGrab(state.working.multiply(new BigDecimal(-1)))
+              .modifyGrab(tax.negate());
+      PluginCore.log().debug("break out since we are good to go with this entry", DebugLevel.DEVELOPER);
+      state.done = true;
+      return ending;
+    }
+    if(index == size - 1) {
+      return entry.modifyGrab(state.working.multiply(new BigDecimal(-1)));
+    }
 
-    this.to.setTax(tax);
-
-    this.modifierTo = modifier;
-    return this;
+    PluginCore.log().debug("Keep Working", DebugLevel.DEVELOPER);
+    final HoldingsEntry ending = entry.modifyGrab(entry.getAmount().multiply(new BigDecimal(-1)));
+    state.working = state.working.subtract(entry.getAmount());
+    return ending;
   }
 
   /**
@@ -382,48 +320,61 @@ public class Transaction {
    */
   public TransactionResult process() throws InvalidTransactionException {
 
-    String missing = null;
-
-    if(this.type == null) {
-      missing = "Transaction Type";
-    }
-
-    if(this.processor == null) {
-      missing = "Transaction Processor";
-    }
-
-    if(this.to == null && this.from == null) {
-      missing = "Both Transaction Parties";
-    }
-
+    final String missing = missingRequirement();
     if(missing != null) {
       throw new InvalidTransactionException(missing);
     }
 
     final TransactionResult result = processor.process(this);
-
     if(resultConsumer != null) {
       resultConsumer.accept(result);
     }
-
     final PostTransactionCallback postTransaction = new PostTransactionCallback(result);
     PluginCore.callbacks().call(postTransaction);
-
-    //Log our stuff.
-    if(result.getReceipt().isPresent()) {
-
-      TransactionManager.receipts().log(result.getReceipt().get());
-
-      if(to != null) {
-        to.asAccount().ifPresent((acc->acc.logReference(result.getReceipt().get())));
-      }
-
-      if(from != null) {
-        from.asAccount().ifPresent((acc->acc.logReference(result.getReceipt().get())));
-      }
-    }
-
+    logReceipt(result);
     return result;
+  }
+
+  private String missingRequirement() {
+
+    String missing = null;
+    if(this.type == null) {
+      missing = "Transaction Type";
+    }
+    if(this.processor == null) {
+      missing = "Transaction Processor";
+    }
+    if(this.to == null && this.from == null) {
+      missing = "Both Transaction Parties";
+    }
+    return missing;
+  }
+
+  private void logReceipt(final TransactionResult result) {
+
+    if(result.getReceipt().isEmpty()) {
+      return;
+    }
+    TransactionManager.receipts().log(result.getReceipt().get());
+    if(to != null) {
+      to.asAccount().ifPresent(acc->acc.logReference(result.getReceipt().get()));
+    }
+    if(from != null) {
+      from.asAccount().ifPresent(acc->acc.logReference(result.getReceipt().get()));
+    }
+  }
+
+  private static final class BalanceState {
+
+    private BigDecimal working;
+    private final boolean take;
+    private boolean done;
+
+    private BalanceState(final BigDecimal working, final boolean take) {
+
+      this.working = working;
+      this.take = take;
+    }
   }
 
   public Optional<Account> getFromAccount() {

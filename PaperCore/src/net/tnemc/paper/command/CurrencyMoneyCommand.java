@@ -27,7 +27,7 @@ import net.tnemc.core.command.parameters.resolver.annotation.EnderSupport;
 import net.tnemc.core.command.parameters.resolver.annotation.InventorySupport;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.parser.ParseMoney;
-import net.tnemc.plugincore.paper.impl.PaperCMDSource;
+import net.tnemc.paper.impl.PaperCMDSource;
 import revxrsal.commands.annotation.Default;
 import revxrsal.commands.annotation.Description;
 import revxrsal.commands.annotation.Named;
@@ -164,7 +164,7 @@ public class CurrencyMoneyCommand implements OrphanCommand {
   @Subcommand({ "request" })
   @Usage("Money.Request.Arguments")
   @Description("Money.Request.Description")
-  @CommandPermission("tne.money.Request")
+  @CommandPermission("tne.money.request")
   public void onRequest(final BukkitCommandActor sender, @Named("account") final Account player, @Named("amount") final ParseMoney amount) {
 
     net.tnemc.core.command.MoneyCommand.onRequest(new PaperCMDSource(sender), player, amount, currency);

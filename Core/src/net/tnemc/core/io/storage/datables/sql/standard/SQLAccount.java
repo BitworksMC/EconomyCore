@@ -297,100 +297,89 @@ public class SQLAccount implements Datable<Account> {
   public Optional<Account> load(final StorageConnector<?> connector, @NotNull final String identifier) {
 
     if(connector instanceof final SQLConnector sql && sql.dialect() instanceof final TNEDialect tne) {
-
-      Account account = null;
-
-      //Loading/creating our account object.
-      try(final ResultSet result = sql.executeQuery(tne.loadAccount(),
-                                                    new Object[]{
-                                                      identifier
-                                              })) {
-        if(result.next()) {
-          final String type = result.getString("account_type");
-
-          //create our account from the type
-          final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,
-                                                                                    result.getString("username"),
-                                                                                    !(type.equalsIgnoreCase("player") ||
-                                                                                      type.equalsIgnoreCase("bedrock")),
-                                                                                    true);
-          if(response.getResponse().success()) {
-
-            //load our basic account information
-            if(response.getAccount().isPresent()) {
-              account = response.getAccount().get();
-
-              account.setStatus(TNECore.eco().account().findStatus(result.getString("status")));
-              account.setCreationDate(result.getTimestamp("created").getTime());
-              account.setPin(result.getString("pin"));
-            }
-          }
-        }
-
-      } catch(final SQLException e) {
-        e.printStackTrace();
-      }
-
+      final Account account = loadBasicAccount(sql, tne, identifier);
       if(account != null) {
-
-        //Load our player account info
-        if(account instanceof final PlayerAccount playerAccount) {
-          try(final ResultSet result = sql.executeQuery(tne.loadPlayer(),
-                                                        new Object[]{
-                                                          identifier
-                                                  })) {
-            if(result.next()) {
-              playerAccount.setLastOnline(result.getTimestamp("last_online").getTime());
-            }
-          } catch(final SQLException e) {
-            e.printStackTrace();
-          }
-        }
-
-        //load our shared account info
-        if(account instanceof final SharedAccount shared) {
-          try(final ResultSet result = sql.executeQuery(tne.loadNonPlayer(),
-                                                        new Object[]{
-                                                          identifier
-                                                  })) {
-            if(result.next()) {
-              shared.setOwner(UUID.fromString(result.getString("owner")));
-            }
-          } catch(final SQLException e) {
-            e.printStackTrace();
-          }
-
-          //Load our members for shared accounts
-          try(final ResultSet result = sql.executeQuery(tne.loadMembers(),
-                                                        new Object[]{
-                                                          identifier
-                                                  })) {
-            while(result.next()) {
-              shared.addPermission(UUID.fromString(result.getString("uid")),
-                                   result.getString("perm"),
-                                   result.getBoolean("perm_value")
-                                  );
-            }
-          } catch(final SQLException e) {
-            e.printStackTrace();
-          }
-
-        }
-
-        final Collection<HoldingsEntry> holdings = TNECore.instance().storage().loadAll(HoldingsEntry.class, identifier);
-        for(final HoldingsEntry entry : holdings) {
-          account.getWallet().setHoldings(entry);
-        }
-
-        account.clearDirty();
-
-        final AccountLoadCallback callback = new AccountLoadCallback(account);
-        PluginCore.callbacks().call(callback);
+        loadPlayerInfo(sql, tne, identifier, account);
+        loadSharedInfo(sql, tne, identifier, account);
+        finishAccountLoad(identifier, account);
       }
-
       return Optional.ofNullable(account);
     }
     return Optional.empty();
+  }
+
+  private Account loadBasicAccount(final SQLConnector sql, final TNEDialect tne, final String identifier) {
+
+    try(final ResultSet result = sql.executeQuery(tne.loadAccount(), new Object[]{ identifier })) {
+      if(!result.next()) {
+        return null;
+      }
+      final String type = result.getString("account_type");
+      final AccountAPIResponse response = TNECore.eco().account().createAccount(
+              identifier, result.getString("username"),
+              !(type.equalsIgnoreCase("player") || type.equalsIgnoreCase("bedrock")), true);
+      if(!response.getResponse().success() || response.getAccount().isEmpty()) {
+        return null;
+      }
+
+      final Account account = response.getAccount().get();
+      account.setStatus(TNECore.eco().account().findStatus(result.getString("status")));
+      account.setCreationDate(result.getTimestamp("created").getTime());
+      account.setPin(result.getString("pin"));
+      return account;
+    } catch(final SQLException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  private void loadPlayerInfo(final SQLConnector sql, final TNEDialect tne, final String identifier,
+                              final Account account) {
+
+    if(!(account instanceof final PlayerAccount playerAccount)) {
+      return;
+    }
+    try(final ResultSet result = sql.executeQuery(tne.loadPlayer(), new Object[]{ identifier })) {
+      if(result.next()) {
+        playerAccount.setLastOnline(result.getTimestamp("last_online").getTime());
+      }
+    } catch(final SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void loadSharedInfo(final SQLConnector sql, final TNEDialect tne, final String identifier,
+                              final Account account) {
+
+    if(!(account instanceof final SharedAccount shared)) {
+      return;
+    }
+    try(final ResultSet result = sql.executeQuery(tne.loadNonPlayer(), new Object[]{ identifier })) {
+      if(result.next()) {
+        shared.setOwner(UUID.fromString(result.getString("owner")));
+      }
+    } catch(final SQLException e) {
+      e.printStackTrace();
+    }
+
+    try(final ResultSet result = sql.executeQuery(tne.loadMembers(), new Object[]{ identifier })) {
+      while(result.next()) {
+        shared.addPermission(UUID.fromString(result.getString("uid")), result.getString("perm"),
+                             result.getBoolean("perm_value"));
+      }
+    } catch(final SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void finishAccountLoad(final String identifier, final Account account) {
+
+    final Collection<HoldingsEntry> holdings = TNECore.instance().storage().loadAll(HoldingsEntry.class, identifier);
+    for(final HoldingsEntry entry : holdings) {
+      account.getWallet().setHoldings(entry);
+    }
+    account.clearDirty();
+    PluginCore.callbacks().call(new AccountLoadCallback(account));
   }
 
   /**
