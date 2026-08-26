@@ -116,9 +116,9 @@ public class BaltopMenu extends Menu {
         final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
         if(receipt.isPresent()) {
           callback.getPage().addIcon(buildTransactionIcon(slot, receipt.get()));
+          slot += 2;
         }
       }
-      slot += 2;
     }
   }
 
