@@ -112,144 +112,13 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <amount> <to currency> [from currency]
   public static void onConvert(final CmdSource<?> sender, final PercentBigDecimal amount, final Currency currency, final Currency fromCurrency) {
 
-    final Currency resolvedFrom = (fromCurrency == null)? TNECore.eco().currency().defaultCurrency(BaseCommand.region(sender)) : fromCurrency;
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.convert.to." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "convert to");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-
-      if(!player.get().hasPermission("tne.money.convert.from." + resolvedFrom.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "convert from");
-        data.addReplacement("$currency", resolvedFrom.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(amount.value().compareTo(BigDecimal.ZERO) < 0) {
-      sender.message(new MessageData("Messages.Money.Negative"));
-      return;
-    }
-
-    if(currency.getUid().equals(resolvedFrom.getUid())) {
-      sender.message(new MessageData("Messages.Money.ConvertSame"));
-      return;
-    }
-
-    final Optional<Account> account = BaseCommand.account(sender, "convert");
-    if(account.isEmpty()) {
-      final MessageData data = new MessageData("Messages.General.NoPlayer");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
-    final Optional<BigDecimal> converted = resolvedFrom.convertValue(currency.getIdentifier(), amount.value());
-    if(converted.isEmpty()) {
-      final MessageData data = new MessageData("Messages.Money.NoConversion");
-      data.addReplacement("$converted", currency.getIdentifier());
-      sender.message(data);
-      return;
-    }
-
-    final HoldingsModifier modifier = new HoldingsModifier(BaseCommand.region(sender),
-                                                           currency.getUid(),
-                                                           converted.get().setScale(currency.getDecimalPlaces(), RoundingMode.DOWN)
-    );
-
-    final HoldingsModifier modifierFrom = new HoldingsModifier(BaseCommand.region(sender),
-                                                               resolvedFrom.getUid(),
-                                                               amount.value().setScale(currency.getDecimalPlaces(), RoundingMode.DOWN).negate()
-    );
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    final Transaction transaction = new Transaction("convert")
-            .from(account.get(), modifierFrom)
-            .to(account.get(), modifier)
-            .processor(EconomyManager.baseProcessor())
-            .source(new PlayerSource(sourceID));
-
-    final Optional<Receipt> receipt = processTransaction(sender, transaction, account.get().getName(), amount.value());
-    if(receipt.isPresent()) {
-      final MessageData data = new MessageData("Messages.Money.Converted");
-      data.addReplacement("$from_amount", amount.value().toPlainString());
-      data.addReplacement("$amount", CurrencyFormatter.format(account.get(),
-                                                              modifierFrom.asEntry()));
-      sender.message(data);
-    }
+    MoneyTransferCommands.convert(sender, amount, currency, fromCurrency);
   }
 
   //ArgumentsParser: <amount> [currency]
   public static void onDeposit(final CmdSource<?> sender, final ParseMoney parseMoney, final Currency currencyParam, final String regionParam) {
 
-    parseMoney.normalizeParameters(currencyParam, regionParam);
-
-    String region = parseMoney.region();
-    final Currency currency = parseMoney.currency();
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.deposit." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "deposit");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(player.isPresent() && region.equalsIgnoreCase("world-113")) {
-      region = player.get().world();
-    }
-
-    if(parseMoney.amount().compareTo(BigDecimal.ZERO) < 0) {
-      sender.message(new MessageData("Messages.Money.Negative"));
-      return;
-    }
-
-    final Optional<Account> senderAccount = BaseCommand.account(sender, "deposit");
-
-    if(senderAccount.isEmpty()) {
-      final MessageData data = new MessageData("Messages.General.NoPlayer");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
-    region = TNECore.eco().region().resolve(region);
-
-    if(!(currency.type() instanceof MixedType)) {
-      sender.message(new MessageData("Messages.Money.NotMixed"));
-      return;
-    }
-
-    final HoldingsModifier modifier = new HoldingsModifier(region,
-                                                           currency.getUid(),
-                                                           parseMoney.amount(),
-                                                           EconomyManager.VIRTUAL
-    );
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    final Transaction transaction = new Transaction("deposit")
-            .to(senderAccount.get(), modifier)
-            .from(senderAccount.get(), modifier.counter(EconomyManager.ITEM_ONLY))
-            .processor(EconomyManager.baseProcessor())
-            .source(new PlayerSource(sourceID));
-
-    final Optional<Receipt> receipt = processTransaction(sender, transaction, senderAccount.get().getName(), parseMoney.amount());
-    if(receipt.isPresent()) {
-      final MessageData data = new MessageData("Messages.Money.Deposit");
-      data.addReplacement("$amount", CurrencyFormatter.format(senderAccount.get(),
-                                                              modifier.asEntry()));
-      sender.message(data);
-    }
+    MoneyTransferCommands.deposit(sender, parseMoney, currencyParam, regionParam);
   }
 
   //ArgumentsParser: <player> <amount> [world] [currency]
@@ -304,60 +173,7 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <amount> [world] [currency]
   public static void onGiveAll(final CmdSource<?> sender, final ParseMoney parseMoney, final Currency currencyParam, final String regionParam) {
 
-    parseMoney.normalizeParameters(currencyParam, regionParam);
-
-    final String region = TNECore.eco().region().resolve(parseMoney.region());
-    final Currency currency = parseMoney.currency();
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.give." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "give funds");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    final HoldingsModifier modifier = new HoldingsModifier(region,
-                                                           currency.getUid(),
-                                                           parseMoney.amount());
-
-    final List<String> accounts = new ArrayList<>();
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    for(final Account account : TNECore.eco().account().getAccounts().values()) {
-
-      final Transaction transaction = new Transaction("give")
-              .to(account, modifier)
-              .source(new PlayerSource(sourceID));
-
-      final Optional<Receipt> receipt = processTransaction(sender, transaction, account.getName(), parseMoney.amount());
-      if(receipt.isPresent()) {
-
-        accounts.add(account.getName());
-
-        final MessageData msgData = new MessageData("Messages.Money.Given");
-        msgData.addReplacement("$currency", currency.getIdentifier());
-        msgData.addReplacement("$player", (sender.name() == null)? MainConfig.yaml().getString("Core.Server.Account.Name") : sender.name());
-        msgData.addReplacement("$amount", CurrencyFormatter.format(account, modifier.asEntry()));
-
-        MessageHandler.send(account.getIdentifier(), msgData.grab(account.getIdentifier()));
-        if(account.isPlayer() && ((PlayerAccount)account).isOnline()) {
-
-          final Optional<PlayerProvider> provider = ((PlayerAccount)account).getPlayer();
-
-          provider.ifPresent(playerProvider->playerProvider.message(msgData));
-        }
-      }
-    }
-
-    final MessageData data = new MessageData("Messages.Money.Gave");
-    data.addReplacement("$player", String.join(", ", accounts));
-    data.addReplacement("$currency", currency.getIdentifier());
-    data.addReplacement("$amount", CurrencyFormatter.format(null, modifier.asEntry()));
-    sender.message(data);
+    MoneyAdminCommands.giveAll(sender, parseMoney, currencyParam, regionParam);
   }
 
   public static void onGiveNote(final CmdSource<?> sender, final Account acc, final ParseMoney parseMoney, final Currency currency) {
@@ -411,112 +227,13 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <amount> [currency]
   public static void onNote(final CmdSource<?> sender, final ParseMoney parseMoney, final Currency currency) {
 
-    parseMoney.normalizeParameters(currency, DEFAULT_WORLD);
-
-    final Optional<Account> account = BaseCommand.account(sender, "note");
-    final Optional<Note> note = parseMoney.currency().getNote();
-    if(account.isPresent() && note.isPresent() && account.get() instanceof final PlayerAccount player) {
-
-      final Optional<PlayerProvider> provider = player.getPlayer();
-      if(provider.isEmpty()) {
-        return;
-      }
-
-      if(EconomyManager.limitCurrency() && !provider.get().hasPermission("tne.money.note." + parseMoney.currency().getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "note");
-        data.addReplacement("$currency", parseMoney.currency().getDisplay());
-        sender.message(data);
-        return;
-      }
-
-      if(parseMoney.amount().compareTo(note.get().getMinimum()) < 0) {
-        final MessageData min = new MessageData("Messages.Note.Minimum");
-        min.addReplacement("$amount", note.get().getMinimum().toPlainString());
-        sender.message(min);
-        return;
-      }
-
-      final BigDecimal rounded = parseMoney.amount().setScale(parseMoney.currency().getDecimalPlaces(), RoundingMode.DOWN);
-
-      final BigDecimal amt = rounded.add(note.get().getFee().calculateTax(rounded)).setScale(parseMoney.currency().getDecimalPlaces(), RoundingMode.DOWN);
-
-      final HoldingsModifier modifier = new HoldingsModifier(BaseCommand.region(sender),
-                                                             parseMoney.currency().getUid(),
-                                                             amt
-      );
-
-      final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-      final Transaction transaction = new Transaction("note")
-              .from(account.get(), modifier.counter())
-              .processor(EconomyManager.baseProcessor())
-              .source(new PlayerSource(sourceID));
-
-
-      final Optional<Receipt> receipt = processTransaction(sender, transaction, account.get().getName(), parseMoney.amount());
-      if(receipt.isPresent()) {
-        final Collection<AbstractItemStack<Object>> left = PluginCore.server().calculations().giveItems(Collections.singletonList(note.get().stack(parseMoney.currency().getIdentifier(), BaseCommand.region(sender), rounded)), provider.get().inventory().getInventory(false));
-
-        final MessageData entryMSG = new MessageData("Messages.Note.Given");
-        entryMSG.addReplacement("$currency", parseMoney.currency().getIdentifier());
-        entryMSG.addReplacement("$amount", CurrencyFormatter.format(account.get(), modifier.asEntry()));
-        sender.message(entryMSG);
-
-        if(!left.isEmpty()) {
-          PluginCore.server().calculations().drop(left, ((PlayerAccount)account.get()).getUUID(), true);
-          sender.message(new MessageData("Messages.Note.Dropped"));
-        }
-      }
-    }
+    MoneyTransferCommands.note(sender, parseMoney, currency);
   }
 
   //ArgumentsParser: <player> [world] [currency]
   public static void onOther(final CmdSource<?> sender, final Account account, final Currency currencyParam, String region) {
 
-    final Optional<PlayerProvider> player = sender.player();
-    final Optional<UUID> senderID = sender.identifier();
-
-    final boolean other = (senderID.isPresent() && !senderID.get().equals(account.getIdentifier()));
-
-    final Currency currency = (currencyParam == null)? TNECore.eco().currency().defaultCurrency() : currencyParam;
-
-    if(EconomyManager.limitCurrency() && player.isPresent() && other) {
-      if(!player.get().hasPermission("tne.money.other." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "balance check other");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(player.isPresent() && region.equalsIgnoreCase("world-113")) {
-      region = player.get().world();
-    }
-
-    region = TNECore.eco().region().resolve(region);
-
-    final String resolve = region;
-
-    if(TNECore.eco().region().getDisabledRegions().contains(resolve)) {
-
-      final MessageData regionMSG = new MessageData("Messages.General.Disabled");
-      sender.message(regionMSG);
-      return;
-    }
-
-    final String header = (other)? "Messages.Money.HoldingsMultiOther" : "Messages.Money.HoldingsMulti";
-
-    final MessageData msg = new MessageData(header);
-    msg.addReplacement("$world", MISCUtils.worldFormatted(region));
-    msg.addReplacement("$player", account.getName());
-    sender.message(msg);
-
-    TNECore.eco().currency().currencies().forEach((cur)->{
-      if(cur.isBalanceShow()) {
-        printBalance(sender, account, cur, resolve);
-      }
-    });
+    MoneyAdminCommands.other(sender, account, currencyParam, region);
   }
 
   public static void printBalance(final CmdSource<?> sender, final Account account, final Currency currency, final String region) {
@@ -555,107 +272,7 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <player> <amount> [currency] [from:account]
   public static void onPay(final CmdSource<?> sender, final Account acc, final ParseMoney parseMoney, final Currency currency) {
 
-    parseMoney.normalizeParameters(currency, DEFAULT_WORLD);
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.pay." + parseMoney.currency().getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "pay");
-        data.addReplacement("$currency", parseMoney.currency().getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(parseMoney.amount().compareTo(BigDecimal.ZERO) < 0) {
-      sender.message(new MessageData("Messages.Money.Negative"));
-      return;
-    }
-
-    final Optional<Account> senderAccount = BaseCommand.account(sender, "pay");
-
-    final Optional<Account> accountOpt = BaseCommand.account(acc.getIdentifier(), "payreceive");
-    final Account account = accountOpt.orElse(acc);
-
-    if(senderAccount.isEmpty()) {
-      final MessageData data = new MessageData("Messages.General.NoPlayer");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
-    if(senderAccount.get().getIdentifier().equals(account.getIdentifier())) {
-      final MessageData data = new MessageData("Messages.Money.SelfPay");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
-    if(!MainConfig.yaml().getBoolean("Core.Commands.Pay.Offline", true)) {
-      if(!(account instanceof PlayerAccount) || !((PlayerAccount)account).isOnline()) {
-
-        sender.message(new MessageData("Messages.Money.PayFailedOnline"));
-        return;
-      }
-    }
-
-    if(MainConfig.yaml().getInt("Core.Commands.Pay.Radius", 0) > 0) {
-      final MessageData data = new MessageData("Messages.Money.PayFailedDistance");
-      data.addReplacement("$distance", String.valueOf(MainConfig.yaml().getInt("Core.Commands.Pay.Radius")));
-
-      if(!(senderAccount.get() instanceof PlayerAccount) || !((PlayerAccount)senderAccount.get()).isOnline()
-         || !(account instanceof PlayerAccount) || !((PlayerAccount)account).isOnline()) {
-        sender.message(data);
-        return;
-      }
-
-      final Optional<PlayerProvider> senderPlayer = ((PlayerAccount)senderAccount.get()).getPlayer();
-      final Optional<PlayerProvider> playerPlayer = ((PlayerAccount)account).getPlayer();
-      if(senderPlayer.isEmpty() || playerPlayer.isEmpty()
-         || senderPlayer.get().getLocation().isEmpty() || playerPlayer.get().getLocation().isEmpty()) {
-        sender.message(data);
-        return;
-      }
-
-      if(senderPlayer.get().getLocation().get().distance(playerPlayer.get().getLocation().get()) > MainConfig.yaml().getInt("Core.Commands.Pay.Radius")) {
-        sender.message(data);
-        return;
-      }
-    }
-
-    final HoldingsModifier modifier = new HoldingsModifier(BaseCommand.region(sender),
-                                                           parseMoney.currency().getUid(),
-                                                           parseMoney.amount()
-    );
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    final Transaction transaction = new Transaction("pay")
-            .to(account, modifier)
-            .from(senderAccount.get(), modifier.counter())
-            .processor(EconomyManager.baseProcessor())
-            .source(new PlayerSource(sourceID));
-
-    final Optional<Receipt> receipt = processTransaction(sender, transaction, account.getName(), parseMoney.amount());
-    if(receipt.isPresent()) {
-      final MessageData data = new MessageData("Messages.Money.Paid");
-      data.addReplacement("$player", account.getName());
-      data.addReplacement("$currency", parseMoney.currency().getIdentifier());
-      data.addReplacement("$amount", CurrencyFormatter.format(account,
-                                                              modifier.asEntry()));
-      sender.message(data);
-
-      final MessageData msgData = new MessageData("Messages.Money.Received");
-      msgData.addReplacement("$player", (sender.name() == null)? MainConfig.yaml().getString("Core.Server.Account.Name") : sender.name());
-      msgData.addReplacement("$amount", CurrencyFormatter.format(account, modifier.asEntry()));
-      MessageHandler.send(account.getIdentifier(), msgData.grab(account.getIdentifier()));
-
-      if(account.isPlayer() && ((PlayerAccount)account).isOnline()) {
-
-        final Optional<PlayerProvider> provider = PluginCore.server().findPlayer(((PlayerAccount)account).getUUID());
-        provider.ifPresent(playerProvider->playerProvider.message(msgData));
-      }
-    }
+    MoneyTransferCommands.pay(sender, acc, parseMoney, currency);
   }
 
   //ArgumentsParser: <player> <amount> [currency]
@@ -880,192 +497,19 @@ public class MoneyCommand extends BaseCommand {
   //ArgumentsParser: <player> <amount> [world] [currency]
   public static void onTake(final CmdSource<?> sender, final Account account, final ParseMoney parseMoney, final Currency currencyParam, final String regionParam) {
 
-    parseMoney.normalizeParameters(currencyParam, regionParam);
-
-    String region = parseMoney.region();
-    final Currency currency = parseMoney.currency();
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.take." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "take funds");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(player.isPresent() && region.equalsIgnoreCase("world-113")) {
-      region = player.get().world();
-    }
-
-    region = TNECore.eco().region().resolve(region);
-
-
-    final HoldingsModifier modifier = new HoldingsModifier(region,
-                                                           currency.getUid(),
-                                                           parseMoney.amount()
-    );
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    final Transaction transaction = new Transaction("take")
-            .to(account, modifier.counter())
-            .processor(EconomyManager.baseProcessor())
-            .source(new PlayerSource(sourceID));
-
-    final Optional<Receipt> receipt = processTransaction(sender, transaction, account.getName(), parseMoney.amount());
-    if(receipt.isPresent()) {
-      final MessageData data = new MessageData("Messages.Money.Took");
-      data.addReplacement("$player", account.getName());
-      data.addReplacement("$currency", currency.getIdentifier());
-      data.addReplacement("$amount", CurrencyFormatter.format(account,
-                                                              modifier.asEntry()));
-      sender.message(data);
-
-      final MessageData msgData = new MessageData("Messages.Money.Taken");
-      msgData.addReplacement("$player", (sender.name() == null)? MainConfig.yaml().getString("Core.Server.Account.Name") : sender.name());
-      msgData.addReplacement("$currency", currency.getIdentifier());
-      msgData.addReplacement("$amount", CurrencyFormatter.format(account, modifier.asEntry()));
-      MessageHandler.send(account.getIdentifier(), msgData.grab(account.getIdentifier()));
-
-      if(account.isPlayer() && ((PlayerAccount)account).isOnline()) {
-
-        final Optional<PlayerProvider> provider = ((PlayerAccount)account).getPlayer();
-
-        provider.ifPresent(playerProvider->playerProvider.message(msgData));
-      }
-    }
+    MoneyAdminCommands.take(sender, account, parseMoney, currencyParam, regionParam);
   }
 
   //ArgumentsParser: [page] [currency:name] [world:world] [limit:#]
   public static void onTop(final CmdSource<?> sender, Integer page, final Currency currencyParam, final Boolean refresh) {
 
-    final Optional<PlayerProvider> player = sender.player();
-
-    String region = DEFAULT_WORLD;
-    if(player.isPresent()) {
-      region = player.get().world();
-    }
-
-    region = TNECore.eco().region().resolve(region);
-
-    final Currency currency = (currencyParam == null)? TNECore.eco().currency().defaultCurrency(region) : currencyParam;
-
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.top." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "balance top");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    final Optional<Account> senderAccount = BaseCommand.account(sender, "top");
-
-    if(player.isPresent() && TNECore.eco().region().getDisabledRegions().contains(player.get().world())) {
-
-      final MessageData regionMSG = new MessageData("Messages.General.Disabled");
-      sender.message(regionMSG);
-      return;
-    }
-
-    if(refresh && (player.isEmpty() || player.get().hasPermission("tne.money.top.refresh"))) {
-
-      TopManager.instance().load();
-    }
-    final int max = Math.max(1, TNECore.eco().getTopManager().page(currency.getUid()));
-
-    if(page < 1) page = 1;
-    if(page > max) page = max;
-
-    final TopPage<String> pageEntry = TNECore.eco().getTopManager().page(page, currency.getUid());
-    if(pageEntry != null) {
-      final MessageData data = new MessageData("Messages.Money.Top");
-      data.addReplacement("$page", String.valueOf(page));
-      data.addReplacement("$page_top", String.valueOf(max));
-      sender.message(data);
-
-      final int adjusted = (page - 1) * TOP_PER_PAGE;
-      int i = 1;
-      for(final Map.Entry<String, BigDecimal> entry : pageEntry.getValues().entrySet()) {
-        final MessageData en = new MessageData("Messages.Money.TopEntry");
-        en.addReplacement("$pos", (adjusted + i));
-        en.addReplacement("$player", entry.getKey());
-        en.addReplacement("$amount", CurrencyFormatter.format(senderAccount.orElse(null), new HoldingsEntry(TNECore.eco().region().defaultRegion(), currency.getUid(), entry.getValue(), EconomyManager.NORMAL)));
-        sender.message(en);
-
-        i++;
-      }
-    }
+    MoneyAdminCommands.top(sender, page, currencyParam, refresh);
   }
 
   //ArgumentsParser: <amount> [currency]
   public static void onWithdraw(final CmdSource<?> sender, final ParseMoney parseMoney, final Currency currencyParam, final String regionParam) {
 
-    parseMoney.normalizeParameters(currencyParam, regionParam);
-
-    String region = parseMoney.region();
-    final Currency currency = parseMoney.currency();
-
-    final Optional<PlayerProvider> player = sender.player();
-    if(EconomyManager.limitCurrency() && player.isPresent()) {
-      if(!player.get().hasPermission("tne.money.withdraw." + currency.getIdentifier())) {
-        final MessageData data = new MessageData("Messages.Account.BlockedAction");
-        data.addReplacement("$action", "withdraw funds");
-        data.addReplacement("$currency", currency.getDisplay());
-        sender.message(data);
-        return;
-      }
-    }
-
-    if(player.isPresent() && region.equalsIgnoreCase("world-113")) {
-      region = player.get().world();
-    }
-
-    if(parseMoney.amount().compareTo(BigDecimal.ZERO) < 0) {
-      sender.message(new MessageData("Messages.Money.Negative"));
-      return;
-    }
-
-    final Optional<Account> senderAccount = BaseCommand.account(sender, "withdraw");
-    if(senderAccount.isEmpty()) {
-      final MessageData data = new MessageData("Messages.General.NoPlayer");
-      data.addReplacement("$player", sender.name());
-      sender.message(data);
-      return;
-    }
-
-    region = TNECore.eco().region().resolve(region);
-
-    if(!(currency.type() instanceof MixedType)) {
-      sender.message(new MessageData("Messages.Money.NotMixed"));
-      return;
-    }
-
-    final HoldingsModifier modifier = new HoldingsModifier(BaseCommand.region(sender),
-                                                           currency.getUid(),
-                                                           parseMoney.amount(),
-                                                           EconomyManager.ITEM_ONLY
-    );
-
-    final UUID sourceID = (sender.identifier().isPresent())? sender.identifier().get() : TNECore.instance().getServerAccount();
-    final Transaction transaction = new Transaction("withdraw")
-            .to(senderAccount.get(), modifier)
-            .from(senderAccount.get(), modifier.counter(EconomyManager.VIRTUAL))
-            .processor(EconomyManager.baseProcessor())
-            .source(new PlayerSource(sourceID));
-
-    final Optional<Receipt> receipt = processTransaction(sender, transaction, senderAccount.get().getName(), parseMoney.amount());
-    if(receipt.isPresent()) {
-
-      final MessageData data = new MessageData("Messages.Money.Withdrawn");
-      data.addReplacement("$currency", currency.getIdentifier());
-      data.addReplacement("$amount", CurrencyFormatter.format(senderAccount.get(),
-                                                              modifier.asEntry()));
-      sender.message(data);
-    }
+    MoneyTransferCommands.withdraw(sender, parseMoney, currencyParam, regionParam);
   }
 
   public static Optional<Receipt> processTransaction(final CmdSource<?> sender, final Transaction transaction, final String modifiedAccount, final BigDecimal modifier) {

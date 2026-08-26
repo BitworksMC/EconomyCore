@@ -74,66 +74,77 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
                                + " amount=" + abstractStack.amount()
                                + " hasMeta=" + insertion.hasItemMeta(), DebugLevel.DEVELOPER);
 
-      int amountLeft = abstractStack.amount();
-      final int originalAmount = amountLeft;
-      final ItemStack[] contents = inventory.getContents();
-      boolean sawShulker = false;
-      int shulkerCount = 0;
-
-      for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
-
-        final ItemStack containerStack = contents[slot];
-        if(containerStack == null || !isShulkerBox(containerStack.getType())) {
-          continue;
-        }
-
-        sawShulker = true;
-        shulkerCount++;
-
-        final ItemMeta itemMeta = containerStack.getItemMeta();
-        if(!(itemMeta instanceof final BlockStateMeta blockStateMeta)) {
-          continue;
-        }
-
-        final BlockState blockState = blockStateMeta.getBlockState();
-        if(!(blockState instanceof final Container container)) {
-          PluginCore.log().debug("Shulker insert slot=" + slot + " has BlockStateMeta but not a Container state.", DebugLevel.DEVELOPER);
-          continue;
-        }
-
-        PluginCore.log().debug("Shulker insert attempting slot=" + slot
-                                 + " shulkerInvSize=" + container.getInventory().getSize()
-                                 + " amountLeftBefore=" + amountLeft, DebugLevel.DEVELOPER);
-
-        amountLeft = addToInventory(container.getInventory(), insertion, amountLeft);
-
-        PluginCore.log().debug("Shulker insert completed slot=" + slot
-                                 + " amountLeftAfter=" + amountLeft, DebugLevel.DEVELOPER);
-
-        blockStateMeta.setBlockState(blockState);
-        containerStack.setItemMeta(blockStateMeta);
-        inventory.setItem(slot, containerStack);
-      }
+      final int originalAmount = abstractStack.amount();
+      final ContainerInsertion result = insertIntoShulkers(inventory, insertion, abstractStack.amount());
+      final int amountLeft = result.amountLeft();
 
       if(amountLeft > 0) {
-        if(!sawShulker) {
+        if(!result.sawShulker()) {
           PluginCore.log().debug("Shulker insert found no shulker boxes in target inventory.", DebugLevel.DEVELOPER);
         } else {
           PluginCore.log().debug("Shulker insert left amount after scan: " + amountLeft
                                    + " material: " + insertion.getType().name()
-                                   + " shulkerCount=" + shulkerCount, DebugLevel.DEVELOPER);
+                                   + " shulkerCount=" + result.shulkerCount(), DebugLevel.DEVELOPER);
         }
         remaining.add(abstractStack.amount(amountLeft));
       } else {
         PluginCore.log().debug("Shulker insert success amount=" + originalAmount
                                  + " material=" + insertion.getType().name()
-                                 + " shulkerCount=" + shulkerCount, DebugLevel.DEVELOPER);
+                                 + " shulkerCount=" + result.shulkerCount(), DebugLevel.DEVELOPER);
       }
     }
 
     PluginCore.log().debug("Shulker insert done. remainingStacks=" + remaining.size()
                              + " remainingAmount=" + remaining.stream().mapToInt(AbstractItemStack::amount).sum(), DebugLevel.DEVELOPER);
 
+    return remaining;
+  }
+
+  private ContainerInsertion insertIntoShulkers(final Inventory inventory, final ItemStack insertion,
+                                                final int amount) {
+
+    int amountLeft = amount;
+    boolean sawShulker = false;
+    int shulkerCount = 0;
+    final ItemStack[] contents = inventory.getContents();
+
+    for(int slot = 0; slot < contents.length && amountLeft > 0; slot++) {
+      final ItemStack containerStack = contents[slot];
+      if(containerStack == null || !isShulkerBox(containerStack.getType())) {
+        continue;
+      }
+      sawShulker = true;
+      shulkerCount++;
+      amountLeft = insertIntoContainer(inventory, containerStack, slot, insertion, amountLeft);
+    }
+    return new ContainerInsertion(amountLeft, sawShulker, shulkerCount);
+  }
+
+  private int insertIntoContainer(final Inventory inventory, final ItemStack containerStack, final int slot,
+                                  final ItemStack insertion, final int amountLeft) {
+
+    final ItemMeta itemMeta = containerStack.getItemMeta();
+    if(!(itemMeta instanceof final BlockStateMeta blockStateMeta)) {
+      return amountLeft;
+    }
+
+    final BlockState blockState = blockStateMeta.getBlockState();
+    if(!(blockState instanceof final Container container)) {
+      PluginCore.log().debug("Shulker insert slot=" + slot
+                             + " has BlockStateMeta but not a Container state.", DebugLevel.DEVELOPER);
+      return amountLeft;
+    }
+
+    PluginCore.log().debug("Shulker insert attempting slot=" + slot
+                           + " shulkerInvSize=" + container.getInventory().getSize()
+                           + " amountLeftBefore=" + amountLeft, DebugLevel.DEVELOPER);
+    final int remaining = addToInventory(container.getInventory(), insertion, amountLeft);
+    PluginCore.log().debug("Shulker insert completed slot=" + slot
+                           + " amountLeftAfter=" + remaining, DebugLevel.DEVELOPER);
+
+    blockStateMeta.setBlockState(blockState);
+    containerStack.setItemMeta(blockStateMeta);
+    inventory.setItem(slot, containerStack);
     return remaining;
   }
 
@@ -212,4 +223,6 @@ public class BukkitItemCalculations extends ItemCalculations<Inventory> {
 
     return amountLeft;
   }
+
+  private record ContainerInsertion(int amountLeft, boolean sawShulker, int shulkerCount) { }
 }

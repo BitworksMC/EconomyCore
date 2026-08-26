@@ -165,31 +165,7 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
     final BigDecimal balance = new BigDecimal(cur.getString("Options.Balance", "200.00"));
     final boolean commandSet = cur.getBoolean("Options.Commands", false);
 
-    //Added in build 28, needs removed by build 32.
-    boolean uuidAsId = false;
-    if(!cur.contains("Info.UUIDAsId")) {
-      cur.set("Info.UUIDAsId", false);
-      MISCUtils.setComment(cur, "Info.UUIDAsId", "Whether to use the Identifier config as the currency's UUID. Not Recommended. Can lead to issues in the future");
-    } else {
-      uuidAsId = cur.getBoolean("Info.UUIDAsId");
-    }
-
-
-    final UUID check = UUID.nameUUIDFromBytes(identifier.getBytes(StandardCharsets.UTF_8));
-    if(cur.contains("Info.UUID")) {
-
-      final UUID id = (uuidAsId && !cur.getString("Info.UUID").equalsIgnoreCase(check.toString()))? check : UUID.fromString(cur.getString("Info.UUID"));
-
-
-      final Optional<Currency> curOption = TNECore.eco().currency().find(id);
-      if(curOption.isEmpty()) {
-        currency.setUid(UUID.fromString(cur.getString("Info.UUID")));
-      }
-    } else {
-      if(uuidAsId) {
-        currency.setUid(check);
-      }
-    }
+    configureIdentifier(cur, currency, identifier);
 
     currency.setIdentifier(identifier);
     currency.setFile(curDirectory.getName());
@@ -215,80 +191,10 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
     currency.setMinorWeight(minorWeight);
     currency.commandSet(commandSet);
 
-    final boolean global = cur.getBoolean("Options.Global.Enabled", true);
-    final boolean globalDefault = cur.getBoolean("Options.Global.Default", false);
-    currency.getRegions().put("global", new CurrencyRegion("global", global, globalDefault));
-
-    if(cur.contains("Options.MultiRegion.Regions")) {
-      for(final Object regionObj : cur.getSection("Options.MultiRegion.Regions").getKeys()) {
-
-        final String region = (String)regionObj;
-        final boolean isDefault = cur.getBoolean("Options.MultiRegion.Regions." + region + ".Default", true);
-        currency.getRegions().put(region, new CurrencyRegion(region, true, isDefault));
-      }
-    }
-
-    if(cur.contains("Options.Limit") && cur.isSection("Options.Limit.Permissions")) {
-
-      if(cur.getBoolean("Options.Limit.Enabled", false)) {
-
-        for(final Object amountObj : cur.getSection("Options.Limit.Permissions").getKeys()) {
-
-          final String amount = (String)amountObj;
-          final String permission = cur.getString("Options.Limit.Permissions." + amount);
-          final BigDecimal limit = new BigDecimal(amount);
-
-          currency.limits().put(limit, permission);
-        }
-      }
-    }
-
-    if(cur.contains("Converting") && cur.getSection("Converting") != null) {
-      final Set<Object> converting = cur.getSection("Converting").getKeys();
-
-      for(final Object strObj : converting) {
-
-        final String str = (String)strObj;
-        currency.getConversion().put(str, cur.getDouble("Converting." + str, 1.0));
-      }
-    }
-
-    //Load our item-back currency configurations.
-    if(currency instanceof final ItemCurrency item) {
-      item.setEnderChest(cur.getBoolean("Item.EnderChest", true));
-      item.setEnderFill(cur.getBoolean("Item.EnderFill", true));
-      item.setImportItem(cur.getBoolean("Item.ImportItems", true));
-      item.blockCraft(cur.getBoolean("Item.BlockCrafting", false));
-      item.shulker(cur.getBoolean("Item.Shulker", true));
-      item.bundle(cur.getBoolean("Item.Bundle", false));
-    }
-
-    //Load our note configurations.
-    if(cur.getBoolean("Note.Notable", true)) {
-
-      //Note Item configs
-      final String material = cur.getString("Note.Item.Material", "PAPER");
-
-      final BigDecimal minimum = new BigDecimal(cur.getString("Note.Minimum", "0.00"));
-
-      final Note note = new Note(material, minimum, cur.getString("Note.Fee", "0.00"));
-
-      note.setTexture(cur.getString("Note.Item.Texture", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDA0NzE5YjNiOTdkMTk1YTIwNTcxOGI2ZWUyMWY1Yzk1Y2FmYTE2N2U3YWJjYTg4YTIxMDNkNTJiMzdkNzIyIn19fQ=="));
-      note.setCustomModelData(cur.getInt("Note.Item.ModelData", -1));
-
-      if(cur.contains("Note.Item.Enchantments")) {
-        note.setEnchantments(cur.getStringList("Note.Item.Enchantments"));
-      } else if(cur.contains("Note.Item.Item.Enchantments")) {
-        note.setEnchantments(cur.getStringList("Note.Item.Item.Enchantments"));
-      }
-
-      if(cur.contains("Note.Item.Flags")) {
-        note.setFlags(cur.getStringList("Note.Item.Flags"));
-      } else if(cur.contains("Note.Item.Item.Flags")) {
-        note.setFlags(cur.getStringList("Note.Item.Item.Flags"));
-      }
-      currency.setNote(note);
-    }
+    configureRegionsAndLimits(cur, currency);
+    configureConversions(cur, currency);
+    configureItemOptions(cur, currency);
+    configureNote(cur, currency);
 
     final CurrencyLoadCallback currencyLoad = new CurrencyLoadCallback(currency);
     if(PluginCore.callbacks().call(currencyLoad)) {
@@ -309,6 +215,98 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
       PluginCore.log().error("Failed to save currency YAML!", e, DebugLevel.OFF);
     }
     return true;
+  }
+
+  private void configureIdentifier(final YamlDocument cur, final Currency currency,
+                                   final String identifier) {
+
+    boolean uuidAsId = false;
+    if(!cur.contains("Info.UUIDAsId")) {
+      cur.set("Info.UUIDAsId", false);
+      MISCUtils.setComment(cur, "Info.UUIDAsId", "Whether to use the Identifier config as the currency's UUID. Not Recommended. Can lead to issues in the future");
+    } else {
+      uuidAsId = cur.getBoolean("Info.UUIDAsId");
+    }
+
+    final UUID check = UUID.nameUUIDFromBytes(identifier.getBytes(StandardCharsets.UTF_8));
+    if(cur.contains("Info.UUID")) {
+      final UUID id = uuidAsId && !cur.getString("Info.UUID").equalsIgnoreCase(check.toString())
+                      ? check : UUID.fromString(cur.getString("Info.UUID"));
+      if(TNECore.eco().currency().find(id).isEmpty()) {
+        currency.setUid(UUID.fromString(cur.getString("Info.UUID")));
+      }
+    } else if(uuidAsId) {
+      currency.setUid(check);
+    }
+  }
+
+  private void configureRegionsAndLimits(final YamlDocument cur, final Currency currency) {
+
+    final boolean global = cur.getBoolean("Options.Global.Enabled", true);
+    final boolean globalDefault = cur.getBoolean("Options.Global.Default", false);
+    currency.getRegions().put("global", new CurrencyRegion("global", global, globalDefault));
+    if(cur.contains("Options.MultiRegion.Regions")) {
+      for(final Object regionObj : cur.getSection("Options.MultiRegion.Regions").getKeys()) {
+        final String region = (String)regionObj;
+        final boolean isDefault = cur.getBoolean("Options.MultiRegion.Regions." + region + ".Default", true);
+        currency.getRegions().put(region, new CurrencyRegion(region, true, isDefault));
+      }
+    }
+
+    if(cur.contains("Options.Limit") && cur.isSection("Options.Limit.Permissions")
+       && cur.getBoolean("Options.Limit.Enabled", false)) {
+      for(final Object amountObj : cur.getSection("Options.Limit.Permissions").getKeys()) {
+        final String amount = (String)amountObj;
+        currency.limits().put(new BigDecimal(amount), cur.getString("Options.Limit.Permissions." + amount));
+      }
+    }
+  }
+
+  private void configureConversions(final YamlDocument cur, final Currency currency) {
+
+    if(!cur.contains("Converting") || cur.getSection("Converting") == null) {
+      return;
+    }
+    final Set<Object> converting = cur.getSection("Converting").getKeys();
+    for(final Object strObj : converting) {
+      final String conversion = (String)strObj;
+      currency.getConversion().put(conversion, cur.getDouble("Converting." + conversion, 1.0));
+    }
+  }
+
+  private void configureItemOptions(final YamlDocument cur, final Currency currency) {
+
+    if(currency instanceof final ItemCurrency item) {
+      item.setEnderChest(cur.getBoolean("Item.EnderChest", true));
+      item.setEnderFill(cur.getBoolean("Item.EnderFill", true));
+      item.setImportItem(cur.getBoolean("Item.ImportItems", true));
+      item.blockCraft(cur.getBoolean("Item.BlockCrafting", false));
+      item.shulker(cur.getBoolean("Item.Shulker", true));
+      item.bundle(cur.getBoolean("Item.Bundle", false));
+    }
+  }
+
+  private void configureNote(final YamlDocument cur, final Currency currency) {
+
+    if(!cur.getBoolean("Note.Notable", true)) {
+      return;
+    }
+    final String material = cur.getString("Note.Item.Material", "PAPER");
+    final BigDecimal minimum = new BigDecimal(cur.getString("Note.Minimum", "0.00"));
+    final Note note = new Note(material, minimum, cur.getString("Note.Fee", "0.00"));
+    note.setTexture(cur.getString("Note.Item.Texture", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDA0NzE5YjNiOTdkMTk1YTIwNTcxOGI2ZWUyMWY1Yzk1Y2FmYTE2N2U3YWJjYTg4YTIxMDNkNTJiMzdkNzIyIn19fQ=="));
+    note.setCustomModelData(cur.getInt("Note.Item.ModelData", -1));
+    if(cur.contains("Note.Item.Enchantments")) {
+      note.setEnchantments(cur.getStringList("Note.Item.Enchantments"));
+    } else if(cur.contains("Note.Item.Item.Enchantments")) {
+      note.setEnchantments(cur.getStringList("Note.Item.Item.Enchantments"));
+    }
+    if(cur.contains("Note.Item.Flags")) {
+      note.setFlags(cur.getStringList("Note.Item.Flags"));
+    } else if(cur.contains("Note.Item.Item.Flags")) {
+      note.setFlags(cur.getStringList("Note.Item.Item.Flags"));
+    }
+    currency.setNote(note);
   }
 
   /**
@@ -394,115 +392,7 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
     denomination.setSingle(single);
     denomination.setPlural(plural);
 
-    if(denomination instanceof final ItemDenomination item) {
-
-      item.setName(denom.getString("Options.Name", ""));
-
-      item.maxStack(denom.getInt("Options.MaxStack", 0));
-
-      final List<String> loreStr = denom.getStringList("Options.Lore", new ArrayList<>());
-      final LinkedList<Component> lore = new LinkedList<>();
-      for(final String str : loreStr) {
-
-        lore.add(MiniMessage.miniMessage().deserialize(str));
-      }
-
-      item.checks().addAll(denom.getStringList("Checks", new ArrayList<>()));
-
-      String provider = "vanilla";
-      String providerID = "";
-
-      if(denom.getBoolean("Integrations.ItemsAdder.Enabled", false)) {
-
-        provider = "itemsadder";
-        providerID = denom.getString("Integrations.ItemsAdder.Item");
-      }
-
-      if(denom.getBoolean("Integrations.Oraxen.Enabled", false)) {
-
-        provider = "oraxen";
-        providerID = denom.getString("Integrations.Oraxen.Item");
-      }
-
-      if(denom.getBoolean("Integrations.Nexo.Enabled", false)) {
-
-        provider = "nexo";
-        providerID = denom.getString("Integrations.Nexo.Item");
-      }
-
-      if(denom.getBoolean("Integrations.Nova.Enabled", false)) {
-
-        provider = "nova";
-        providerID = denom.getString("Integrations.Nova.Item");
-      }
-
-      if(denom.getBoolean("Integrations.SlimeFun.Enabled", false)) {
-
-        provider = "slimefun";
-        providerID = denom.getString("Integrations.Slimefun.Item");
-      }
-
-      item.provider(provider);
-      item.providerID(providerID);
-
-      item.setLore(lore);
-      item.setCustomModel(denom.getInt("Options.ModelData", -1));
-      item.setTexture(denom.getString("Options.Texture", ""));
-
-      if(denom.getBoolean("Options.ItemModel.Enabled", false)) {
-
-        item.itemModel(denom.getString("Options.ItemModel.Model", ""));
-        item.modelColours().addAll(denom.getStringList("Options.ItemModel.Colours", new ArrayList<>()));
-        item.modelStrings().addAll(denom.getStringList("Options.ItemModel.Strings", new ArrayList<>()));
-
-        for(final String str : denom.getStringList("Options.ItemModel.Booleans", new ArrayList<>())) {
-
-          item.modelBooleans().add(Boolean.valueOf(str));
-        }
-
-        for(final String str : denom.getStringList("Options.ItemModel.Floats", new ArrayList<>())) {
-
-          item.modelFloats().add(Float.valueOf(str));
-        }
-      }
-
-      if(denom.contains("Options.Enchantments")) {
-        item.enchantments(denom.getStringList("Options.Enchantments"));
-      }
-
-      if(denom.contains("Options.Flags")) {
-        item.flags(denom.getStringList("Options.Flags"));
-      }
-
-      //Crafting
-      if(denom.getBoolean("Options.Crafting.Enabled", false)) {
-        final boolean shapeless = denom.getBoolean("Options.Crafting.Shapeless", false);
-        final int amount = denom.getInt("Options.Crafting.Amount", 1);
-
-        final AbstractItemStack<?> craftingItem = TNECore.instance().denominationToStack(item).amount(amount);
-
-        final CraftingRecipe recipe = new CraftingRecipe(!shapeless, amount, craftingItem);
-
-        for(final String materials : denom.getStringList("Options.Crafting.Materials")) {
-
-          final String[] split = materials.split(":");
-          if(split.length >= 2) {
-            recipe.getIngredients().put(split[0].charAt(0), split[1]);
-          }
-        }
-
-        int i = 0;
-        for(final String row : denom.getStringList("Options.Crafting.Recipe")) {
-          if(i > 2) break;
-
-          recipe.getRows()[i] = row;
-
-          i++;
-        }
-
-        PluginCore.server().registerCrafting(currency.getIdentifier() + ":" + single, recipe);
-      }
-    }
+    configureItemDenomination(denom, currency, denomination, single);
 
     final DenominationLoadCallback denomCallback = new DenominationLoadCallback(currency, denomination);
     if(PluginCore.callbacks().call(denomCallback)) {
@@ -511,5 +401,101 @@ public class DefaultCurrencyLoader implements CurrencyLoader {
 
     currency.getDenominations().put(weight, denomination);
     return true;
+  }
+
+  private void configureItemDenomination(final YamlDocument denom, final Currency currency,
+                                         final Denomination denomination, final String single) {
+
+    if(!(denomination instanceof final ItemDenomination item)) {
+      return;
+    }
+    item.setName(denom.getString("Options.Name", ""));
+    item.maxStack(denom.getInt("Options.MaxStack", 0));
+    final LinkedList<Component> lore = new LinkedList<>();
+    for(final String str : denom.getStringList("Options.Lore", new ArrayList<>())) {
+      lore.add(MiniMessage.miniMessage().deserialize(str));
+    }
+    item.checks().addAll(denom.getStringList("Checks", new ArrayList<>()));
+    configureProvider(denom, item);
+    item.setLore(lore);
+    item.setCustomModel(denom.getInt("Options.ModelData", -1));
+    item.setTexture(denom.getString("Options.Texture", ""));
+    configureItemModel(denom, item);
+    if(denom.contains("Options.Enchantments")) {
+      item.enchantments(denom.getStringList("Options.Enchantments"));
+    }
+    if(denom.contains("Options.Flags")) {
+      item.flags(denom.getStringList("Options.Flags"));
+    }
+    configureCrafting(denom, currency, item, single);
+  }
+
+  private void configureProvider(final YamlDocument denom, final ItemDenomination item) {
+
+    item.provider("vanilla");
+    item.providerID("");
+    if(denom.getBoolean("Integrations.ItemsAdder.Enabled", false)) {
+      item.provider("itemsadder");
+      item.providerID(denom.getString("Integrations.ItemsAdder.Item"));
+    }
+    if(denom.getBoolean("Integrations.Oraxen.Enabled", false)) {
+      item.provider("oraxen");
+      item.providerID(denom.getString("Integrations.Oraxen.Item"));
+    }
+    if(denom.getBoolean("Integrations.Nexo.Enabled", false)) {
+      item.provider("nexo");
+      item.providerID(denom.getString("Integrations.Nexo.Item"));
+    }
+    if(denom.getBoolean("Integrations.Nova.Enabled", false)) {
+      item.provider("nova");
+      item.providerID(denom.getString("Integrations.Nova.Item"));
+    }
+    if(denom.getBoolean("Integrations.SlimeFun.Enabled", false)) {
+      item.provider("slimefun");
+      item.providerID(denom.getString("Integrations.Slimefun.Item"));
+    }
+  }
+
+  private void configureItemModel(final YamlDocument denom, final ItemDenomination item) {
+
+    if(!denom.getBoolean("Options.ItemModel.Enabled", false)) {
+      return;
+    }
+    item.itemModel(denom.getString("Options.ItemModel.Model", ""));
+    item.modelColours().addAll(denom.getStringList("Options.ItemModel.Colours", new ArrayList<>()));
+    item.modelStrings().addAll(denom.getStringList("Options.ItemModel.Strings", new ArrayList<>()));
+    for(final String str : denom.getStringList("Options.ItemModel.Booleans", new ArrayList<>())) {
+      item.modelBooleans().add(Boolean.valueOf(str));
+    }
+    for(final String str : denom.getStringList("Options.ItemModel.Floats", new ArrayList<>())) {
+      item.modelFloats().add(Float.valueOf(str));
+    }
+  }
+
+  private void configureCrafting(final YamlDocument denom, final Currency currency,
+                                 final ItemDenomination item, final String single) {
+
+    if(!denom.getBoolean("Options.Crafting.Enabled", false)) {
+      return;
+    }
+    final boolean shapeless = denom.getBoolean("Options.Crafting.Shapeless", false);
+    final int amount = denom.getInt("Options.Crafting.Amount", 1);
+    final AbstractItemStack<?> craftingItem = TNECore.instance().denominationToStack(item).amount(amount);
+    final CraftingRecipe recipe = new CraftingRecipe(!shapeless, amount, craftingItem);
+    for(final String materials : denom.getStringList("Options.Crafting.Materials")) {
+      final String[] split = materials.split(":");
+      if(split.length >= 2) {
+        recipe.getIngredients().put(split[0].charAt(0), split[1]);
+      }
+    }
+    int index = 0;
+    for(final String row : denom.getStringList("Options.Crafting.Recipe")) {
+      if(index > 2) {
+        break;
+      }
+      recipe.getRows()[index] = row;
+      index++;
+    }
+    PluginCore.server().registerCrafting(currency.getIdentifier() + ":" + single, recipe);
   }
 }

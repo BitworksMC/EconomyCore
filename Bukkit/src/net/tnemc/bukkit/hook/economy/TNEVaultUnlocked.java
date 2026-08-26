@@ -496,197 +496,55 @@ public class TNEVaultUnlocked implements Economy {
   @Override
   public boolean createSharedAccount(final @NotNull String pluginName, final @NotNull UUID accountID, final @NotNull String name, final @NotNull UUID owner) {
 
-    if(TNECore.eco().account().findAccount(name).isPresent() || TNECore.eco().account().findAccount(accountID.toString()).isPresent()) {
-
-      return false;
-    }
-
-    final SharedAccount account = new SharedAccount(accountID, name, owner);
-
-    TNECore.eco().account().getAccounts().put(account.getIdentifier().toString(), account);
-    TNECore.eco().account().uuidProvider().store(new UUIDPair(accountID, name));
-
-    return true;
+    return VaultUnlockedSharedAccounts.create(accountID, name, owner);
   }
 
   @Override
   public boolean isAccountOwner(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      return shared.getOwner().equals(uuid);
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.isOwner(accountID, uuid);
   }
 
   @Override
   public boolean setOwner(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      shared.setOwner(uuid);
-
-      return true;
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.setOwner(accountID, uuid);
   }
 
   @Override
   public boolean isAccountMember(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      return shared.getOwner().equals(uuid) || shared.isMember(uuid);
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.isMember(accountID, uuid);
   }
 
   @Override
   public boolean addAccountMember(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      final Member member = new Member(uuid);
-      shared.getMembers().put(uuid, member);
-      return true;
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.addMember(accountID, uuid);
   }
 
   @Override
   public boolean addAccountMember(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid, final AccountPermission... initialPermissions) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      final Member member = new Member(uuid);
-
-      for(final AccountPermission permission : initialPermissions) {
-
-        final MemberPermissions perm = permissionConversion(permission);
-        if(perm != null) {
-
-          member.addPermission(perm, true);
-        }
-
-      }
-
-      shared.getMembers().put(uuid, member);
-      return true;
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.addMember(accountID, uuid, initialPermissions);
   }
 
   @Override
   public boolean removeAccountMember(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    if(account.isEmpty()) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      shared.getMembers().remove(uuid);
-      return true;
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.removeMember(accountID, uuid);
   }
 
   @Override
   public boolean hasAccountPermission(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid, final @NotNull AccountPermission permission) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    final MemberPermissions perm = permissionConversion(permission);
-    if(account.isEmpty() || perm == null) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      final Optional<Member> member = shared.findMember(uuid);
-      if(member.isPresent()) {
-
-        return member.get().hasPermission(perm);
-      }
-    }
-
-    return false;
+    return VaultUnlockedSharedAccounts.hasPermission(accountID, uuid, permission);
   }
 
   @Override
   public boolean updateAccountPermission(final @NotNull String pluginName, final UUID accountID, final @NotNull UUID uuid, final @NotNull AccountPermission permission, final boolean value) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID.toString());
-    final MemberPermissions perm = permissionConversion(permission);
-    if(account.isEmpty() || perm == null) {
-
-      return false;
-    }
-
-    if(account.get() instanceof final SharedAccount shared) {
-
-      final Optional<Member> member = shared.findMember(uuid);
-      if(member.isPresent()) {
-
-        member.get().addPermission(perm, value);
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private MemberPermissions permissionConversion(final AccountPermission permission) {
-
-    return switch(permission) {
-      case DEPOSIT -> MemberPermissions.DEPOSIT;
-      case WITHDRAW -> MemberPermissions.WITHDRAW;
-      case BALANCE -> MemberPermissions.BALANCE;
-      case TRANSFER_OWNERSHIP -> MemberPermissions.TRANSFER_OWNERSHIP;
-      case INVITE_MEMBER -> MemberPermissions.ADD_MEMBER;
-      case REMOVE_MEMBER -> MemberPermissions.REMOVE_MEMBER;
-      case CHANGE_MEMBER_PERMISSION -> MemberPermissions.MODIFY_MEMBER;
-      case OWNER -> MemberPermissions.OWNERSHIP;
-      case DELETE -> MemberPermissions.DELETE_ACCOUNT;
-    };
+    return VaultUnlockedSharedAccounts.updatePermission(accountID, uuid, permission, value);
   }
 
   private ResponseType fromResult(@Nullable final TransactionResult result) {

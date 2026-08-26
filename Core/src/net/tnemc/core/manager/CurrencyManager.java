@@ -97,41 +97,55 @@ public class CurrencyManager {
     try {
       loader.loadCurrencies(new File(parent, "currency"));
     } catch(final NoValidCurrenciesException ignore) {
-      if(retry) {
-        PluginCore.log().error("No valid currencies found and failed to create USD defaults! Disabling plugin. Configure your currencies properly then retry!", DebugLevel.OFF);
-        return false;
-      }
-
-      PluginCore.log().error("No valid currencies found, attempting to create and load USD defaults.", DebugLevel.OFF);
-
-      //Save our default currency file
-      final File cur = new File(PluginCore.directory(), "currency");
-
-      final int count = (cur.exists())? IOUtil.getYAMLs(cur).length : 0;
-      if(!cur.exists()) {
-        final boolean created = cur.mkdir();
-        if(!created) {
-          PluginCore.log().error("Failed to create plugin currency directory. Disabling plugin.", DebugLevel.OFF);
-          return false;
-        }
-        if(count == 0) {
-          PluginCore.server().saveResource("currency/USD.yml", false);
-        }
-      }
-
-      final File usd = new File(cur, "USD");
-      if(count == 0 && !usd.exists()) {
-        final boolean created = usd.mkdir();
-        if(!created) {
-          PluginCore.log().error("Failed to create plugin USD currency directory. Disabling plugin.", DebugLevel.OFF);
-          return false;
-        }
-        PluginCore.server().saveResource("currency/USD/one.yml", false);
-        PluginCore.server().saveResource("currency/USD/penny.yml", false);
-      }
-      this.retry = true;
-      return load(parent, reset);
+      return recoverWithDefaults(parent, reset);
     }
+    return true;
+  }
+
+  private boolean recoverWithDefaults(final File parent, final boolean reset) {
+
+    if(retry) {
+      PluginCore.log().error("No valid currencies found and failed to create USD defaults! Disabling plugin. Configure your currencies properly then retry!", DebugLevel.OFF);
+      return false;
+    }
+
+    PluginCore.log().error("No valid currencies found, attempting to create and load USD defaults.", DebugLevel.OFF);
+    final File currencyDirectory = new File(PluginCore.directory(), "currency");
+    final int count = currencyDirectory.exists()? IOUtil.getYAMLs(currencyDirectory).length : 0;
+    if(!ensureCurrencyDirectory(currencyDirectory, count) || !ensureUsdDirectory(currencyDirectory, count)) {
+      return false;
+    }
+    this.retry = true;
+    return load(parent, reset);
+  }
+
+  private boolean ensureCurrencyDirectory(final File currencyDirectory, final int count) {
+
+    if(currencyDirectory.exists()) {
+      return true;
+    }
+    if(!currencyDirectory.mkdir()) {
+      PluginCore.log().error("Failed to create plugin currency directory. Disabling plugin.", DebugLevel.OFF);
+      return false;
+    }
+    if(count == 0) {
+      PluginCore.server().saveResource("currency/USD.yml", false);
+    }
+    return true;
+  }
+
+  private boolean ensureUsdDirectory(final File currencyDirectory, final int count) {
+
+    final File usd = new File(currencyDirectory, "USD");
+    if(count != 0 || usd.exists()) {
+      return true;
+    }
+    if(!usd.mkdir()) {
+      PluginCore.log().error("Failed to create plugin USD currency directory. Disabling plugin.", DebugLevel.OFF);
+      return false;
+    }
+    PluginCore.server().saveResource("currency/USD/one.yml", false);
+    PluginCore.server().saveResource("currency/USD/penny.yml", false);
     return true;
   }
 

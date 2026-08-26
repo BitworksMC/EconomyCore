@@ -126,27 +126,7 @@ public class DefaultCurrencySaver implements CurrencySaver {
     MISCUtils.setComment(cur, "Info.UUID", "Used for data saving. Do NOT modify.");
     cur.set("Info.UUID", currency.getUid().toString());
 
-    //World Configurations
-    MISCUtils.setComment(cur, "Options.MultiRegion", "Configurations relating to multi region support.");
-    MISCUtils.setComment(cur, "Options.MultiRegion.Regions", "Configurations relating to regions this currency is enabled in.");
-    for(final CurrencyRegion region : currency.getRegions().values()) {
-
-      if(region.region().equalsIgnoreCase("global")) {
-
-        MISCUtils.setComment(cur, "Options.Global", "Configurations relating to global configurations for this currency.");
-        MISCUtils.setComment(cur, "Options.Global.Enabled", "Should this currency be global?(i.e. usable in every world)");
-        cur.set("Options.Global.Enabled", region.isEnabled());
-
-        MISCUtils.setComment(cur, "Options.Global.Default", "Should this currency be the global default?");
-        cur.set("Options.Global.Default", region.isDefault());
-        continue;
-      }
-      MISCUtils.setComment(cur, "Options.MultiRegion.Regions." + region.region() + ".Enabled", "Should this currency be enabled in this world?");
-      cur.set("Options.MultiRegion.Regions." + region.region() + ".Enabled", region.isEnabled());
-
-      MISCUtils.setComment(cur, "Options.MultiRegion.Regions." + region.region() + ".Default", "Should this currency be the default in this world?");
-      cur.set("Options.MultiRegion.Regions." + region.region() + ".Default", region.isDefault());
-    }
+    writeRegions(cur, currency);
 
     MISCUtils.setComment(cur, "Options.Disabled", "Whether this currency is enabled.");
     cur.set("Options.Disabled", false);
@@ -175,28 +155,7 @@ public class DefaultCurrencySaver implements CurrencySaver {
     MISCUtils.setComment(cur, "Options.Minor_Weight", "This is used to determine how many of minor it takes to make one major");
     cur.set("Options.Minor_Weight", currency.getMinorWeight());
 
-    //Load our item-back currency configurations.
-    if(currency instanceof final ItemCurrency item) {
-
-      MISCUtils.setComment(cur, "Item", "All configurations relating to item-backed currencies");
-      MISCUtils.setComment(cur, "Item.EnderChest", "Would you like your item currency balances to also check the player's ender chest?");
-      cur.set("Item.EnderChest", item.canEnderChest());
-
-      MISCUtils.setComment(cur, "Item.EnderFill", "Would you like your item currency items to go into the ender chest before dropping on the ground if inventory is full?");
-      cur.set("Item.EnderFill", item.isEnderFill());
-
-      MISCUtils.setComment(cur, "Item.ImportItems", "Whether to import exist item currencies into a player's balance with the first balance check for this currency.");
-      cur.set("Item.ImportItems", item.isImportItem());
-
-      MISCUtils.setComment(cur, "Item.BlockCrafting", "Whether we should block crafting with this currency");
-      cur.set("Item.BlockCrafting", item.blockCraft());
-
-      MISCUtils.setComment(cur, "Item.Shulker", "Should items from shulkers be used in holdings calculations");
-      cur.set("Item.Shulker", item.shulker());
-
-      MISCUtils.setComment(cur, "Item.Bundle", "Should items from bundles be used in holdings calculations");
-      cur.set("Item.Bundle", item.bundle());
-    }
+    writeItemOptions(cur, currency);
 
     //Formatting Configurations
     MISCUtils.setComment(cur, "Formatting", "All configurations related to formatting.");
@@ -215,45 +174,8 @@ public class DefaultCurrencySaver implements CurrencySaver {
     MISCUtils.setComment(cur, "Formatting.Balance", "Should this currency be shown in the balance commands.");
     cur.set("Formatting.Balance", currency.isBalanceShow());
 
-    //Load our note configurations.
-    final Optional<Note> note = currency.getNote();
-
-    MISCUtils.setComment(cur, "Note", "All configurations relating to currency notes.");
-    MISCUtils.setComment(cur, "Note.Notable", "Whether this currency is able to be noted using the note command");
-    cur.set("Note.Notable", note.isPresent());
-    if(note.isPresent()) {
-
-      MISCUtils.setComment(cur, "Note.Fee", "The fee to note this currency.");
-      cur.set("Note.Fee", note.get().getFee().asString());
-
-      MISCUtils.setComment(cur, "Note.Minimum", "The minimum amount required to create a note for this currency.");
-      cur.set("Note.Minimum", note.get().getMinimum().toPlainString());
-
-      MISCUtils.setComment(cur, "Note.Item", "Configurations relating to the note item.");
-      MISCUtils.setComment(cur, "Note.Item.Material", "The material to use.");
-      cur.set("Note.Item.Material", note.get().getMaterial());
-
-      MISCUtils.setComment(cur, "Note.Item.ModelData", "The custom model data value used for this item. Defaults to 0. Optional");
-      cur.set("Note.Item.ModelData", note.get().getCustomModelData());
-
-      MISCUtils.setComment(cur, "Note.Item.Texture", "The base64 texture to use if the material is PLAYER_HEAD");
-      cur.set("Note.Item.Texture", note.get().getTexture());
-
-      MISCUtils.setComment(cur, "Note.Item.Enchantments", "All configurations relating to enchantment identification for the note item");
-      cur.set("Note.Item.Enchantments", note.get().getEnchantments());
-
-      MISCUtils.setComment(cur, "Note.Item.Flags", "All configurations relating to item flags identification for the note item");
-      cur.set("Note.Item.Flags", note.get().getFlags());
-    }
-
-    //Conversion
-    if(!currency.getConversion().isEmpty()) {
-      MISCUtils.setComment(cur, "Converting", "Format is currency name and decimal based rate");
-
-      for(final Map.Entry<String, Double> entry : currency.getConversion().entrySet()) {
-        cur.set("Converting." + entry.getKey(), entry.getValue());
-      }
-    }
+    writeNote(cur, currency);
+    writeConversions(cur, currency);
 
     try {
       cur.save();
@@ -279,6 +201,83 @@ public class DefaultCurrencySaver implements CurrencySaver {
 
     for(final Denomination denomination : currency.getDenominations().values()) {
       saveDenomination(curDirectory, currency, denomination);
+    }
+  }
+
+  private void writeRegions(final YamlDocument cur, final Currency currency) {
+
+    MISCUtils.setComment(cur, "Options.MultiRegion", "Configurations relating to multi region support.");
+    MISCUtils.setComment(cur, "Options.MultiRegion.Regions", "Configurations relating to regions this currency is enabled in.");
+    for(final CurrencyRegion region : currency.getRegions().values()) {
+      if(region.region().equalsIgnoreCase("global")) {
+        MISCUtils.setComment(cur, "Options.Global", "Configurations relating to global configurations for this currency.");
+        MISCUtils.setComment(cur, "Options.Global.Enabled", "Should this currency be global?(i.e. usable in every world)");
+        cur.set("Options.Global.Enabled", region.isEnabled());
+        MISCUtils.setComment(cur, "Options.Global.Default", "Should this currency be the global default?");
+        cur.set("Options.Global.Default", region.isDefault());
+      } else {
+        MISCUtils.setComment(cur, "Options.MultiRegion.Regions." + region.region() + ".Enabled", "Should this currency be enabled in this world?");
+        cur.set("Options.MultiRegion.Regions." + region.region() + ".Enabled", region.isEnabled());
+        MISCUtils.setComment(cur, "Options.MultiRegion.Regions." + region.region() + ".Default", "Should this currency be the default in this world?");
+        cur.set("Options.MultiRegion.Regions." + region.region() + ".Default", region.isDefault());
+      }
+    }
+  }
+
+  private void writeItemOptions(final YamlDocument cur, final Currency currency) {
+
+    if(!(currency instanceof final ItemCurrency item)) {
+      return;
+    }
+    MISCUtils.setComment(cur, "Item", "All configurations relating to item-backed currencies");
+    MISCUtils.setComment(cur, "Item.EnderChest", "Would you like your item currency balances to also check the player's ender chest?");
+    cur.set("Item.EnderChest", item.canEnderChest());
+    MISCUtils.setComment(cur, "Item.EnderFill", "Would you like your item currency items to go into the ender chest before dropping on the ground if inventory is full?");
+    cur.set("Item.EnderFill", item.isEnderFill());
+    MISCUtils.setComment(cur, "Item.ImportItems", "Whether to import exist item currencies into a player's balance with the first balance check for this currency.");
+    cur.set("Item.ImportItems", item.isImportItem());
+    MISCUtils.setComment(cur, "Item.BlockCrafting", "Whether we should block crafting with this currency");
+    cur.set("Item.BlockCrafting", item.blockCraft());
+    MISCUtils.setComment(cur, "Item.Shulker", "Should items from shulkers be used in holdings calculations");
+    cur.set("Item.Shulker", item.shulker());
+    MISCUtils.setComment(cur, "Item.Bundle", "Should items from bundles be used in holdings calculations");
+    cur.set("Item.Bundle", item.bundle());
+  }
+
+  private void writeNote(final YamlDocument cur, final Currency currency) {
+
+    final Optional<Note> note = currency.getNote();
+    MISCUtils.setComment(cur, "Note", "All configurations relating to currency notes.");
+    MISCUtils.setComment(cur, "Note.Notable", "Whether this currency is able to be noted using the note command");
+    cur.set("Note.Notable", note.isPresent());
+    if(note.isEmpty()) {
+      return;
+    }
+    MISCUtils.setComment(cur, "Note.Fee", "The fee to note this currency.");
+    cur.set("Note.Fee", note.get().getFee().asString());
+    MISCUtils.setComment(cur, "Note.Minimum", "The minimum amount required to create a note for this currency.");
+    cur.set("Note.Minimum", note.get().getMinimum().toPlainString());
+    MISCUtils.setComment(cur, "Note.Item", "Configurations relating to the note item.");
+    MISCUtils.setComment(cur, "Note.Item.Material", "The material to use.");
+    cur.set("Note.Item.Material", note.get().getMaterial());
+    MISCUtils.setComment(cur, "Note.Item.ModelData", "The custom model data value used for this item. Defaults to 0. Optional");
+    cur.set("Note.Item.ModelData", note.get().getCustomModelData());
+    MISCUtils.setComment(cur, "Note.Item.Texture", "The base64 texture to use if the material is PLAYER_HEAD");
+    cur.set("Note.Item.Texture", note.get().getTexture());
+    MISCUtils.setComment(cur, "Note.Item.Enchantments", "All configurations relating to enchantment identification for the note item");
+    cur.set("Note.Item.Enchantments", note.get().getEnchantments());
+    MISCUtils.setComment(cur, "Note.Item.Flags", "All configurations relating to item flags identification for the note item");
+    cur.set("Note.Item.Flags", note.get().getFlags());
+  }
+
+  private void writeConversions(final YamlDocument cur, final Currency currency) {
+
+    if(currency.getConversion().isEmpty()) {
+      return;
+    }
+    MISCUtils.setComment(cur, "Converting", "Format is currency name and decimal based rate");
+    for(final Map.Entry<String, Double> entry : currency.getConversion().entrySet()) {
+      cur.set("Converting." + entry.getKey(), entry.getValue());
     }
   }
 
@@ -342,53 +341,56 @@ public class DefaultCurrencySaver implements CurrencySaver {
     MISCUtils.setComment(denom, "Options.Weight", "The weight of the tier. E.X. 20USD would equal 20");
     denom.set("Options.Weight", denomination.weight().doubleValue());
 
-    if(denomination instanceof final ItemDenomination itemDenomination) {
-
-      MISCUtils.setComment(denom, "Options.Material", "The material used for this item.");
-      denom.set("Options.Material", itemDenomination.material());
-
-      if(itemDenomination.getTexture() != null) {
-        MISCUtils.setComment(denom, "Options.Texture", "The base64 texture to use if the material is PLAYER_HEAD");
-        denom.set("Options.Texture", itemDenomination.getTexture());
-      }
-
-      if(itemDenomination.getDamage() > 0) {
-        MISCUtils.setComment(denom, "Options.Damage", "The damage value used for this item. Defaults to 0.(Optional)");
-        denom.set("Options.Damage", itemDenomination.getDamage());
-      }
-
-      if(itemDenomination.getName() != null) {
-        MISCUtils.setComment(denom, "Options.Name", "The custom name this item must have in order to be considered currency.(Optional)");
-        denom.set("Options.Name", itemDenomination.getName());
-      }
-
-      if(!itemDenomination.getLore().isEmpty()) {
-        MISCUtils.setComment(denom, "Options.Lore", "The lore string this item must have  in order to be considered currency.(Optional)");
-        denom.set("Options.Lore", itemDenomination.getLoreAsString());
-      }
-
-      if(itemDenomination.getCustomModel() > -1) {
-        MISCUtils.setComment(denom, "Options.ModelData", "The custom model data value used for this item. Defaults to 0.(Optional)");
-        denom.set("Options.ModelData", itemDenomination.getCustomModel());
-      }
-
-      if(!itemDenomination.enchantments().isEmpty()) {
-        MISCUtils.setComment(denom, "Options.Enchantments", "All configurations relating to enchantment identification for currency tiers.(Optional)");
-        denom.set("Options.Enchantments", itemDenomination.enchantments());
-      }
-
-      if(!itemDenomination.flags().isEmpty()) {
-        MISCUtils.setComment(denom, "Options.Flags", "All configurations relating to item flags identification for currency tiers.(Optional)");
-        denom.set("Options.Flags", itemDenomination.flags());
-      }
-
-      //TODO: Crafting stuff
-    }
+    writeItemDenomination(denom, denomination);
 
     try {
       denom.save();
     } catch(final IOException e) {
       PluginCore.log().error("Failed to save currency denomination: " + denomination.singular(), e, DebugLevel.STANDARD);
+    }
+  }
+
+  private void writeItemDenomination(final YamlDocument denom, final Denomination denomination) {
+
+    if(!(denomination instanceof final ItemDenomination itemDenomination)) {
+      return;
+    }
+    MISCUtils.setComment(denom, "Options.Material", "The material used for this item.");
+    denom.set("Options.Material", itemDenomination.material());
+
+    if(itemDenomination.getTexture() != null) {
+      MISCUtils.setComment(denom, "Options.Texture", "The base64 texture to use if the material is PLAYER_HEAD");
+      denom.set("Options.Texture", itemDenomination.getTexture());
+    }
+
+    if(itemDenomination.getDamage() > 0) {
+      MISCUtils.setComment(denom, "Options.Damage", "The damage value used for this item. Defaults to 0.(Optional)");
+      denom.set("Options.Damage", itemDenomination.getDamage());
+    }
+
+    if(itemDenomination.getName() != null) {
+      MISCUtils.setComment(denom, "Options.Name", "The custom name this item must have in order to be considered currency.(Optional)");
+      denom.set("Options.Name", itemDenomination.getName());
+    }
+
+    if(!itemDenomination.getLore().isEmpty()) {
+      MISCUtils.setComment(denom, "Options.Lore", "The lore string this item must have  in order to be considered currency.(Optional)");
+      denom.set("Options.Lore", itemDenomination.getLoreAsString());
+    }
+
+    if(itemDenomination.getCustomModel() > -1) {
+      MISCUtils.setComment(denom, "Options.ModelData", "The custom model data value used for this item. Defaults to 0.(Optional)");
+      denom.set("Options.ModelData", itemDenomination.getCustomModel());
+    }
+
+    if(!itemDenomination.enchantments().isEmpty()) {
+      MISCUtils.setComment(denom, "Options.Enchantments", "All configurations relating to enchantment identification for currency tiers.(Optional)");
+      denom.set("Options.Enchantments", itemDenomination.enchantments());
+    }
+
+    if(!itemDenomination.flags().isEmpty()) {
+      MISCUtils.setComment(denom, "Options.Flags", "All configurations relating to item flags identification for currency tiers.(Optional)");
+      denom.set("Options.Flags", itemDenomination.flags());
     }
   }
 }

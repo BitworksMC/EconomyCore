@@ -85,43 +85,65 @@ public class YAMLAccount implements Datable<Account> {
   @Override
   public void store(final StorageConnector<?> connector, @NotNull final Account account, @Nullable final String identifier) {
 
-    //MISCUtils.printStack();
-
     PluginCore.log().debug("Saving Account with ID: " + identifier + " Name: " + account.getName(), DebugLevel.STANDARD);
-
-    //check if our file is in use.
     final String file = "accounts/" + identifier + ".yml";
-    while(TNECore.yaml().inUse(file)) {
+    waitForFile(file);
+    TNECore.yaml().add(file);
+    final File accFile = new File(PluginCore.directory(), file);
+    if(!ensureAccountFile(accFile, account) ) {
+      return;
+    }
 
+    final YamlDocument yaml = loadDocument(accFile, account);
+    if(yaml == null) {
+      return;
+    }
+    writeAccount(yaml, account);
+    if(!saveDocument(yaml, account)) {
+      return;
+    }
+    TNECore.yaml().remove(file);
+    TNECore.instance().storage().storeAll(account.getIdentifier().toString());
+    account.clearDirty();
+    PluginCore.callbacks().call(new AccountSaveCallback(account));
+  }
+
+  private void waitForFile(final String file) {
+
+    while(TNECore.yaml().inUse(file)) {
       try {
         Thread.sleep(1000);
       } catch(final InterruptedException e) {
         e.printStackTrace();
       }
     }
+  }
 
-    TNECore.yaml().add(file);
+  private boolean ensureAccountFile(final File accFile, final Account account) {
 
-    final File accFile = new File(PluginCore.directory(), file);
-    if(!accFile.exists()) {
-      try {
-        accFile.createNewFile();
-      } catch(final IOException ignore) {
-
-        PluginCore.log().error("Issue creating account file. Account: " + account.getName(), DebugLevel.OFF);
-        return;
-      }
+    if(accFile.exists()) {
+      return true;
     }
-
-
-    YamlDocument yaml = null;
     try {
-      yaml = YamlDocument.create(accFile);
+      accFile.createNewFile();
+      return true;
     } catch(final IOException ignore) {
-
-      PluginCore.log().error("Issue loading account file. Account: " + account.getName(), DebugLevel.OFF);
-      return;
+      PluginCore.log().error("Issue creating account file. Account: " + account.getName(), DebugLevel.OFF);
+      return false;
     }
+  }
+
+  private YamlDocument loadDocument(final File accFile, final Account account) {
+
+    try {
+      return YamlDocument.create(accFile);
+    } catch(final IOException ignore) {
+      PluginCore.log().error("Issue loading account file. Account: " + account.getName(), DebugLevel.OFF);
+      return null;
+    }
+  }
+
+  private void writeAccount(final YamlDocument yaml, final Account account) {
 
     yaml.set("Info.ID", account.getIdentifier().toString());
     yaml.set("Info.Name", account.getName());
@@ -137,31 +159,29 @@ public class YAMLAccount implements Datable<Account> {
     if(account instanceof final SharedAccount shared) {
       final String owner = (shared.getOwner() == null)? account.getIdentifier().toString() :
                            shared.getOwner().toString();
-
       yaml.set("Info.Owner", owner);
+      writeMembers(yaml, shared);
+    }
+  }
 
-      for(final Member member : shared.getMembers().values()) {
-        for(final Map.Entry<String, Boolean> entry : member.getPermissions().entrySet()) {
+  private void writeMembers(final YamlDocument yaml, final SharedAccount shared) {
 
-          yaml.set("Members." + member.getId().toString() + "." + entry.getKey(), entry.getValue());
-        }
+    for(final Member member : shared.getMembers().values()) {
+      for(final Map.Entry<String, Boolean> entry : member.getPermissions().entrySet()) {
+        yaml.set("Members." + member.getId() + "." + entry.getKey(), entry.getValue());
       }
     }
-    try {
+  }
 
+  private boolean saveDocument(final YamlDocument yaml, final Account account) {
+
+    try {
       yaml.save();
-      yaml = null;
+      return true;
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue saving account file. Account: " + account.getName());
-      return;
+      return false;
     }
-    TNECore.yaml().remove(file);
-
-    TNECore.instance().storage().storeAll(account.getIdentifier().toString());
-    account.clearDirty();
-
-    final AccountSaveCallback callback = new AccountSaveCallback(account);
-    PluginCore.callbacks().call(callback);
   }
 
   /**
@@ -219,75 +239,12 @@ public class YAMLAccount implements Datable<Account> {
       return Optional.empty();
     }
     try {
-
       try(final FileInputStream fis = new FileInputStream(accFile)) {
-
         final YamlDocument yaml = YamlDocument.create(fis);
-
-        if(yaml != null) {
-
-          Account account = null;
-
-          //Validate account file
-          if(!yaml.contains("Info.Name") || !yaml.contains("Info.Type")) {
-
-            PluginCore.log().error("Invalid account file. Account: " + identifier + ". You may need to remove this account file! This is due to a previous server crash or improper shutdown and not a bug.", DebugLevel.OFF);
-            return Optional.empty();
-          }
-
-          final String type = yaml.getString("Info.Type");
-
-          //create our account from the type
-          final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,
-                                                                                    yaml.getString("Info.Name"),
-                                                                                    !(type.equalsIgnoreCase("player") ||
-                                                                                      type.equalsIgnoreCase("bedrock")),
-                                                                                    true);
-          if(response.getResponse().success() && response.getAccount().isPresent()) {
-
-            //load our basic account information
-            account = response.getAccount().get();
-
-            account.setStatus(TNECore.eco().account().findStatus(yaml.getString("Info.Status")));
-            account.setCreationDate(yaml.getLong("Info.CreationDate"));
-            account.setPin(yaml.getString("Info.Pin"));
-          }
-
-          if(account != null) {
-
-            if(account instanceof final PlayerAccount playerAccount) {
-              playerAccount.setLastOnline(yaml.getLong("Info.LastOnline"));
-            }
-
-            if(account instanceof final SharedAccount shared && yaml.contains("Members")) {
-
-              final Section section = yaml.getSection("Members");
-              for(final Object memberObj : section.getKeys()) {
-
-                final String member = (String)memberObj;
-                for(final Object permissionObj : section.getSection(member).getKeys()) {
-
-                  final String permission = (String)permissionObj;
-                  shared.addPermission(UUID.fromString(member), permission,
-                                       yaml.getBoolean("Members." + member +
-                                                       "." + permission));
-                }
-              }
-            }
-
-            final Collection<HoldingsEntry> holdings = TNECore.instance().storage().loadAll(HoldingsEntry.class, identifier);
-            for(final HoldingsEntry entry : holdings) {
-              account.getWallet().setHoldings(entry);
-            }
-
-            account.clearDirty();
-
-            final AccountLoadCallback callback = new AccountLoadCallback(account);
-            PluginCore.callbacks().call(callback);
-          }
-
-          return Optional.ofNullable(account);
+        if(yaml == null) {
+          return Optional.empty();
         }
+        return loadAccount(yaml, identifier);
       }
     } catch(final Exception ignore) {
 
@@ -295,7 +252,58 @@ public class YAMLAccount implements Datable<Account> {
       return Optional.empty();
     }
 
-    return Optional.empty();
+  }
+
+  private Optional<Account> loadAccount(final YamlDocument yaml, final String identifier) {
+
+    if(!yaml.contains("Info.Name") || !yaml.contains("Info.Type")) {
+      PluginCore.log().error("Invalid account file. Account: " + identifier + ". You may need to remove this account file! This is due to a previous server crash or improper shutdown and not a bug.", DebugLevel.OFF);
+      return Optional.empty();
+    }
+
+    final String type = yaml.getString("Info.Type");
+    final AccountAPIResponse response = TNECore.eco().account().createAccount(
+            identifier, yaml.getString("Info.Name"),
+            !(type.equalsIgnoreCase("player") || type.equalsIgnoreCase("bedrock")), true);
+    if(!response.getResponse().success() || response.getAccount().isEmpty()) {
+      return Optional.empty();
+    }
+
+    final Account account = response.getAccount().get();
+    account.setStatus(TNECore.eco().account().findStatus(yaml.getString("Info.Status")));
+    account.setCreationDate(yaml.getLong("Info.CreationDate"));
+    account.setPin(yaml.getString("Info.Pin"));
+    finishAccountLoad(yaml, identifier, account);
+    return Optional.of(account);
+  }
+
+  private void finishAccountLoad(final YamlDocument yaml, final String identifier, final Account account) {
+
+    if(account instanceof final PlayerAccount playerAccount) {
+      playerAccount.setLastOnline(yaml.getLong("Info.LastOnline"));
+    }
+    if(account instanceof final SharedAccount shared && yaml.contains("Members")) {
+      loadMembers(yaml, shared);
+    }
+    final Collection<HoldingsEntry> holdings = TNECore.instance().storage().loadAll(HoldingsEntry.class, identifier);
+    for(final HoldingsEntry entry : holdings) {
+      account.getWallet().setHoldings(entry);
+    }
+    account.clearDirty();
+    PluginCore.callbacks().call(new AccountLoadCallback(account));
+  }
+
+  private void loadMembers(final YamlDocument yaml, final SharedAccount shared) {
+
+    final Section section = yaml.getSection("Members");
+    for(final Object memberObj : section.getKeys()) {
+      final String member = (String)memberObj;
+      for(final Object permissionObj : section.getSection(member).getKeys()) {
+        final String permission = (String)permissionObj;
+        shared.addPermission(UUID.fromString(member), permission,
+                             yaml.getBoolean("Members." + member + "." + permission));
+      }
+    }
   }
 
   /**

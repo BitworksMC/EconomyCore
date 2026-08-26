@@ -24,6 +24,7 @@ import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.config.MainConfig;
 import net.tnemc.core.manager.TransactionManager;
 import net.tnemc.core.transaction.Receipt;
+import net.tnemc.core.transaction.TransactionParticipant;
 import net.tnemc.core.transaction.history.AwayHistory;
 import net.tnemc.core.transaction.history.SortedHistory;
 import net.tnemc.plugincore.core.compatibility.CmdSource;
@@ -83,11 +84,6 @@ public class TransactionCommand {
   //[page:#] [world:name/all] [player:name]
   public static void history(final CmdSource<?> sender, final int page, String region, final Account account) {
 
-    if(sender.player().isPresent() && MainConfig.yaml().getBoolean("Core.Commands.GUIAlternatives", true)) {
-      //sender.player().get().inventory().openMenu(sender.player().get(), "transaction_menu");
-      //return;
-    }
-
     region = TNECore.eco().region().resolve(region);
 
     final SortedHistory sorted = account.getSorted(account.getIdentifier());
@@ -104,34 +100,32 @@ public class TransactionCommand {
     sender.message(heading);
 
     for(final Map.Entry<Long, UUID> entry : sorted.getPage(selectedPage).entrySet()) {
-
-      final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
-      if(receipt.isPresent()) {
-
-        String from = "None";
-        if(receipt.get().getFrom() != null) {
-          final Optional<Account> fromACC = receipt.get().getFrom().asAccount();
-          if(fromACC.isPresent()) {
-            from = fromACC.get().getName();
-          }
-        }
-
-        String to = "None";
-        if(receipt.get().getTo() != null) {
-          final Optional<Account> toACC = receipt.get().getTo().asAccount();
-          if(toACC.isPresent()) {
-            to = toACC.get().getName();
-          }
-        }
-
-        final MessageData awayEntry = new MessageData("Messages.Transaction.HistoryEntry");
-        awayEntry.addReplacement("$id", entry.getValue().toString());
-        awayEntry.addReplacement("$type", receipt.get().getType());
-        awayEntry.addReplacement("$initiator", from);
-        awayEntry.addReplacement("$recipient", to);
-        sender.message(awayEntry);
-      }
+      sendHistoryEntry(sender, account, entry);
     }
+  }
+
+  private static void sendHistoryEntry(final CmdSource<?> sender, final Account account,
+                                       final Map.Entry<Long, UUID> entry) {
+
+    final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
+    if(receipt.isEmpty()) {
+      return;
+    }
+
+    final MessageData awayEntry = new MessageData("Messages.Transaction.HistoryEntry");
+    awayEntry.addReplacement("$id", entry.getValue().toString());
+    awayEntry.addReplacement("$type", receipt.get().getType());
+    awayEntry.addReplacement("$initiator", participantName(receipt.get().getFrom()));
+    awayEntry.addReplacement("$recipient", participantName(receipt.get().getTo()));
+    sender.message(awayEntry);
+  }
+
+  private static String participantName(final TransactionParticipant participant) {
+
+    if(participant == null) {
+      return "None";
+    }
+    return participant.asAccount().map(Account::getName).orElse("None");
   }
 
   //<uuid>

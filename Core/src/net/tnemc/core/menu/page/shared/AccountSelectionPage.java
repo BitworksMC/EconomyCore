@@ -112,48 +112,56 @@ public class AccountSelectionPage {
                                          .withSlot(4)
                                          .build());
 
-      int i = 0;
-      for(final Map.Entry<String, Account> entry : TNECore.eco().account().getAccounts().entrySet()) {
-
-        if(i < start) {
-
-          i++;
-
-          continue;
-        }
-        if(i >= (start + items)) break;
-
-        SkullProfile profile = null;
-        try {
-
-          if(entry.getValue() instanceof PlayerAccount) {
-            profile = new SkullProfile();
-
-            if(PluginCore.server().playedBefore(UUID.fromString(entry.getKey()))) {
-              profile.uuid(UUID.fromString(entry.getKey()));
-            }
-          }
-
-        } catch(final Exception ignore) { }
-
-        AbstractItemStack<?> stack = PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)
-                .customName(Component.text(entry.getValue().getName()))
-                .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Account.Select"), id)));
-
-        if(profile != null) {
-          stack = stack.profile(profile);
-        }
-
-
-        callback.getPage().addIcon(new IconBuilder(stack)
-                                           .withActions(new DataAction(accountDataID + "_ID", entry.getKey()),
-                                                        new DataAction(accountDataID + "_NAME", entry.getValue().getName()),
-                                                        new SwitchPageAction(returnMenu, returnPage))
-                                           .withSlot(9 + (i - start))
-                                           .build());
-
-        i++;
-      }
+      addAccounts(callback, id, start, items);
     }
+  }
+
+  private void addAccounts(final PageOpenCallback callback, final UUID id, final int start,
+                           final int items) {
+
+    int index = 0;
+    for(final Map.Entry<String, Account> entry : TNECore.eco().account().getAccounts().entrySet()) {
+      if(index < start) {
+        index++;
+        continue;
+      }
+      if(index >= start + items) {
+        break;
+      }
+
+      callback.getPage().addIcon(new IconBuilder(accountStack(entry, id))
+                                         .withActions(new DataAction(accountDataID + "_ID", entry.getKey()),
+                                                      new DataAction(accountDataID + "_NAME", entry.getValue().getName()),
+                                                      new SwitchPageAction(returnMenu, returnPage))
+                                         .withSlot(9 + index - start).build());
+      index++;
+    }
+  }
+
+  private AbstractItemStack<?> accountStack(final Map.Entry<String, Account> entry, final UUID id) {
+
+    AbstractItemStack<?> stack = PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)
+            .customName(Component.text(entry.getValue().getName()))
+            .lore(Collections.singletonList(
+                    MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Account.Select"), id)));
+    final SkullProfile profile = skullProfile(entry);
+    if(profile != null) {
+      stack = stack.profile(profile);
+    }
+    return stack;
+  }
+
+  private SkullProfile skullProfile(final Map.Entry<String, Account> entry) {
+
+    try {
+      if(entry.getValue() instanceof PlayerAccount) {
+        final SkullProfile profile = new SkullProfile();
+        if(PluginCore.server().playedBefore(UUID.fromString(entry.getKey()))) {
+          profile.uuid(UUID.fromString(entry.getKey()));
+        }
+        return profile;
+      }
+    } catch(final Exception ignore) { }
+    return null;
   }
 }

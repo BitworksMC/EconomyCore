@@ -62,186 +62,193 @@ public class PlayerJoinHandler {
   public HandlerResponse handle(final PlayerProvider provider, final String serverIP, final int serverPort) {
 
     final HandlerResponse response = new HandlerResponse("", false);
-
     PluginCore.log().debug("Player Join ID: " + provider.identifier());
 
-    //we have to hardcode this UUID since MoDispenserMechanics fires the join event with their fake player....
     if(provider.identifier().toString().equalsIgnoreCase("657912a8-aa0e-3f17-aff5-a41f440e710c")) {
       return response;
     }
 
-    //look for an account with the same name, but different UUID
-    //This indicates that the player has renamed, but never rejoined and someone else took the name
-
-    PluginCore.log().debug("Validating Player Name: " + provider.getName() + ".");
-    final Optional<UUIDPair> idPair = TNECore.eco().account().uuidProvider().retrieve(provider.getName());
-    if(idPair.isPresent() && !provider.identifier().toString().equalsIgnoreCase(idPair.get().getIdentifier().toString())) {
-
-      final Optional<Account> oldAccount = TNECore.eco().account().findAccount(provider.identifier());
-      if(oldAccount.isPresent()) {
-
-        PluginCore.log().debug("Renaming player as someone took their old username already!");
-
-        final String newName = oldAccount.get().getName() + "_old";
-        oldAccount.get().setName(newName);
-        TNECore.eco().account().uuidProvider().store(new UUIDPair(provider.identifier(), newName));
-      }
-
-    }
-
+    validatePlayerName(provider);
     final Optional<Account> account = TNECore.eco().account().findAccount(provider.identifier());
-
-    boolean firstJoin = false;
-    AccountAPIResponse apiResponse = null;
-
     PluginCore.log().debug("Join Account Check: " + account.isPresent());
-
-    //Our account doesn't exist, so now we need to continue from here
-    if(account.isEmpty()) {
-      firstJoin = true;
-
-      apiResponse = TNECore.eco().account().createAccount(provider.identifier().toString(),
-                                                          provider.getName());
-
-      PluginCore.log().debug("API Join Check. Account Exists: " + apiResponse.getAccount().isPresent());
-      if(apiResponse.getAccount().isEmpty()) {
-        response.setResponse(response.getResponse());
-        response.setCancelled(true);
-        return response;
-      } else {
-        if(!apiResponse.getResponse().success() && apiResponse.getAccount().isPresent()) {
-          firstJoin = false;
-        }
-      }
+    final JoinAccount joinAccount = resolveAccount(provider, account);
+    if(joinAccount == null) {
+      response.setResponse(response.getResponse());
+      response.setCancelled(true);
+      return response;
     }
 
-    PluginCore.log().debug("First Join: " + firstJoin);
-
-    final Optional<Account> acc = (apiResponse == null)? account :
-                                  apiResponse.getAccount();
-
-    final UUID id = provider.identifier();
-    if(acc.isPresent()) {
-
-      //the player has a new name
-      if(!acc.get().getName().equalsIgnoreCase(provider.getName())) {
-        acc.get().setName(provider.getName());
-
-        TNECore.eco().account().uuidProvider().store(new UUIDPair(provider.identifier(), provider.getName()));
-      }
-
-      if(firstJoin || acc.get().getCreationDate() == ((PlayerAccount)acc.get()).getLastOnline()) {
-
-        final String region = TNECore.eco().region().getMode().region(provider);
-        for(final Currency currency : TNECore.eco().currency().currencies()) {
-
-          if(currency.type().supportsItems() && MainConfig.yaml().getBoolean("Core.Server.ImportItems", true)) {
-
-            TNECore.eco().account().getImporting().add(id);
-
-            for(final HoldingsEntry entry : acc.get().getHoldings(region, currency.getUid())) {
-
-              acc.get().setHoldings(entry, entry.getHandler());
-            }
-
-            TNECore.eco().account().getImporting().remove(id);
-            continue;
-          }
-
-          PluginCore.log().debug("Setting Balance to Starting Holdings Currency: " + currency.getIdentifier());
-
-          if(firstJoin) {
-            acc.get().setHoldings(new HoldingsEntry(region,
-                                                    currency.getUid(),
-                                                    currency.getStartingHoldings(),
-                                                    EconomyManager.NORMAL
-            ));
-          }
-        }
-      } else {
-        TNECore.eco().account().getLoading().add(id);
-
-        final String region = TNECore.eco().region().getMode().region(provider);
-        for(final Currency currency : TNECore.eco().currency().getCurrencies(region)) {
-
-          if(currency instanceof final ItemCurrency itemCurrency) {
-
-            if(!acc.get().getWallet().contains(region, currency.getUid())) {
-
-              if(itemCurrency.isImportItem()) {
-
-                TNECore.eco().account().getImporting().add(id);
-
-                for(final HoldingsEntry entry : acc.get().getHoldings(region, currency.getUid())) {
-
-                  acc.get().setHoldings(entry, entry.getHandler());
-                }
-
-                TNECore.eco().account().getImporting().remove(id);
-              } else {
-                acc.get().setHoldings(new HoldingsEntry(region,
-                                                        currency.getUid(),
-                                                        currency.getStartingHoldings(),
-                                                        EconomyManager.NORMAL
-                ));
-              }
-            } else {
-
-              for(final HoldingsEntry entry : acc.get().getHoldings(region, currency.getUid())) {
-
-                acc.get().setHoldings(entry, entry.getHandler());
-              }
-            }
-          }
-        }
-      }
-      TNECore.eco().account().getLoading().remove(id);
-
-      PluginCore.server().scheduler().createDelayedTask(()->{
-
-        final Optional<AwayHistory> away = acc.get().away(((PlayerAccount)acc.get()).getUUID());
-        if(away.isPresent()) {
-          provider.message(new MessageData("Messages.Transaction.AwayJoin"));
-        }
-
-      }, new ChoreTime(0), ChoreExecution.SECONDARY);
-
-      if(provider.hasPermission("tne.admin.update")) {
-        if(MainConfig.yaml().getBoolean("Core.Update.Notify") && TNECore.instance().update() != null) {
-
-          if(TNECore.instance().update().needsUpdate()) {
-            provider.message(new MessageData("<red>[TNE] Update Available! Latest: <white>" + TNECore.instance().update().getBuild()));
-          }
-
-          if(TNECore.instance().update().isEarlyBuild()) {
-            provider.message(new MessageData("<gold>[TNE] Thank You for testing this pre-release version!"));
-          }
-        }
-
-
-        if(TNECore.eco().transaction().isTrack()) {
-          //TODO: Any warnings? Balance jumps?
-        }
-      }
-
-      //If this is the first player online, sync balances.
-      if(PluginCore.server().onlinePlayers() == 1) {
-        //check if server own wants db reloaded
-        if(DataConfig.yaml().getBoolean("Data.Sync.Reload.Enabled", false)) {
-
-          if(MISCUtils.isTimeDifferenceGreaterOrEqual(new Date(TNECore.eco().getReloadTime()), DataConfig.yaml().getInt("Data.Sync.Reload.Time", 120))) {
-
-            TNECore.eco().account().getAccounts().clear();
-            TransactionManager.receipts().getReceipts().clear();
-
-            TNECore.instance().storage().loadAll(Account.class, "");
-            TNECore.instance().storage().loadAll(Receipt.class, "");
-
-            TNECore.eco().setReloadTime(new Date().getTime());
-          }
-        }
-      }
+    PluginCore.log().debug("First Join: " + joinAccount.firstJoin());
+    if(joinAccount.account().isPresent()) {
+      initializeAccount(provider, joinAccount.account().get(), joinAccount.firstJoin());
     }
     return response;
   }
+
+  private void validatePlayerName(final PlayerProvider provider) {
+
+    PluginCore.log().debug("Validating Player Name: " + provider.getName() + ".");
+    final Optional<UUIDPair> idPair = TNECore.eco().account().uuidProvider().retrieve(provider.getName());
+    if(idPair.isEmpty()
+       || provider.identifier().toString().equalsIgnoreCase(idPair.get().getIdentifier().toString())) {
+      return;
+    }
+
+    final Optional<Account> oldAccount = TNECore.eco().account().findAccount(provider.identifier());
+    if(oldAccount.isPresent()) {
+      PluginCore.log().debug("Renaming player as someone took their old username already!");
+      final String newName = oldAccount.get().getName() + "_old";
+      oldAccount.get().setName(newName);
+      TNECore.eco().account().uuidProvider().store(new UUIDPair(provider.identifier(), newName));
+    }
+  }
+
+  private JoinAccount resolveAccount(final PlayerProvider provider, final Optional<Account> account) {
+
+    if(account.isPresent()) {
+      return new JoinAccount(account, false);
+    }
+
+    final AccountAPIResponse apiResponse = TNECore.eco().account().createAccount(
+            provider.identifier().toString(), provider.getName());
+    PluginCore.log().debug("API Join Check. Account Exists: " + apiResponse.getAccount().isPresent());
+    if(apiResponse.getAccount().isEmpty()) {
+      return null;
+    }
+    return new JoinAccount(apiResponse.getAccount(), apiResponse.getResponse().success());
+  }
+
+  private void initializeAccount(final PlayerProvider provider, final Account account, final boolean firstJoin) {
+
+    updatePlayerName(provider, account);
+    final UUID identifier = provider.identifier();
+    if(firstJoin || account.getCreationDate() == ((PlayerAccount)account).getLastOnline()) {
+      initializeBalances(provider, account, identifier, firstJoin);
+    } else {
+      loadBalances(provider, account, identifier);
+    }
+    TNECore.eco().account().getLoading().remove(identifier);
+    scheduleAwayNotification(provider, account);
+    notifyUpdate(provider);
+    reloadSharedDataIfNeeded();
+  }
+
+  private void updatePlayerName(final PlayerProvider provider, final Account account) {
+
+    if(!account.getName().equalsIgnoreCase(provider.getName())) {
+      account.setName(provider.getName());
+      TNECore.eco().account().uuidProvider().store(new UUIDPair(provider.identifier(), provider.getName()));
+    }
+  }
+
+  private void initializeBalances(final PlayerProvider provider, final Account account, final UUID identifier,
+                                  final boolean firstJoin) {
+
+    final String region = TNECore.eco().region().getMode().region(provider);
+    for(final Currency currency : TNECore.eco().currency().currencies()) {
+      initializeCurrency(account, identifier, region, currency, firstJoin);
+    }
+  }
+
+  private void initializeCurrency(final Account account, final UUID identifier, final String region,
+                                  final Currency currency, final boolean firstJoin) {
+
+    if(currency.type().supportsItems() && MainConfig.yaml().getBoolean("Core.Server.ImportItems", true)) {
+      importHoldings(account, identifier, region, currency);
+      return;
+    }
+
+    PluginCore.log().debug("Setting Balance to Starting Holdings Currency: " + currency.getIdentifier());
+    if(firstJoin) {
+      account.setHoldings(new HoldingsEntry(region, currency.getUid(), currency.getStartingHoldings(),
+                                            EconomyManager.NORMAL));
+    }
+  }
+
+  private void loadBalances(final PlayerProvider provider, final Account account, final UUID identifier) {
+
+    TNECore.eco().account().getLoading().add(identifier);
+    final String region = TNECore.eco().region().getMode().region(provider);
+    for(final Currency currency : TNECore.eco().currency().getCurrencies(region)) {
+      loadCurrency(account, identifier, region, currency);
+    }
+  }
+
+  private void loadCurrency(final Account account, final UUID identifier, final String region,
+                            final Currency currency) {
+
+    if(!(currency instanceof final ItemCurrency itemCurrency)) {
+      return;
+    }
+    if(account.getWallet().contains(region, currency.getUid())) {
+      restoreHoldings(account, region, currency);
+      return;
+    }
+    if(itemCurrency.isImportItem()) {
+      importHoldings(account, identifier, region, currency);
+    } else {
+      account.setHoldings(new HoldingsEntry(region, currency.getUid(), currency.getStartingHoldings(),
+                                            EconomyManager.NORMAL));
+    }
+  }
+
+  private void importHoldings(final Account account, final UUID identifier, final String region,
+                              final Currency currency) {
+
+    TNECore.eco().account().getImporting().add(identifier);
+    restoreHoldings(account, region, currency);
+    TNECore.eco().account().getImporting().remove(identifier);
+  }
+
+  private void restoreHoldings(final Account account, final String region, final Currency currency) {
+
+    for(final HoldingsEntry entry : account.getHoldings(region, currency.getUid())) {
+      account.setHoldings(entry, entry.getHandler());
+    }
+  }
+
+  private void scheduleAwayNotification(final PlayerProvider provider, final Account account) {
+
+    PluginCore.server().scheduler().createDelayedTask(()->{
+      final Optional<AwayHistory> away = account.away(((PlayerAccount)account).getUUID());
+      if(away.isPresent()) {
+        provider.message(new MessageData("Messages.Transaction.AwayJoin"));
+      }
+    }, new ChoreTime(0), ChoreExecution.SECONDARY);
+  }
+
+  private void notifyUpdate(final PlayerProvider provider) {
+
+    if(!provider.hasPermission("tne.admin.update") || !MainConfig.yaml().getBoolean("Core.Update.Notify")
+       || TNECore.instance().update() == null) {
+      return;
+    }
+    if(TNECore.instance().update().needsUpdate()) {
+      provider.message(new MessageData("<red>[TNE] Update Available! Latest: <white>"
+                                       + TNECore.instance().update().getBuild()));
+    }
+    if(TNECore.instance().update().isEarlyBuild()) {
+      provider.message(new MessageData("<gold>[TNE] Thank You for testing this pre-release version!"));
+    }
+  }
+
+  private void reloadSharedDataIfNeeded() {
+
+    if(PluginCore.server().onlinePlayers() != 1
+       || !DataConfig.yaml().getBoolean("Data.Sync.Reload.Enabled", false)) {
+      return;
+    }
+    if(!MISCUtils.isTimeDifferenceGreaterOrEqual(new Date(TNECore.eco().getReloadTime()),
+                                                 DataConfig.yaml().getInt("Data.Sync.Reload.Time", 120))) {
+      return;
+    }
+
+    TNECore.eco().account().getAccounts().clear();
+    TransactionManager.receipts().getReceipts().clear();
+    TNECore.instance().storage().loadAll(Account.class, "");
+    TNECore.instance().storage().loadAll(Receipt.class, "");
+    TNECore.eco().setReloadTime(new Date().getTime());
+  }
+
+  private record JoinAccount(Optional<Account> account, boolean firstJoin) { }
 }

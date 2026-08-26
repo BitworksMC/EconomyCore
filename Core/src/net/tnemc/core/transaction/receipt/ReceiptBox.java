@@ -78,28 +78,33 @@ public class ReceiptBox {
       return Optional.empty();
     }
 
-    final AwayHistory history = new AwayHistory(account);
-    final long time = new Date().getTime();
-
-    int i = 0;
-
-    for(final Map.Entry<Long, Receipt> entry : range(((PlayerAccount)acc.get()).getLastOnline(), time).entrySet()) {
-
-      final Receipt receipt = entry.getValue();
-
-      if(receipt.getFrom() != null && receipt.getFrom().getId().equals(account)
-         || receipt.getTo() != null && receipt.getTo().getId().equals(account)) {
-        history.getReceipts().put(receipt.getTime(), receipt.getId());
-        i++;
-      }
-    }
-
-    if(i <= 0) {
+    final AwayHistory history = createAwayHistory(account, (PlayerAccount)acc.get());
+    if(history.getReceipts().isEmpty()) {
       return Optional.empty();
     }
 
     away = history;
     return Optional.of(history);
+  }
+
+  private AwayHistory createAwayHistory(final UUID account, final PlayerAccount playerAccount) {
+
+    final AwayHistory history = new AwayHistory(account);
+    final long time = new Date().getTime();
+
+    for(final Map.Entry<Long, Receipt> entry : range(playerAccount.getLastOnline(), time).entrySet()) {
+      final Receipt receipt = entry.getValue();
+      if(involves(receipt, account)) {
+        history.getReceipts().put(receipt.getTime(), receipt.getId());
+      }
+    }
+    return history;
+  }
+
+  private boolean involves(final Receipt receipt, final UUID account) {
+
+    return receipt.getFrom() != null && receipt.getFrom().getId().equals(account)
+           || receipt.getTo() != null && receipt.getTo().getId().equals(account);
   }
 
   public SortedHistory getSorted(final UUID identifier) {

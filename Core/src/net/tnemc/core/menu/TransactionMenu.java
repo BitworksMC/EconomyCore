@@ -74,56 +74,55 @@ public class TransactionMenu extends Menu {
 
     final UUID id = callback.getPlayer().identifier();
     final Optional<Account> account = TNECore.eco().account().findAccount(callback.getPlayer().identifier());
+    if(account.isEmpty()) {
+      return;
+    }
 
-    if(account.isPresent()) {
+    final SortedHistory sorted = account.get().getSorted(account.get().getIdentifier());
+    final int pagesPer = TRANSACTION_HISTORY_COUNT / 5;
+    final int pageDiv = sorted.maxPages() / pagesPer;
+    final int maxPages = sorted.maxPages() % pagesPer > 0? pageDiv + 1 : pageDiv;
+    final int page = callback.getPlayer().viewer().isPresent()
+                     ? (Integer)callback.getPlayer().viewer().get().dataOrDefault(TRANSACTION_PAGE_ID, 1) : 1;
+    addNavigation(callback, id, page, maxPages);
+    scanTransactions(account.get(), sorted, page);
+  }
 
-      final SortedHistory sorted = account.get().getSorted(account.get().getIdentifier());
+  private void addNavigation(final PageOpenCallback callback, final UUID id, final int page,
+                             final int maxPages) {
 
-      final int pagesPer = TRANSACTION_HISTORY_COUNT / 5;
-      final int pageDiv = (sorted.maxPages() / pagesPer);
-      final int maxPages = (sorted.maxPages() % pagesPer > 0)? pageDiv + 1 : pageDiv;
+    if(maxPages <= 1) {
+      return;
+    }
+    final int prev = page <= 1? maxPages : page - 1;
+    final int next = page >= maxPages? 1 : page + 1;
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)
+                                                       .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))
+                                                       .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))
+                                       .withActions(new DataAction(TRANSACTION_PAGE_ID, prev), new SwitchPageAction(this.name, 1))
+                                       .withSlot(0).build());
+    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)
+                                                       .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))
+                                                       .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))
+                                       .withActions(new DataAction(TRANSACTION_PAGE_ID, next), new SwitchPageAction(this.name, 1))
+                                       .withSlot(8).build());
+  }
 
-      final int page = (callback.getPlayer().viewer().isPresent())? (Integer)callback.getPlayer().viewer().get().dataOrDefault(TRANSACTION_PAGE_ID, 1) : 1;
+  private void scanTransactions(final Account account, final SortedHistory sorted, final int page) {
 
-      final int prev = (page <= 1)? maxPages : page - 1;
-      final int next = (page >= maxPages)? 1 : page + 1;
-
-      if(maxPages > 1) {
-
-        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)
-                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))
-                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))
-                                           .withActions(new DataAction(TRANSACTION_PAGE_ID, prev), new SwitchPageAction(this.name, 1))
-                                           .withSlot(0)
-                                           .build());
-
-        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)
-                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))
-                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))
-                                           .withActions(new DataAction(TRANSACTION_PAGE_ID, next), new SwitchPageAction(this.name, 1))
-                                           .withSlot(8)
-                                           .build());
+    int slot = 9;
+    for(int i = 1; i <= 2; i++) {
+      final int adjustedPage = i + page - 1;
+      if(adjustedPage > sorted.maxPages()) {
+        break;
       }
-
-      int slot = 9;
-      for(int i = 1; i <= 2; i++) {
-
-        final int adjustedPage = i + (page - 1);
-        if(adjustedPage > sorted.maxPages()) {
-          break;
-        }
-
-        for(final Map.Entry<Long, UUID> entry : sorted.getPage(adjustedPage).entrySet()) {
-
-          final Optional<Receipt> receipt = account.get().findReceipt(entry.getValue());
-          if(receipt.isEmpty()) {
-            continue;
-          }
+      for(final Map.Entry<Long, UUID> entry : sorted.getPage(adjustedPage).entrySet()) {
+        final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
+        if(receipt.isPresent()) {
           //callback.getPage().addIcon(buildTransactionIcon(slot, receipt.get()));
         }
-
-        slot += 2;
       }
+      slot += 2;
     }
   }
 
