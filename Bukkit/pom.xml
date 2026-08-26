@@ -308,7 +308,7 @@
     <parent>
         <groupId>net.tnemc</groupId>
         <artifactId>TNE</artifactId>
-        <version>0.1.4.4</version>
+        <version>0.1.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 </project>
