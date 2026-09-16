@@ -33,55 +33,129 @@
 <span class="source-line-no">020</span><span id="line-20"></span>
 <span class="source-line-no">021</span><span id="line-21">import com.vdurmont.semver4j.Semver;</span>
 <span class="source-line-no">022</span><span id="line-22">import net.tnemc.plugincore.PluginCore;</span>
-<span class="source-line-no">023</span><span id="line-23">import net.tnemc.plugincore.core.utils.IOUtil;</span>
-<span class="source-line-no">024</span><span id="line-24">import net.tnemc.plugincore.core.utils.UpdateChecker;</span>
-<span class="source-line-no">025</span><span id="line-25"></span>
-<span class="source-line-no">026</span><span id="line-26">/**</span>
-<span class="source-line-no">027</span><span id="line-27"> * Updater</span>
-<span class="source-line-no">028</span><span id="line-28"> *</span>
-<span class="source-line-no">029</span><span id="line-29"> * @author creatorfromhell</span>
-<span class="source-line-no">030</span><span id="line-30"> * @since 0.1.2.0</span>
-<span class="source-line-no">031</span><span id="line-31"> */</span>
-<span class="source-line-no">032</span><span id="line-32">public class Updater extends UpdateChecker {</span>
-<span class="source-line-no">033</span><span id="line-33"></span>
-<span class="source-line-no">034</span><span id="line-34">  final String ver;</span>
-<span class="source-line-no">035</span><span id="line-35">  final int verStrip;</span>
-<span class="source-line-no">036</span><span id="line-36">  final int pluginStrip;</span>
-<span class="source-line-no">037</span><span id="line-37"></span>
-<span class="source-line-no">038</span><span id="line-38">  public Updater() {</span>
-<span class="source-line-no">039</span><span id="line-39"></span>
-<span class="source-line-no">040</span><span id="line-40">    ver = IOUtil.readVersion().orElse("0.0.0.0");</span>
-<span class="source-line-no">041</span><span id="line-41">    verStrip = Integer.parseInt(ver.replaceAll("\\.", ""));</span>
-<span class="source-line-no">042</span><span id="line-42">    pluginStrip = Integer.parseInt(PluginCore.engine().version().replaceAll("\\.", ""));</span>
-<span class="source-line-no">043</span><span id="line-43">  }</span>
-<span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">  @Override</span>
-<span class="source-line-no">046</span><span id="line-46">  public boolean isEarlyBuild() {</span>
-<span class="source-line-no">047</span><span id="line-47"></span>
-<span class="source-line-no">048</span><span id="line-48">    return verStrip &lt; pluginStrip;</span>
-<span class="source-line-no">049</span><span id="line-49">  }</span>
+<span class="source-line-no">023</span><span id="line-23">import net.tnemc.plugincore.core.utils.UpdateChecker;</span>
+<span class="source-line-no">024</span><span id="line-24">import org.json.simple.JSONObject;</span>
+<span class="source-line-no">025</span><span id="line-25">import org.json.simple.parser.JSONParser;</span>
+<span class="source-line-no">026</span><span id="line-26">import org.json.simple.parser.ParseException;</span>
+<span class="source-line-no">027</span><span id="line-27"></span>
+<span class="source-line-no">028</span><span id="line-28">import java.io.IOException;</span>
+<span class="source-line-no">029</span><span id="line-29">import java.net.URI;</span>
+<span class="source-line-no">030</span><span id="line-30">import java.net.http.HttpClient;</span>
+<span class="source-line-no">031</span><span id="line-31">import java.net.http.HttpRequest;</span>
+<span class="source-line-no">032</span><span id="line-32">import java.net.http.HttpResponse;</span>
+<span class="source-line-no">033</span><span id="line-33">import java.time.Duration;</span>
+<span class="source-line-no">034</span><span id="line-34"></span>
+<span class="source-line-no">035</span><span id="line-35">/**</span>
+<span class="source-line-no">036</span><span id="line-36"> * Updater</span>
+<span class="source-line-no">037</span><span id="line-37"> *</span>
+<span class="source-line-no">038</span><span id="line-38"> * @author creatorfromhell</span>
+<span class="source-line-no">039</span><span id="line-39"> * @since 0.1.2.0</span>
+<span class="source-line-no">040</span><span id="line-40"> */</span>
+<span class="source-line-no">041</span><span id="line-41">public class Updater extends UpdateChecker {</span>
+<span class="source-line-no">042</span><span id="line-42"></span>
+<span class="source-line-no">043</span><span id="line-43">  private static final URI RELEASE_ENDPOINT = URI.create(</span>
+<span class="source-line-no">044</span><span id="line-44">          "https://api.github.com/repos/BitworksMC/EconomyCore/releases/latest");</span>
+<span class="source-line-no">045</span><span id="line-45">  private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);</span>
+<span class="source-line-no">046</span><span id="line-46"></span>
+<span class="source-line-no">047</span><span id="line-47">  final String ver;</span>
+<span class="source-line-no">048</span><span id="line-48">  final Semver releaseVersion;</span>
+<span class="source-line-no">049</span><span id="line-49">  final Semver pluginVersion;</span>
 <span class="source-line-no">050</span><span id="line-50"></span>
-<span class="source-line-no">051</span><span id="line-51">  @Override</span>
-<span class="source-line-no">052</span><span id="line-52">  public boolean needsUpdate() {</span>
-<span class="source-line-no">053</span><span id="line-53"></span>
-<span class="source-line-no">054</span><span id="line-54">    return verStrip &gt; pluginStrip;</span>
-<span class="source-line-no">055</span><span id="line-55">  }</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
-<span class="source-line-no">057</span><span id="line-57">  @Override</span>
-<span class="source-line-no">058</span><span id="line-58">  public String stable() {</span>
-<span class="source-line-no">059</span><span id="line-59"></span>
-<span class="source-line-no">060</span><span id="line-60">    if(new Semver(PluginCore.engine().version() + "-" + PluginCore.engine().build(), Semver.SemverType.LOOSE).isStable()) {</span>
-<span class="source-line-no">061</span><span id="line-61">      return "Stable";</span>
-<span class="source-line-no">062</span><span id="line-62">    }</span>
-<span class="source-line-no">063</span><span id="line-63">    return "Not Stable";</span>
-<span class="source-line-no">064</span><span id="line-64">  }</span>
-<span class="source-line-no">065</span><span id="line-65"></span>
-<span class="source-line-no">066</span><span id="line-66">  @Override</span>
-<span class="source-line-no">067</span><span id="line-67">  public String getBuild() {</span>
-<span class="source-line-no">068</span><span id="line-68"></span>
-<span class="source-line-no">069</span><span id="line-69">    return ver;</span>
-<span class="source-line-no">070</span><span id="line-70">  }</span>
-<span class="source-line-no">071</span><span id="line-71">}</span>
+<span class="source-line-no">051</span><span id="line-51">  public Updater() {</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53">    final String installedVersion = PluginCore.engine().version();</span>
+<span class="source-line-no">054</span><span id="line-54">    ver = latestRelease(installedVersion);</span>
+<span class="source-line-no">055</span><span id="line-55">    releaseVersion = new Semver(ver, Semver.SemverType.LOOSE);</span>
+<span class="source-line-no">056</span><span id="line-56">    pluginVersion = new Semver(installedVersion, Semver.SemverType.LOOSE);</span>
+<span class="source-line-no">057</span><span id="line-57">  }</span>
+<span class="source-line-no">058</span><span id="line-58"></span>
+<span class="source-line-no">059</span><span id="line-59">  @Override</span>
+<span class="source-line-no">060</span><span id="line-60">  public boolean isEarlyBuild() {</span>
+<span class="source-line-no">061</span><span id="line-61"></span>
+<span class="source-line-no">062</span><span id="line-62">    return pluginVersion.compareTo(releaseVersion) &gt; 0;</span>
+<span class="source-line-no">063</span><span id="line-63">  }</span>
+<span class="source-line-no">064</span><span id="line-64"></span>
+<span class="source-line-no">065</span><span id="line-65">  @Override</span>
+<span class="source-line-no">066</span><span id="line-66">  public boolean needsUpdate() {</span>
+<span class="source-line-no">067</span><span id="line-67"></span>
+<span class="source-line-no">068</span><span id="line-68">    return releaseVersion.compareTo(pluginVersion) &gt; 0;</span>
+<span class="source-line-no">069</span><span id="line-69">  }</span>
+<span class="source-line-no">070</span><span id="line-70"></span>
+<span class="source-line-no">071</span><span id="line-71">  @Override</span>
+<span class="source-line-no">072</span><span id="line-72">  public String stable() {</span>
+<span class="source-line-no">073</span><span id="line-73"></span>
+<span class="source-line-no">074</span><span id="line-74">    return stability(PluginCore.engine().version(), PluginCore.engine().build());</span>
+<span class="source-line-no">075</span><span id="line-75">  }</span>
+<span class="source-line-no">076</span><span id="line-76"></span>
+<span class="source-line-no">077</span><span id="line-77">  public static String stability(final String version, final String build) {</span>
+<span class="source-line-no">078</span><span id="line-78"></span>
+<span class="source-line-no">079</span><span id="line-79">    if(new Semver(version + "-" + build, Semver.SemverType.LOOSE).isStable()) {</span>
+<span class="source-line-no">080</span><span id="line-80">      return "Stable";</span>
+<span class="source-line-no">081</span><span id="line-81">    }</span>
+<span class="source-line-no">082</span><span id="line-82">    return "Not Stable";</span>
+<span class="source-line-no">083</span><span id="line-83">  }</span>
+<span class="source-line-no">084</span><span id="line-84"></span>
+<span class="source-line-no">085</span><span id="line-85">  @Override</span>
+<span class="source-line-no">086</span><span id="line-86">  public String getBuild() {</span>
+<span class="source-line-no">087</span><span id="line-87"></span>
+<span class="source-line-no">088</span><span id="line-88">    return ver;</span>
+<span class="source-line-no">089</span><span id="line-89">  }</span>
+<span class="source-line-no">090</span><span id="line-90"></span>
+<span class="source-line-no">091</span><span id="line-91">  private static String latestRelease(final String installedVersion) {</span>
+<span class="source-line-no">092</span><span id="line-92"></span>
+<span class="source-line-no">093</span><span id="line-93">    try {</span>
+<span class="source-line-no">094</span><span id="line-94">      return requestLatestRelease(installedVersion);</span>
+<span class="source-line-no">095</span><span id="line-95">    } catch(final InterruptedException e) {</span>
+<span class="source-line-no">096</span><span id="line-96">      Thread.currentThread().interrupt();</span>
+<span class="source-line-no">097</span><span id="line-97">      logFailure(e);</span>
+<span class="source-line-no">098</span><span id="line-98">    } catch(final IOException | ParseException | IllegalArgumentException e) {</span>
+<span class="source-line-no">099</span><span id="line-99">      logFailure(e);</span>
+<span class="source-line-no">100</span><span id="line-100">    }</span>
+<span class="source-line-no">101</span><span id="line-101">    return installedVersion;</span>
+<span class="source-line-no">102</span><span id="line-102">  }</span>
+<span class="source-line-no">103</span><span id="line-103"></span>
+<span class="source-line-no">104</span><span id="line-104">  private static String requestLatestRelease(final String installedVersion)</span>
+<span class="source-line-no">105</span><span id="line-105">          throws IOException, InterruptedException, ParseException {</span>
+<span class="source-line-no">106</span><span id="line-106"></span>
+<span class="source-line-no">107</span><span id="line-107">    final HttpClient client = HttpClient.newBuilder()</span>
+<span class="source-line-no">108</span><span id="line-108">            .connectTimeout(REQUEST_TIMEOUT)</span>
+<span class="source-line-no">109</span><span id="line-109">            .followRedirects(HttpClient.Redirect.NORMAL)</span>
+<span class="source-line-no">110</span><span id="line-110">            .build();</span>
+<span class="source-line-no">111</span><span id="line-111">    final HttpRequest request = HttpRequest.newBuilder(RELEASE_ENDPOINT)</span>
+<span class="source-line-no">112</span><span id="line-112">            .timeout(REQUEST_TIMEOUT)</span>
+<span class="source-line-no">113</span><span id="line-113">            .header("Accept", "application/vnd.github+json")</span>
+<span class="source-line-no">114</span><span id="line-114">            .header("X-GitHub-Api-Version", "2022-11-28")</span>
+<span class="source-line-no">115</span><span id="line-115">            .header("User-Agent", "EconomyCore/" + installedVersion)</span>
+<span class="source-line-no">116</span><span id="line-116">            .GET()</span>
+<span class="source-line-no">117</span><span id="line-117">            .build();</span>
+<span class="source-line-no">118</span><span id="line-118">    final HttpResponse&lt;String&gt; response = client.send(request, HttpResponse.BodyHandlers.ofString());</span>
+<span class="source-line-no">119</span><span id="line-119">    if(response.statusCode() != 200) {</span>
+<span class="source-line-no">120</span><span id="line-120">      throw new IOException("GitHub returned HTTP " + response.statusCode());</span>
+<span class="source-line-no">121</span><span id="line-121">    }</span>
+<span class="source-line-no">122</span><span id="line-122">    return releaseTag(response.body());</span>
+<span class="source-line-no">123</span><span id="line-123">  }</span>
+<span class="source-line-no">124</span><span id="line-124"></span>
+<span class="source-line-no">125</span><span id="line-125">  private static String releaseTag(final String responseBody) throws ParseException {</span>
+<span class="source-line-no">126</span><span id="line-126"></span>
+<span class="source-line-no">127</span><span id="line-127">    final Object parsed = new JSONParser().parse(responseBody);</span>
+<span class="source-line-no">128</span><span id="line-128">    if(!(parsed instanceof JSONObject release)) {</span>
+<span class="source-line-no">129</span><span id="line-129">      throw new IllegalArgumentException("GitHub returned an unexpected response");</span>
+<span class="source-line-no">130</span><span id="line-130">    }</span>
+<span class="source-line-no">131</span><span id="line-131">    final Object tag = release.get("tag_name");</span>
+<span class="source-line-no">132</span><span id="line-132">    if(!(tag instanceof String) || ((String)tag).isBlank()) {</span>
+<span class="source-line-no">133</span><span id="line-133">      throw new IllegalArgumentException("GitHub release is missing tag_name");</span>
+<span class="source-line-no">134</span><span id="line-134">    }</span>
+<span class="source-line-no">135</span><span id="line-135">    final String version = ((String)tag).replaceFirst("^[vV]", "");</span>
+<span class="source-line-no">136</span><span id="line-136">    new Semver(version, Semver.SemverType.LOOSE);</span>
+<span class="source-line-no">137</span><span id="line-137">    return version;</span>
+<span class="source-line-no">138</span><span id="line-138">  }</span>
+<span class="source-line-no">139</span><span id="line-139"></span>
+<span class="source-line-no">140</span><span id="line-140">  private static void logFailure(final Exception exception) {</span>
+<span class="source-line-no">141</span><span id="line-141"></span>
+<span class="source-line-no">142</span><span id="line-142">    PluginCore.log().warning("Unable to check BitworksMC/EconomyCore GitHub releases: "</span>
+<span class="source-line-no">143</span><span id="line-143">                             + exception.getMessage());</span>
+<span class="source-line-no">144</span><span id="line-144">  }</span>
+<span class="source-line-no">145</span><span id="line-145">}</span>
 
 
 

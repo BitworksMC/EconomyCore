@@ -99,22 +99,23 @@
 <span class="source-line-no">086</span><span id="line-86">    int i = 0;</span>
 <span class="source-line-no">087</span><span id="line-87">    while(it.hasNext()) {</span>
 <span class="source-line-no">088</span><span id="line-88">      if(pos - 1 == i) {</span>
-<span class="source-line-no">089</span><span id="line-89">        data.addReplacement("$account", (String)it.next().getKey());</span>
-<span class="source-line-no">090</span><span id="line-90">        data.addReplacement("$balance", CurrencyFormatter.format(null, new HoldingsEntry(PluginCore.server().defaultWorld(), currency, it.next().getValue(), EconomyManager.NORMAL)));</span>
-<span class="source-line-no">091</span><span id="line-91">        return data;</span>
-<span class="source-line-no">092</span><span id="line-92">      }</span>
-<span class="source-line-no">093</span><span id="line-93"></span>
-<span class="source-line-no">094</span><span id="line-94">      it.next();</span>
-<span class="source-line-no">095</span><span id="line-95">      i++;</span>
-<span class="source-line-no">096</span><span id="line-96">    }</span>
-<span class="source-line-no">097</span><span id="line-97">    return data;</span>
-<span class="source-line-no">098</span><span id="line-98">  }</span>
-<span class="source-line-no">099</span><span id="line-99"></span>
-<span class="source-line-no">100</span><span id="line-100">  public int getPage() {</span>
-<span class="source-line-no">101</span><span id="line-101"></span>
-<span class="source-line-no">102</span><span id="line-102">    return page;</span>
-<span class="source-line-no">103</span><span id="line-103">  }</span>
-<span class="source-line-no">104</span><span id="line-104">}</span>
+<span class="source-line-no">089</span><span id="line-89">        final Map.Entry&lt;V, BigDecimal&gt; entry = it.next();</span>
+<span class="source-line-no">090</span><span id="line-90">        data.addReplacement("$account", (String)entry.getKey());</span>
+<span class="source-line-no">091</span><span id="line-91">        data.addReplacement("$balance", CurrencyFormatter.format(null, new HoldingsEntry(PluginCore.server().defaultWorld(), currency, entry.getValue(), EconomyManager.NORMAL)));</span>
+<span class="source-line-no">092</span><span id="line-92">        return data;</span>
+<span class="source-line-no">093</span><span id="line-93">      }</span>
+<span class="source-line-no">094</span><span id="line-94"></span>
+<span class="source-line-no">095</span><span id="line-95">      it.next();</span>
+<span class="source-line-no">096</span><span id="line-96">      i++;</span>
+<span class="source-line-no">097</span><span id="line-97">    }</span>
+<span class="source-line-no">098</span><span id="line-98">    return data;</span>
+<span class="source-line-no">099</span><span id="line-99">  }</span>
+<span class="source-line-no">100</span><span id="line-100"></span>
+<span class="source-line-no">101</span><span id="line-101">  public int getPage() {</span>
+<span class="source-line-no">102</span><span id="line-102"></span>
+<span class="source-line-no">103</span><span id="line-103">    return page;</span>
+<span class="source-line-no">104</span><span id="line-104">  }</span>
+<span class="source-line-no">105</span><span id="line-105">}</span>
 
 
 

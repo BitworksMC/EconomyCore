@@ -186,53 +186,50 @@
 <span class="source-line-no">173</span><span id="line-173">                                         .build());</span>
 <span class="source-line-no">174</span><span id="line-174"></span>
 <span class="source-line-no">175</span><span id="line-175"></span>
-<span class="source-line-no">176</span><span id="line-176">      final String[] stringSet = CurrencyFormatter.rules().keySet().toArray(new String[CurrencyFormatter.rules().size()]);</span>
-<span class="source-line-no">177</span><span id="line-177"></span>
-<span class="source-line-no">178</span><span id="line-178">      final LinkedList&lt;Component&gt; lore = new LinkedList&lt;&gt;();</span>
-<span class="source-line-no">179</span><span id="line-179">      lore.add(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Format.Add"), id));</span>
-<span class="source-line-no">180</span><span id="line-180">      lore.add(Component.text("Placeholder"));</span>
-<span class="source-line-no">181</span><span id="line-181"></span>
-<span class="source-line-no">182</span><span id="line-182">      int slot = 9;</span>
-<span class="source-line-no">183</span><span id="line-183">      for(int i = start; i &lt; start + items; i++) {</span>
-<span class="source-line-no">184</span><span id="line-184">        if(stringSet.length &lt;= i) {</span>
-<span class="source-line-no">185</span><span id="line-185">          break;</span>
-<span class="source-line-no">186</span><span id="line-186">        }</span>
+<span class="source-line-no">176</span><span id="line-176">      addFormatRules(callback, id, start, items);</span>
+<span class="source-line-no">177</span><span id="line-177">    }</span>
+<span class="source-line-no">178</span><span id="line-178">  }</span>
+<span class="source-line-no">179</span><span id="line-179"></span>
+<span class="source-line-no">180</span><span id="line-180">  private void addFormatRules(final PageOpenCallback callback, final UUID id, final int start,</span>
+<span class="source-line-no">181</span><span id="line-181">                              final int items) {</span>
+<span class="source-line-no">182</span><span id="line-182"></span>
+<span class="source-line-no">183</span><span id="line-183">    final String[] stringSet = CurrencyFormatter.rules().keySet().toArray(new String[CurrencyFormatter.rules().size()]);</span>
+<span class="source-line-no">184</span><span id="line-184">    final LinkedList&lt;Component&gt; lore = new LinkedList&lt;&gt;();</span>
+<span class="source-line-no">185</span><span id="line-185">    lore.add(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Format.Add"), id));</span>
+<span class="source-line-no">186</span><span id="line-186">    lore.add(Component.text("Placeholder"));</span>
 <span class="source-line-no">187</span><span id="line-187"></span>
-<span class="source-line-no">188</span><span id="line-188">        final FormatRule rule = CurrencyFormatter.rules().get(stringSet[i]);</span>
-<span class="source-line-no">189</span><span id="line-189"></span>
-<span class="source-line-no">190</span><span id="line-190">        if(!rule.includeInMenu()) {</span>
-<span class="source-line-no">191</span><span id="line-191">          continue;</span>
-<span class="source-line-no">192</span><span id="line-192">        }</span>
-<span class="source-line-no">193</span><span id="line-193"></span>
-<span class="source-line-no">194</span><span id="line-194">        //reset lore to include description for each rule.</span>
-<span class="source-line-no">195</span><span id="line-195">        lore.set(1, Component.text(rule.description()));</span>
-<span class="source-line-no">196</span><span id="line-196"></span>
-<span class="source-line-no">197</span><span id="line-197">        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PAPER", 1)</span>
-<span class="source-line-no">198</span><span id="line-198">                                                           .customName(Component.text(rule.name()))</span>
-<span class="source-line-no">199</span><span id="line-199">                                                           .lore(lore))</span>
-<span class="source-line-no">200</span><span id="line-200">                                           .withActions(new SwitchPageAction(menuName, menuPage))</span>
-<span class="source-line-no">201</span><span id="line-201">                                           .withClick((click)-&gt;formatAddClick(click, rule.name()))</span>
-<span class="source-line-no">202</span><span id="line-202">                                           .withSlot(slot)</span>
-<span class="source-line-no">203</span><span id="line-203">                                           .build());</span>
-<span class="source-line-no">204</span><span id="line-204"></span>
-<span class="source-line-no">205</span><span id="line-205">        slot++;</span>
-<span class="source-line-no">206</span><span id="line-206">      }</span>
-<span class="source-line-no">207</span><span id="line-207">    }</span>
-<span class="source-line-no">208</span><span id="line-208">  }</span>
-<span class="source-line-no">209</span><span id="line-209"></span>
-<span class="source-line-no">210</span><span id="line-210">  private void formatAddClick(final MenuClickHandler click, final String toAdd) {</span>
-<span class="source-line-no">211</span><span id="line-211"></span>
-<span class="source-line-no">212</span><span id="line-212">    final Optional&lt;MenuViewer&gt; clickViewer = click.player().viewer();</span>
-<span class="source-line-no">213</span><span id="line-213">    clickViewer.ifPresent(menuViewer-&gt;addToClickData(menuViewer, toAdd));</span>
-<span class="source-line-no">214</span><span id="line-214">  }</span>
-<span class="source-line-no">215</span><span id="line-215"></span>
-<span class="source-line-no">216</span><span id="line-216">  protected void addToClickData(final MenuViewer viewer, final String toAdd) {</span>
-<span class="source-line-no">217</span><span id="line-217"></span>
-<span class="source-line-no">218</span><span id="line-218">    final String formatStr = (String)viewer.dataOrDefault(formatID, "");</span>
-<span class="source-line-no">219</span><span id="line-219"></span>
-<span class="source-line-no">220</span><span id="line-220">    viewer.addData(formatID, formatStr + toAdd);</span>
-<span class="source-line-no">221</span><span id="line-221">  }</span>
-<span class="source-line-no">222</span><span id="line-222">}</span>
+<span class="source-line-no">188</span><span id="line-188">    int slot = 9;</span>
+<span class="source-line-no">189</span><span id="line-189">    for(int i = start; i &lt; start + items; i++) {</span>
+<span class="source-line-no">190</span><span id="line-190">      if(stringSet.length &lt;= i) {</span>
+<span class="source-line-no">191</span><span id="line-191">        break;</span>
+<span class="source-line-no">192</span><span id="line-192">      }</span>
+<span class="source-line-no">193</span><span id="line-193">      final FormatRule rule = CurrencyFormatter.rules().get(stringSet[i]);</span>
+<span class="source-line-no">194</span><span id="line-194">      if(!rule.includeInMenu()) {</span>
+<span class="source-line-no">195</span><span id="line-195">        continue;</span>
+<span class="source-line-no">196</span><span id="line-196">      }</span>
+<span class="source-line-no">197</span><span id="line-197">      lore.set(1, Component.text(rule.description()));</span>
+<span class="source-line-no">198</span><span id="line-198">      callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("PAPER", 1)</span>
+<span class="source-line-no">199</span><span id="line-199">                                                         .customName(Component.text(rule.name())).lore(lore))</span>
+<span class="source-line-no">200</span><span id="line-200">                                         .withActions(new SwitchPageAction(menuName, menuPage))</span>
+<span class="source-line-no">201</span><span id="line-201">                                         .withClick(click-&gt;formatAddClick(click, rule.name()))</span>
+<span class="source-line-no">202</span><span id="line-202">                                         .withSlot(slot).build());</span>
+<span class="source-line-no">203</span><span id="line-203">      slot++;</span>
+<span class="source-line-no">204</span><span id="line-204">    }</span>
+<span class="source-line-no">205</span><span id="line-205">  }</span>
+<span class="source-line-no">206</span><span id="line-206"></span>
+<span class="source-line-no">207</span><span id="line-207">  private void formatAddClick(final MenuClickHandler click, final String toAdd) {</span>
+<span class="source-line-no">208</span><span id="line-208"></span>
+<span class="source-line-no">209</span><span id="line-209">    final Optional&lt;MenuViewer&gt; clickViewer = click.player().viewer();</span>
+<span class="source-line-no">210</span><span id="line-210">    clickViewer.ifPresent(menuViewer-&gt;addToClickData(menuViewer, toAdd));</span>
+<span class="source-line-no">211</span><span id="line-211">  }</span>
+<span class="source-line-no">212</span><span id="line-212"></span>
+<span class="source-line-no">213</span><span id="line-213">  protected void addToClickData(final MenuViewer viewer, final String toAdd) {</span>
+<span class="source-line-no">214</span><span id="line-214"></span>
+<span class="source-line-no">215</span><span id="line-215">    final String formatStr = (String)viewer.dataOrDefault(formatID, "");</span>
+<span class="source-line-no">216</span><span id="line-216"></span>
+<span class="source-line-no">217</span><span id="line-217">    viewer.addData(formatID, formatStr + toAdd);</span>
+<span class="source-line-no">218</span><span id="line-218">  }</span>
+<span class="source-line-no">219</span><span id="line-219">}</span>
 
 
 

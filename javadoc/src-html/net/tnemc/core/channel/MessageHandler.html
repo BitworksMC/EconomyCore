@@ -59,39 +59,47 @@
 <span class="source-line-no">046</span><span id="line-46"></span>
 <span class="source-line-no">047</span><span id="line-47">  public static void send(final UUID identifier, final Component component) {</span>
 <span class="source-line-no">048</span><span id="line-48"></span>
-<span class="source-line-no">049</span><span id="line-49">    final ByteArrayDataOutput out = ByteStreams.newDataOutput();</span>
-<span class="source-line-no">050</span><span id="line-50">    out.writeUTF(PluginCore.instance().getServerID().toString());</span>
-<span class="source-line-no">051</span><span id="line-51">    out.writeUTF(identifier.toString());</span>
-<span class="source-line-no">052</span><span id="line-52">    out.writeUTF(MiniMessage.miniMessage().serialize(component));</span>
-<span class="source-line-no">053</span><span id="line-53">    PluginCore.log().debug("Sending message: " + MiniMessage.miniMessage().serialize(component));</span>
-<span class="source-line-no">054</span><span id="line-54"></span>
-<span class="source-line-no">055</span><span id="line-55">    TNECore.instance().storage().sendProxyMessage("tne:message", out.toByteArray());</span>
-<span class="source-line-no">056</span><span id="line-56">  }</span>
-<span class="source-line-no">057</span><span id="line-57"></span>
-<span class="source-line-no">058</span><span id="line-58">  @Override</span>
-<span class="source-line-no">059</span><span id="line-59">  public void handle(final ChannelBytesWrapper wrapper) {</span>
-<span class="source-line-no">060</span><span id="line-60"></span>
-<span class="source-line-no">061</span><span id="line-61">    try {</span>
+<span class="source-line-no">049</span><span id="line-49">    if(!TNECore.syncEnabled()) {</span>
+<span class="source-line-no">050</span><span id="line-50">      return;</span>
+<span class="source-line-no">051</span><span id="line-51">    }</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53">    final ByteArrayDataOutput out = ByteStreams.newDataOutput();</span>
+<span class="source-line-no">054</span><span id="line-54">    out.writeUTF(PluginCore.instance().getServerID().toString());</span>
+<span class="source-line-no">055</span><span id="line-55">    ChannelSecurity.writeToken(out);</span>
+<span class="source-line-no">056</span><span id="line-56">    out.writeUTF(identifier.toString());</span>
+<span class="source-line-no">057</span><span id="line-57">    out.writeUTF(MiniMessage.miniMessage().serialize(component));</span>
+<span class="source-line-no">058</span><span id="line-58">    PluginCore.log().debug("Sending message: " + MiniMessage.miniMessage().serialize(component));</span>
+<span class="source-line-no">059</span><span id="line-59"></span>
+<span class="source-line-no">060</span><span id="line-60">    TNECore.instance().storage().sendProxyMessage("tne:message", out.toByteArray());</span>
+<span class="source-line-no">061</span><span id="line-61">  }</span>
 <span class="source-line-no">062</span><span id="line-62"></span>
-<span class="source-line-no">063</span><span id="line-63">      final String uuid = wrapper.readUTF();</span>
-<span class="source-line-no">064</span><span id="line-64">      final String message = wrapper.readUTF();</span>
-<span class="source-line-no">065</span><span id="line-65">      PluginCore.log().debug("Received message: " + message);</span>
-<span class="source-line-no">066</span><span id="line-66"></span>
-<span class="source-line-no">067</span><span id="line-67">      if(uuid != null &amp;&amp; message != null) {</span>
-<span class="source-line-no">068</span><span id="line-68"></span>
-<span class="source-line-no">069</span><span id="line-69">        final UUID identifier = UUID.fromString(uuid);</span>
+<span class="source-line-no">063</span><span id="line-63">  @Override</span>
+<span class="source-line-no">064</span><span id="line-64">  public void handle(final ChannelBytesWrapper wrapper) {</span>
+<span class="source-line-no">065</span><span id="line-65"></span>
+<span class="source-line-no">066</span><span id="line-66">    try {</span>
+<span class="source-line-no">067</span><span id="line-67">      if(!ChannelSecurity.validate(wrapper, "message")) {</span>
+<span class="source-line-no">068</span><span id="line-68">        return;</span>
+<span class="source-line-no">069</span><span id="line-69">      }</span>
 <span class="source-line-no">070</span><span id="line-70"></span>
-<span class="source-line-no">071</span><span id="line-71">        final Optional&lt;PlayerAccount&gt; player = TNECore.eco().account().findPlayerAccount(identifier);</span>
-<span class="source-line-no">072</span><span id="line-72">        if(player.isPresent() &amp;&amp; player.get().getPlayer().isPresent()) {</span>
-<span class="source-line-no">073</span><span id="line-73">          player.get().getPlayer().get().message(message);</span>
-<span class="source-line-no">074</span><span id="line-74">        }</span>
-<span class="source-line-no">075</span><span id="line-75">      }</span>
+<span class="source-line-no">071</span><span id="line-71">      final String uuid = wrapper.readUTF();</span>
+<span class="source-line-no">072</span><span id="line-72">      final String message = wrapper.readUTF();</span>
+<span class="source-line-no">073</span><span id="line-73">      PluginCore.log().debug("Received message: " + message);</span>
+<span class="source-line-no">074</span><span id="line-74"></span>
+<span class="source-line-no">075</span><span id="line-75">      if(uuid != null &amp;&amp; message != null) {</span>
 <span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77">    } catch(Exception e) {</span>
-<span class="source-line-no">078</span><span id="line-78">      PluginCore.log().error("Issue with message plugin message", e, DebugLevel.STANDARD);</span>
-<span class="source-line-no">079</span><span id="line-79">    }</span>
-<span class="source-line-no">080</span><span id="line-80">  }</span>
-<span class="source-line-no">081</span><span id="line-81">}</span>
+<span class="source-line-no">077</span><span id="line-77">        final UUID identifier = UUID.fromString(uuid);</span>
+<span class="source-line-no">078</span><span id="line-78"></span>
+<span class="source-line-no">079</span><span id="line-79">        final Optional&lt;PlayerAccount&gt; player = TNECore.eco().account().findPlayerAccount(identifier);</span>
+<span class="source-line-no">080</span><span id="line-80">        if(player.isPresent() &amp;&amp; player.get().getPlayer().isPresent()) {</span>
+<span class="source-line-no">081</span><span id="line-81">          player.get().getPlayer().get().message(message);</span>
+<span class="source-line-no">082</span><span id="line-82">        }</span>
+<span class="source-line-no">083</span><span id="line-83">      }</span>
+<span class="source-line-no">084</span><span id="line-84"></span>
+<span class="source-line-no">085</span><span id="line-85">    } catch(Exception e) {</span>
+<span class="source-line-no">086</span><span id="line-86">      PluginCore.log().error("Issue with message plugin message", e, DebugLevel.STANDARD);</span>
+<span class="source-line-no">087</span><span id="line-87">    }</span>
+<span class="source-line-no">088</span><span id="line-88">  }</span>
+<span class="source-line-no">089</span><span id="line-89">}</span>
 
 
 

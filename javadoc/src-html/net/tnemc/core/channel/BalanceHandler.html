@@ -62,56 +62,64 @@
 <span class="source-line-no">049</span><span id="line-49"></span>
 <span class="source-line-no">050</span><span id="line-50">  public static void send(final String identifier, final String name, final String region, final UUID currency, final Identifier handler, final BigDecimal amount) {</span>
 <span class="source-line-no">051</span><span id="line-51"></span>
-<span class="source-line-no">052</span><span id="line-52">    final ByteArrayDataOutput out = ByteStreams.newDataOutput();</span>
-<span class="source-line-no">053</span><span id="line-53">    out.writeUTF(PluginCore.instance().getServerID().toString());</span>
-<span class="source-line-no">054</span><span id="line-54">    out.writeUTF(identifier);</span>
-<span class="source-line-no">055</span><span id="line-55">    out.writeUTF(name);</span>
-<span class="source-line-no">056</span><span id="line-56">    out.writeUTF(region);</span>
-<span class="source-line-no">057</span><span id="line-57">    out.writeUTF(currency.toString());</span>
-<span class="source-line-no">058</span><span id="line-58">    out.writeUTF(handler.asID());</span>
-<span class="source-line-no">059</span><span id="line-59">    out.writeUTF(amount.toPlainString());</span>
-<span class="source-line-no">060</span><span id="line-60"></span>
-<span class="source-line-no">061</span><span id="line-61">    TNECore.instance().storage().sendProxyMessage("tne:balance", out.toByteArray());</span>
-<span class="source-line-no">062</span><span id="line-62">  }</span>
-<span class="source-line-no">063</span><span id="line-63"></span>
-<span class="source-line-no">064</span><span id="line-64">  @Override</span>
-<span class="source-line-no">065</span><span id="line-65">  public void handle(final ChannelBytesWrapper wrapper) {</span>
-<span class="source-line-no">066</span><span id="line-66"></span>
-<span class="source-line-no">067</span><span id="line-67">    try {</span>
+<span class="source-line-no">052</span><span id="line-52">    if(!TNECore.syncEnabled()) {</span>
+<span class="source-line-no">053</span><span id="line-53">      return;</span>
+<span class="source-line-no">054</span><span id="line-54">    }</span>
+<span class="source-line-no">055</span><span id="line-55"></span>
+<span class="source-line-no">056</span><span id="line-56">    final ByteArrayDataOutput out = ByteStreams.newDataOutput();</span>
+<span class="source-line-no">057</span><span id="line-57">    out.writeUTF(PluginCore.instance().getServerID().toString());</span>
+<span class="source-line-no">058</span><span id="line-58">    ChannelSecurity.writeToken(out);</span>
+<span class="source-line-no">059</span><span id="line-59">    out.writeUTF(identifier);</span>
+<span class="source-line-no">060</span><span id="line-60">    out.writeUTF(name);</span>
+<span class="source-line-no">061</span><span id="line-61">    out.writeUTF(region);</span>
+<span class="source-line-no">062</span><span id="line-62">    out.writeUTF(currency.toString());</span>
+<span class="source-line-no">063</span><span id="line-63">    out.writeUTF(handler.asID());</span>
+<span class="source-line-no">064</span><span id="line-64">    out.writeUTF(amount.toPlainString());</span>
+<span class="source-line-no">065</span><span id="line-65"></span>
+<span class="source-line-no">066</span><span id="line-66">    TNECore.instance().storage().sendProxyMessage("tne:balance", out.toByteArray());</span>
+<span class="source-line-no">067</span><span id="line-67">  }</span>
 <span class="source-line-no">068</span><span id="line-68"></span>
-<span class="source-line-no">069</span><span id="line-69">      final String accountID = wrapper.readUTF();</span>
-<span class="source-line-no">070</span><span id="line-70">      final String accountName = wrapper.readUTF();</span>
-<span class="source-line-no">071</span><span id="line-71">      final String region = wrapper.readUTF();</span>
-<span class="source-line-no">072</span><span id="line-72">      final Optional&lt;UUID&gt; currency = wrapper.readUUID();</span>
-<span class="source-line-no">073</span><span id="line-73">      final String handler = wrapper.readUTF();</span>
-<span class="source-line-no">074</span><span id="line-74">      final Optional&lt;BigDecimal&gt; amountOPT = wrapper.readBigDecimal();</span>
-<span class="source-line-no">075</span><span id="line-75"></span>
-<span class="source-line-no">076</span><span id="line-76">      if(amountOPT.isPresent() &amp;&amp; currency.isPresent()) {</span>
-<span class="source-line-no">077</span><span id="line-77"></span>
-<span class="source-line-no">078</span><span id="line-78">        Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(accountID);</span>
-<span class="source-line-no">079</span><span id="line-79">        if(account.isEmpty()) {</span>
-<span class="source-line-no">080</span><span id="line-80">          final AccountAPIResponse response = TNECore.eco().account().createAccount(accountID, accountName);</span>
-<span class="source-line-no">081</span><span id="line-81">          if(response.getResponse().success()) {</span>
-<span class="source-line-no">082</span><span id="line-82">            account = response.getAccount();</span>
-<span class="source-line-no">083</span><span id="line-83">          }</span>
-<span class="source-line-no">084</span><span id="line-84">        }</span>
+<span class="source-line-no">069</span><span id="line-69">  @Override</span>
+<span class="source-line-no">070</span><span id="line-70">  public void handle(final ChannelBytesWrapper wrapper) {</span>
+<span class="source-line-no">071</span><span id="line-71"></span>
+<span class="source-line-no">072</span><span id="line-72">    try {</span>
+<span class="source-line-no">073</span><span id="line-73">      if(!ChannelSecurity.validate(wrapper, "balance")) {</span>
+<span class="source-line-no">074</span><span id="line-74">        return;</span>
+<span class="source-line-no">075</span><span id="line-75">      }</span>
+<span class="source-line-no">076</span><span id="line-76"></span>
+<span class="source-line-no">077</span><span id="line-77">      final String accountID = wrapper.readUTF();</span>
+<span class="source-line-no">078</span><span id="line-78">      final String accountName = wrapper.readUTF();</span>
+<span class="source-line-no">079</span><span id="line-79">      final String region = wrapper.readUTF();</span>
+<span class="source-line-no">080</span><span id="line-80">      final Optional&lt;UUID&gt; currency = wrapper.readUUID();</span>
+<span class="source-line-no">081</span><span id="line-81">      final String handler = wrapper.readUTF();</span>
+<span class="source-line-no">082</span><span id="line-82">      final Optional&lt;BigDecimal&gt; amountOPT = wrapper.readBigDecimal();</span>
+<span class="source-line-no">083</span><span id="line-83"></span>
+<span class="source-line-no">084</span><span id="line-84">      if(amountOPT.isPresent() &amp;&amp; currency.isPresent()) {</span>
 <span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">        if(account.isPresent()) {</span>
-<span class="source-line-no">087</span><span id="line-87">          PluginCore.instance().getChannelMessageManager().addAccount(accountID);</span>
-<span class="source-line-no">088</span><span id="line-88"></span>
-<span class="source-line-no">089</span><span id="line-89">          final Identifier type = Identifier.fromID(handler);</span>
-<span class="source-line-no">090</span><span id="line-90"></span>
-<span class="source-line-no">091</span><span id="line-91">          final HoldingsEntry entry = new HoldingsEntry(region, currency.get(),</span>
-<span class="source-line-no">092</span><span id="line-92">                                                        amountOPT.get(), type);</span>
-<span class="source-line-no">093</span><span id="line-93">          account.get().setHoldings(entry, type);</span>
-<span class="source-line-no">094</span><span id="line-94">        }</span>
-<span class="source-line-no">095</span><span id="line-95">      }</span>
+<span class="source-line-no">086</span><span id="line-86">        Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(accountID);</span>
+<span class="source-line-no">087</span><span id="line-87">        if(account.isEmpty()) {</span>
+<span class="source-line-no">088</span><span id="line-88">          final AccountAPIResponse response = TNECore.eco().account().createAccount(accountID, accountName);</span>
+<span class="source-line-no">089</span><span id="line-89">          if(response.getResponse().success()) {</span>
+<span class="source-line-no">090</span><span id="line-90">            account = response.getAccount();</span>
+<span class="source-line-no">091</span><span id="line-91">          }</span>
+<span class="source-line-no">092</span><span id="line-92">        }</span>
+<span class="source-line-no">093</span><span id="line-93"></span>
+<span class="source-line-no">094</span><span id="line-94">        if(account.isPresent()) {</span>
+<span class="source-line-no">095</span><span id="line-95">          PluginCore.instance().getChannelMessageManager().addAccount(accountID);</span>
 <span class="source-line-no">096</span><span id="line-96"></span>
-<span class="source-line-no">097</span><span id="line-97">    } catch(Exception e) {</span>
-<span class="source-line-no">098</span><span id="line-98">      PluginCore.log().error("Issue with balance plugin message handler.", e, DebugLevel.STANDARD);</span>
-<span class="source-line-no">099</span><span id="line-99">    }</span>
-<span class="source-line-no">100</span><span id="line-100">  }</span>
-<span class="source-line-no">101</span><span id="line-101">}</span>
+<span class="source-line-no">097</span><span id="line-97">          final Identifier type = Identifier.fromID(handler);</span>
+<span class="source-line-no">098</span><span id="line-98"></span>
+<span class="source-line-no">099</span><span id="line-99">          final HoldingsEntry entry = new HoldingsEntry(region, currency.get(),</span>
+<span class="source-line-no">100</span><span id="line-100">                                                        amountOPT.get(), type);</span>
+<span class="source-line-no">101</span><span id="line-101">          account.get().setHoldings(entry, type);</span>
+<span class="source-line-no">102</span><span id="line-102">        }</span>
+<span class="source-line-no">103</span><span id="line-103">      }</span>
+<span class="source-line-no">104</span><span id="line-104"></span>
+<span class="source-line-no">105</span><span id="line-105">    } catch(Exception e) {</span>
+<span class="source-line-no">106</span><span id="line-106">      PluginCore.log().error("Issue with balance plugin message handler.", e, DebugLevel.STANDARD);</span>
+<span class="source-line-no">107</span><span id="line-107">    }</span>
+<span class="source-line-no">108</span><span id="line-108">  }</span>
+<span class="source-line-no">109</span><span id="line-109">}</span>
 
 
 

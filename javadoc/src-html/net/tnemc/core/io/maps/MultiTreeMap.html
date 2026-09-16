@@ -36,55 +36,55 @@
 <span class="source-line-no">023</span><span id="line-23">import java.math.BigDecimal;</span>
 <span class="source-line-no">024</span><span id="line-24">import java.util.ArrayList;</span>
 <span class="source-line-no">025</span><span id="line-25">import java.util.Collections;</span>
-<span class="source-line-no">026</span><span id="line-26">import java.util.HashMap;</span>
-<span class="source-line-no">027</span><span id="line-27">import java.util.LinkedList;</span>
-<span class="source-line-no">028</span><span id="line-28">import java.util.List;</span>
-<span class="source-line-no">029</span><span id="line-29">import java.util.Map;</span>
-<span class="source-line-no">030</span><span id="line-30">import java.util.TreeMap;</span>
-<span class="source-line-no">031</span><span id="line-31"></span>
-<span class="source-line-no">032</span><span id="line-32">/**</span>
-<span class="source-line-no">033</span><span id="line-33"> * MultiTreeMap represents a tree map that supports multiple entries for each key.</span>
-<span class="source-line-no">034</span><span id="line-34"> *</span>
-<span class="source-line-no">035</span><span id="line-35"> * @author creatorfromhell</span>
-<span class="source-line-no">036</span><span id="line-36"> * @since 0.1.2.0</span>
-<span class="source-line-no">037</span><span id="line-37"> */</span>
-<span class="source-line-no">038</span><span id="line-38">public class MultiTreeMap&lt;V&gt; {</span>
-<span class="source-line-no">039</span><span id="line-39"></span>
-<span class="source-line-no">040</span><span id="line-40">  private final TreeMap&lt;BigDecimal, List&lt;V&gt;&gt; map = new TreeMap&lt;&gt;(Collections.reverseOrder());</span>
-<span class="source-line-no">041</span><span id="line-41">  private final Map&lt;Integer, TopPage&lt;V&gt;&gt; pageMap = new HashMap&lt;&gt;();</span>
-<span class="source-line-no">042</span><span id="line-42"></span>
-<span class="source-line-no">043</span><span id="line-43">  private final int perPage;</span>
-<span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">  public MultiTreeMap(final int perPage) {</span>
-<span class="source-line-no">046</span><span id="line-46"></span>
-<span class="source-line-no">047</span><span id="line-47">    this.perPage = perPage;</span>
-<span class="source-line-no">048</span><span id="line-48">  }</span>
-<span class="source-line-no">049</span><span id="line-49"></span>
-<span class="source-line-no">050</span><span id="line-50">  public void put(final BigDecimal key, final V value) {</span>
-<span class="source-line-no">051</span><span id="line-51"></span>
-<span class="source-line-no">052</span><span id="line-52">    map.computeIfAbsent(key, k-&gt;new ArrayList&lt;&gt;()).add(value);</span>
-<span class="source-line-no">053</span><span id="line-53">  }</span>
-<span class="source-line-no">054</span><span id="line-54"></span>
-<span class="source-line-no">055</span><span id="line-55">  public List&lt;V&gt; get(final BigDecimal key) {</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
-<span class="source-line-no">057</span><span id="line-57">    if(map.containsKey(key)) {</span>
-<span class="source-line-no">058</span><span id="line-58">      return map.get(key);</span>
-<span class="source-line-no">059</span><span id="line-59">    }</span>
-<span class="source-line-no">060</span><span id="line-60">    return new ArrayList&lt;&gt;();</span>
-<span class="source-line-no">061</span><span id="line-61">  }</span>
-<span class="source-line-no">062</span><span id="line-62"></span>
-<span class="source-line-no">063</span><span id="line-63">  public void removeValues(final BigDecimal key) {</span>
-<span class="source-line-no">064</span><span id="line-64"></span>
-<span class="source-line-no">065</span><span id="line-65">    map.remove(key);</span>
-<span class="source-line-no">066</span><span id="line-66">  }</span>
-<span class="source-line-no">067</span><span id="line-67"></span>
-<span class="source-line-no">068</span><span id="line-68">  public boolean containsKey(final BigDecimal key) {</span>
-<span class="source-line-no">069</span><span id="line-69"></span>
-<span class="source-line-no">070</span><span id="line-70">    return map.containsKey(key);</span>
-<span class="source-line-no">071</span><span id="line-71">  }</span>
-<span class="source-line-no">072</span><span id="line-72"></span>
-<span class="source-line-no">073</span><span id="line-73">  public void sort() {</span>
-<span class="source-line-no">074</span><span id="line-74"></span>
+<span class="source-line-no">026</span><span id="line-26">import java.util.LinkedList;</span>
+<span class="source-line-no">027</span><span id="line-27">import java.util.List;</span>
+<span class="source-line-no">028</span><span id="line-28">import java.util.Map;</span>
+<span class="source-line-no">029</span><span id="line-29">import java.util.TreeMap;</span>
+<span class="source-line-no">030</span><span id="line-30"></span>
+<span class="source-line-no">031</span><span id="line-31">/**</span>
+<span class="source-line-no">032</span><span id="line-32"> * MultiTreeMap represents a tree map that supports multiple entries for each key.</span>
+<span class="source-line-no">033</span><span id="line-33"> *</span>
+<span class="source-line-no">034</span><span id="line-34"> * @author creatorfromhell</span>
+<span class="source-line-no">035</span><span id="line-35"> * @since 0.1.2.0</span>
+<span class="source-line-no">036</span><span id="line-36"> */</span>
+<span class="source-line-no">037</span><span id="line-37">public class MultiTreeMap&lt;V&gt; {</span>
+<span class="source-line-no">038</span><span id="line-38"></span>
+<span class="source-line-no">039</span><span id="line-39">  private final TreeMap&lt;BigDecimal, List&lt;V&gt;&gt; map = new TreeMap&lt;&gt;(Collections.reverseOrder());</span>
+<span class="source-line-no">040</span><span id="line-40">  private final Map&lt;Integer, TopPage&lt;V&gt;&gt; pageMap = new TreeMap&lt;&gt;();</span>
+<span class="source-line-no">041</span><span id="line-41"></span>
+<span class="source-line-no">042</span><span id="line-42">  private final int perPage;</span>
+<span class="source-line-no">043</span><span id="line-43"></span>
+<span class="source-line-no">044</span><span id="line-44">  public MultiTreeMap(final int perPage) {</span>
+<span class="source-line-no">045</span><span id="line-45"></span>
+<span class="source-line-no">046</span><span id="line-46">    this.perPage = perPage;</span>
+<span class="source-line-no">047</span><span id="line-47">  }</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">  public void put(final BigDecimal key, final V value) {</span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51">    map.computeIfAbsent(key, k-&gt;new ArrayList&lt;&gt;()).add(value);</span>
+<span class="source-line-no">052</span><span id="line-52">  }</span>
+<span class="source-line-no">053</span><span id="line-53"></span>
+<span class="source-line-no">054</span><span id="line-54">  public List&lt;V&gt; get(final BigDecimal key) {</span>
+<span class="source-line-no">055</span><span id="line-55"></span>
+<span class="source-line-no">056</span><span id="line-56">    if(map.containsKey(key)) {</span>
+<span class="source-line-no">057</span><span id="line-57">      return map.get(key);</span>
+<span class="source-line-no">058</span><span id="line-58">    }</span>
+<span class="source-line-no">059</span><span id="line-59">    return new ArrayList&lt;&gt;();</span>
+<span class="source-line-no">060</span><span id="line-60">  }</span>
+<span class="source-line-no">061</span><span id="line-61"></span>
+<span class="source-line-no">062</span><span id="line-62">  public void removeValues(final BigDecimal key) {</span>
+<span class="source-line-no">063</span><span id="line-63"></span>
+<span class="source-line-no">064</span><span id="line-64">    map.remove(key);</span>
+<span class="source-line-no">065</span><span id="line-65">  }</span>
+<span class="source-line-no">066</span><span id="line-66"></span>
+<span class="source-line-no">067</span><span id="line-67">  public boolean containsKey(final BigDecimal key) {</span>
+<span class="source-line-no">068</span><span id="line-68"></span>
+<span class="source-line-no">069</span><span id="line-69">    return map.containsKey(key);</span>
+<span class="source-line-no">070</span><span id="line-70">  }</span>
+<span class="source-line-no">071</span><span id="line-71"></span>
+<span class="source-line-no">072</span><span id="line-72">  public void sort() {</span>
+<span class="source-line-no">073</span><span id="line-73"></span>
+<span class="source-line-no">074</span><span id="line-74">    pageMap.clear();</span>
 <span class="source-line-no">075</span><span id="line-75">    int page = 1;</span>
 <span class="source-line-no">076</span><span id="line-76">    TopPage&lt;V&gt; pageEntry = new TopPage&lt;&gt;(page);</span>
 <span class="source-line-no">077</span><span id="line-77">    for(final Map.Entry&lt;BigDecimal, List&lt;V&gt;&gt; entry : map.entrySet()) {</span>
@@ -108,33 +108,35 @@
 <span class="source-line-no">095</span><span id="line-95">        pageEntry = new TopPage&lt;&gt;(page);</span>
 <span class="source-line-no">096</span><span id="line-96">      }</span>
 <span class="source-line-no">097</span><span id="line-97">    }</span>
-<span class="source-line-no">098</span><span id="line-98">    pageMap.put(pageEntry.getPage(), pageEntry);</span>
-<span class="source-line-no">099</span><span id="line-99">    pageEntry = null;</span>
-<span class="source-line-no">100</span><span id="line-100">    map.clear();</span>
-<span class="source-line-no">101</span><span id="line-101">  }</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">  public int position(final V search) {</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">    for(final TopPage&lt;V&gt; page : pageMap.values()) {</span>
-<span class="source-line-no">106</span><span id="line-106">      if(page.getValues().containsKey(search)) {</span>
-<span class="source-line-no">107</span><span id="line-107">        return (((page.getPage() - 1) * perPage) + new LinkedList&lt;&gt;(page.getValues().keySet()).indexOf(search));</span>
-<span class="source-line-no">108</span><span id="line-108">      }</span>
-<span class="source-line-no">109</span><span id="line-109">    }</span>
-<span class="source-line-no">110</span><span id="line-110">    return -1;</span>
-<span class="source-line-no">111</span><span id="line-111">  }</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">  public TopPage&lt;V&gt; getValues(int page) {</span>
-<span class="source-line-no">114</span><span id="line-114"></span>
-<span class="source-line-no">115</span><span id="line-115">    if(page &gt; pageMap.size()) page = 1;</span>
-<span class="source-line-no">116</span><span id="line-116"></span>
-<span class="source-line-no">117</span><span id="line-117">    return pageMap.get(page);</span>
-<span class="source-line-no">118</span><span id="line-118">  }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">  public int pages() {</span>
+<span class="source-line-no">098</span><span id="line-98">    if(!pageEntry.getValues().isEmpty() || pageMap.isEmpty()) {</span>
+<span class="source-line-no">099</span><span id="line-99">      pageMap.put(pageEntry.getPage(), pageEntry);</span>
+<span class="source-line-no">100</span><span id="line-100">    }</span>
+<span class="source-line-no">101</span><span id="line-101">    map.clear();</span>
+<span class="source-line-no">102</span><span id="line-102">  }</span>
+<span class="source-line-no">103</span><span id="line-103"></span>
+<span class="source-line-no">104</span><span id="line-104">  public int position(final V search) {</span>
+<span class="source-line-no">105</span><span id="line-105"></span>
+<span class="source-line-no">106</span><span id="line-106">    for(final TopPage&lt;V&gt; page : pageMap.values()) {</span>
+<span class="source-line-no">107</span><span id="line-107">      if(page.getValues().containsKey(search)) {</span>
+<span class="source-line-no">108</span><span id="line-108">        return (((page.getPage() - 1) * perPage) + new LinkedList&lt;&gt;(page.getValues().keySet()).indexOf(search) + 1);</span>
+<span class="source-line-no">109</span><span id="line-109">      }</span>
+<span class="source-line-no">110</span><span id="line-110">    }</span>
+<span class="source-line-no">111</span><span id="line-111">    return -1;</span>
+<span class="source-line-no">112</span><span id="line-112">  }</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">  public TopPage&lt;V&gt; getValues(int page) {</span>
+<span class="source-line-no">115</span><span id="line-115"></span>
+<span class="source-line-no">116</span><span id="line-116">    if(page &lt; 1) page = 1;</span>
+<span class="source-line-no">117</span><span id="line-117">    if(page &gt; pageMap.size()) page = 1;</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">    return pageMap.get(page);</span>
+<span class="source-line-no">120</span><span id="line-120">  }</span>
 <span class="source-line-no">121</span><span id="line-121"></span>
-<span class="source-line-no">122</span><span id="line-122">    return pageMap.size();</span>
-<span class="source-line-no">123</span><span id="line-123">  }</span>
-<span class="source-line-no">124</span><span id="line-124">}</span>
+<span class="source-line-no">122</span><span id="line-122">  public int pages() {</span>
+<span class="source-line-no">123</span><span id="line-123"></span>
+<span class="source-line-no">124</span><span id="line-124">    return pageMap.size();</span>
+<span class="source-line-no">125</span><span id="line-125">  }</span>
+<span class="source-line-no">126</span><span id="line-126">}</span>
 
 
 

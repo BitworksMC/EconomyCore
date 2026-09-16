@@ -32,21 +32,102 @@
 <span class="source-line-no">019</span><span id="line-19"> */</span>
 <span class="source-line-no">020</span><span id="line-20"></span>
 <span class="source-line-no">021</span><span id="line-21">import net.tnemc.core.TNECore;</span>
-<span class="source-line-no">022</span><span id="line-22"></span>
-<span class="source-line-no">023</span><span id="line-23">/**</span>
-<span class="source-line-no">024</span><span id="line-24"> * TownyHandler</span>
-<span class="source-line-no">025</span><span id="line-25"> *</span>
-<span class="source-line-no">026</span><span id="line-26"> * @author creatorfromhell</span>
-<span class="source-line-no">027</span><span id="line-27"> * @since 0.1.2.0</span>
-<span class="source-line-no">028</span><span id="line-28"> */</span>
-<span class="source-line-no">029</span><span id="line-29">public class TownyHandler {</span>
-<span class="source-line-no">030</span><span id="line-30"></span>
-<span class="source-line-no">031</span><span id="line-31">  public static void addTypes() {</span>
+<span class="source-line-no">022</span><span id="line-22">import net.tnemc.core.account.Account;</span>
+<span class="source-line-no">023</span><span id="line-23">import net.tnemc.core.account.SharedAccount;</span>
+<span class="source-line-no">024</span><span id="line-24">import net.tnemc.core.account.holdings.HoldingsEntry;</span>
+<span class="source-line-no">025</span><span id="line-25">import net.tnemc.plugincore.PluginCore;</span>
+<span class="source-line-no">026</span><span id="line-26">import net.tnemc.plugincore.core.id.UUIDPair;</span>
+<span class="source-line-no">027</span><span id="line-27"></span>
+<span class="source-line-no">028</span><span id="line-28">import com.palmergames.bukkit.towny.TownyAPI;</span>
+<span class="source-line-no">029</span><span id="line-29">import com.palmergames.bukkit.towny.TownySettings;</span>
+<span class="source-line-no">030</span><span id="line-30">import com.palmergames.bukkit.towny.object.Nation;</span>
+<span class="source-line-no">031</span><span id="line-31">import com.palmergames.bukkit.towny.object.Town;</span>
 <span class="source-line-no">032</span><span id="line-32"></span>
-<span class="source-line-no">033</span><span id="line-33">    TNECore.eco().account().addAccountType(TownAccount.class, new TownCheck().check());</span>
-<span class="source-line-no">034</span><span id="line-34">    TNECore.eco().account().addAccountType(NationAccount.class, new NationCheck().check());</span>
-<span class="source-line-no">035</span><span id="line-35">  }</span>
-<span class="source-line-no">036</span><span id="line-36">}</span>
+<span class="source-line-no">033</span><span id="line-33">import java.util.Iterator;</span>
+<span class="source-line-no">034</span><span id="line-34">import java.util.List;</span>
+<span class="source-line-no">035</span><span id="line-35">import java.util.Map;</span>
+<span class="source-line-no">036</span><span id="line-36">import java.util.Optional;</span>
+<span class="source-line-no">037</span><span id="line-37">import java.util.UUID;</span>
+<span class="source-line-no">038</span><span id="line-38"></span>
+<span class="source-line-no">039</span><span id="line-39">/**</span>
+<span class="source-line-no">040</span><span id="line-40"> * TownyHandler</span>
+<span class="source-line-no">041</span><span id="line-41"> *</span>
+<span class="source-line-no">042</span><span id="line-42"> * @author creatorfromhell</span>
+<span class="source-line-no">043</span><span id="line-43"> * @since 0.1.2.0</span>
+<span class="source-line-no">044</span><span id="line-44"> */</span>
+<span class="source-line-no">045</span><span id="line-45">public class TownyHandler {</span>
+<span class="source-line-no">046</span><span id="line-46"></span>
+<span class="source-line-no">047</span><span id="line-47">  public static void addTypes() {</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">    TNECore.eco().account().addAccountType(TownAccount.class, new TownCheck().check());</span>
+<span class="source-line-no">050</span><span id="line-50">    TNECore.eco().account().addAccountType(NationAccount.class, new NationCheck().check());</span>
+<span class="source-line-no">051</span><span id="line-51">  }</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53">  public static void synchronizeAccounts() {</span>
+<span class="source-line-no">054</span><span id="line-54"></span>
+<span class="source-line-no">055</span><span id="line-55">    final Iterator&lt;Map.Entry&lt;UUID, UUIDPair&gt;&gt; idIterator = TNECore.eco().account().uuidProvider().pairs().entrySet().iterator();</span>
+<span class="source-line-no">056</span><span id="line-56">    while(idIterator.hasNext()) {</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">      final Map.Entry&lt;UUID, UUIDPair&gt; entry = idIterator.next();</span>
+<span class="source-line-no">059</span><span id="line-59">      final String name = entry.getValue().getUsername();</span>
+<span class="source-line-no">060</span><span id="line-60"></span>
+<span class="source-line-no">061</span><span id="line-61">      if(name.contains(TownySettings.getTownAccountPrefix())) {</span>
+<span class="source-line-no">062</span><span id="line-62">        synchronizeTown(entry, idIterator, name);</span>
+<span class="source-line-no">063</span><span id="line-63">      } else if(entry.getValue().getUsername().contains(TownySettings.getNationAccountPrefix())) {</span>
+<span class="source-line-no">064</span><span id="line-64">        synchronizeNation(entry, idIterator, name);</span>
+<span class="source-line-no">065</span><span id="line-65">      }</span>
+<span class="source-line-no">066</span><span id="line-66">    }</span>
+<span class="source-line-no">067</span><span id="line-67">  }</span>
+<span class="source-line-no">068</span><span id="line-68"></span>
+<span class="source-line-no">069</span><span id="line-69">  private static void synchronizeTown(final Map.Entry&lt;UUID, UUIDPair&gt; entry,</span>
+<span class="source-line-no">070</span><span id="line-70">                                      final Iterator&lt;Map.Entry&lt;UUID, UUIDPair&gt;&gt; idIterator,</span>
+<span class="source-line-no">071</span><span id="line-71">                                      final String name) {</span>
+<span class="source-line-no">072</span><span id="line-72"></span>
+<span class="source-line-no">073</span><span id="line-73">    final Town town = TownyAPI.getInstance().getTown(name.replace(TownySettings.getTownAccountPrefix(), ""));</span>
+<span class="source-line-no">074</span><span id="line-74">    if(town == null) {</span>
+<span class="source-line-no">075</span><span id="line-75">      removeStaleAccount("town", name, entry.getKey());</span>
+<span class="source-line-no">076</span><span id="line-76">      return;</span>
+<span class="source-line-no">077</span><span id="line-77">    }</span>
+<span class="source-line-no">078</span><span id="line-78">    repairIdentifier(entry, idIterator, name, "town", town.getUUID());</span>
+<span class="source-line-no">079</span><span id="line-79">  }</span>
+<span class="source-line-no">080</span><span id="line-80"></span>
+<span class="source-line-no">081</span><span id="line-81">  private static void synchronizeNation(final Map.Entry&lt;UUID, UUIDPair&gt; entry,</span>
+<span class="source-line-no">082</span><span id="line-82">                                        final Iterator&lt;Map.Entry&lt;UUID, UUIDPair&gt;&gt; idIterator,</span>
+<span class="source-line-no">083</span><span id="line-83">                                        final String name) {</span>
+<span class="source-line-no">084</span><span id="line-84"></span>
+<span class="source-line-no">085</span><span id="line-85">    final Nation nation = TownyAPI.getInstance().getNation(name.replace(TownySettings.getNationAccountPrefix(), ""));</span>
+<span class="source-line-no">086</span><span id="line-86">    if(nation == null) {</span>
+<span class="source-line-no">087</span><span id="line-87">      removeStaleAccount("nation", name, entry.getKey());</span>
+<span class="source-line-no">088</span><span id="line-88">      return;</span>
+<span class="source-line-no">089</span><span id="line-89">    }</span>
+<span class="source-line-no">090</span><span id="line-90">    repairIdentifier(entry, idIterator, name, "nation", nation.getUUID());</span>
+<span class="source-line-no">091</span><span id="line-91">  }</span>
+<span class="source-line-no">092</span><span id="line-92"></span>
+<span class="source-line-no">093</span><span id="line-93">  private static void removeStaleAccount(final String type, final String name, final UUID identifier) {</span>
+<span class="source-line-no">094</span><span id="line-94"></span>
+<span class="source-line-no">095</span><span id="line-95">    PluginCore.log().inform("Removing stale Towny " + type + " account: " + name);</span>
+<span class="source-line-no">096</span><span id="line-96">    TNECore.eco().account().deleteAccount(identifier);</span>
+<span class="source-line-no">097</span><span id="line-97">  }</span>
+<span class="source-line-no">098</span><span id="line-98"></span>
+<span class="source-line-no">099</span><span id="line-99">  private static void repairIdentifier(final Map.Entry&lt;UUID, UUIDPair&gt; entry,</span>
+<span class="source-line-no">100</span><span id="line-100">                                       final Iterator&lt;Map.Entry&lt;UUID, UUIDPair&gt;&gt; idIterator,</span>
+<span class="source-line-no">101</span><span id="line-101">                                       final String name, final String type, final UUID townyUUID) {</span>
+<span class="source-line-no">102</span><span id="line-102"></span>
+<span class="source-line-no">103</span><span id="line-103">    final Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(entry.getKey().toString());</span>
+<span class="source-line-no">104</span><span id="line-104">    if(townyUUID.equals(entry.getKey()) || account.isEmpty()) {</span>
+<span class="source-line-no">105</span><span id="line-105">      return;</span>
+<span class="source-line-no">106</span><span id="line-106">    }</span>
+<span class="source-line-no">107</span><span id="line-107"></span>
+<span class="source-line-no">108</span><span id="line-108">    PluginCore.log().inform("Repairing Towny " + type + " UUID mismatch for: " + name</span>
+<span class="source-line-no">109</span><span id="line-109">                            + ". Old UUID: " + entry.getKey() + ", New UUID: " + townyUUID + '.');</span>
+<span class="source-line-no">110</span><span id="line-110">    final List&lt;HoldingsEntry&gt; holdings = account.get().getWallet().entryList();</span>
+<span class="source-line-no">111</span><span id="line-111">    idIterator.remove();</span>
+<span class="source-line-no">112</span><span id="line-112">    TNECore.eco().account().deleteAccount(entry.getKey());</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    final Optional&lt;SharedAccount&gt; response = TNECore.eco().account().createNonPlayerAccount(townyUUID.toString(), name);</span>
+<span class="source-line-no">115</span><span id="line-115">    response.ifPresent(sharedAccount-&gt;holdings.forEach(sharedAccount::setHoldings));</span>
+<span class="source-line-no">116</span><span id="line-116">  }</span>
+<span class="source-line-no">117</span><span id="line-117">}</span>
 
 
 

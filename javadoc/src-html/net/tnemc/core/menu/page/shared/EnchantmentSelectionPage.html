@@ -92,7 +92,7 @@
 <span class="source-line-no">079</span><span id="line-79">    if(viewer.isPresent()) {</span>
 <span class="source-line-no">080</span><span id="line-80"></span>
 <span class="source-line-no">081</span><span id="line-81">      final UUID id = viewer.get().uuid();</span>
-<span class="source-line-no">082</span><span id="line-82">      final int page = (Integer)viewer.get().dataOrDefault(menuName + "_ENCHANTMENT_SELECTION_PAGE", 1);</span>
+<span class="source-line-no">082</span><span id="line-82">      final int page = (Integer)viewer.get().dataOrDefault(enchantPageID, 1);</span>
 <span class="source-line-no">083</span><span id="line-83">      final int items = (menuRows - 1) * 9;</span>
 <span class="source-line-no">084</span><span id="line-84">      final int start = ((page - 1) * items);</span>
 <span class="source-line-no">085</span><span id="line-85">      final int maxPages = (MenuManager.instance().getHelper().enchantments().size() / items) + (((MenuManager.instance().getHelper().enchantments().size() % items) &gt; 0)? 1 : 0);</span>
@@ -105,14 +105,14 @@
 <span class="source-line-no">092</span><span id="line-92">        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)</span>
 <span class="source-line-no">093</span><span id="line-93">                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))</span>
 <span class="source-line-no">094</span><span id="line-94">                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))</span>
-<span class="source-line-no">095</span><span id="line-95">                                           .withActions(new DataAction(menuName + "_ENCHANTMENT_SELECTION_PAGE", prev), new SwitchPageAction(menuName, menuPage))</span>
+<span class="source-line-no">095</span><span id="line-95">                                           .withActions(new DataAction(enchantPageID, prev), new SwitchPageAction(menuName, menuPage))</span>
 <span class="source-line-no">096</span><span id="line-96">                                           .withSlot(0)</span>
 <span class="source-line-no">097</span><span id="line-97">                                           .build());</span>
 <span class="source-line-no">098</span><span id="line-98"></span>
 <span class="source-line-no">099</span><span id="line-99">        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)</span>
 <span class="source-line-no">100</span><span id="line-100">                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))</span>
 <span class="source-line-no">101</span><span id="line-101">                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))</span>
-<span class="source-line-no">102</span><span id="line-102">                                           .withActions(new DataAction(menuName + "_ENCHANTMENT_SELECTION_PAGE", next), new SwitchPageAction(menuName, menuPage))</span>
+<span class="source-line-no">102</span><span id="line-102">                                           .withActions(new DataAction(enchantPageID, next), new SwitchPageAction(menuName, menuPage))</span>
 <span class="source-line-no">103</span><span id="line-103">                                           .withSlot(8)</span>
 <span class="source-line-no">104</span><span id="line-104">                                           .build());</span>
 <span class="source-line-no">105</span><span id="line-105">      }</span>
@@ -134,7 +134,7 @@
 <span class="source-line-no">121</span><span id="line-121">                                             final StringBuilder builder = new StringBuilder();</span>
 <span class="source-line-no">122</span><span id="line-122">                                             for(final String enchant : MenuManager.instance().getHelper().enchantments()) {</span>
 <span class="source-line-no">123</span><span id="line-123"></span>
-<span class="source-line-no">124</span><span id="line-124">                                               final String value = (String)viewer.get().dataOrDefault(menuName + "_" + enchant, "Disabled");</span>
+<span class="source-line-no">124</span><span id="line-124">                                               final String value = (String)viewer.get().dataOrDefault(enchantsID + "_" + enchant, "Disabled");</span>
 <span class="source-line-no">125</span><span id="line-125">                                               final boolean enabled = value.equalsIgnoreCase("enabled");</span>
 <span class="source-line-no">126</span><span id="line-126">                                               if(enabled) {</span>
 <span class="source-line-no">127</span><span id="line-127"></span>
@@ -161,7 +161,7 @@
 <span class="source-line-no">148</span><span id="line-148">        final AbstractItemStack&lt;?&gt; enabledStack = PluginCore.server().stackBuilder().customName(Component.text(enchantment + "(Enabled)")).of("GREEN_WOOL", 1);</span>
 <span class="source-line-no">149</span><span id="line-149"></span>
 <span class="source-line-no">150</span><span id="line-150">        //ender chest icon</span>
-<span class="source-line-no">151</span><span id="line-151">        final StateIcon enchant = new StateIcon(disabledStack, null, menuName + "_" + enchantment, "DISABLED", (currentState)-&gt;{</span>
+<span class="source-line-no">151</span><span id="line-151">        final StateIcon enchant = new StateIcon(disabledStack, null, enchantsID + "_" + enchantment, "DISABLED", (currentState)-&gt;{</span>
 <span class="source-line-no">152</span><span id="line-152">          if(currentState.toUpperCase(Locale.ROOT).equals("ENABLED")) {</span>
 <span class="source-line-no">153</span><span id="line-153">            return "DISABLED";</span>
 <span class="source-line-no">154</span><span id="line-154">          }</span>

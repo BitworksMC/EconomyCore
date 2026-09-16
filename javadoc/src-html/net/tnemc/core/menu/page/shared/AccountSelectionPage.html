@@ -125,51 +125,59 @@
 <span class="source-line-no">112</span><span id="line-112">                                         .withSlot(4)</span>
 <span class="source-line-no">113</span><span id="line-113">                                         .build());</span>
 <span class="source-line-no">114</span><span id="line-114"></span>
-<span class="source-line-no">115</span><span id="line-115">      int i = 0;</span>
-<span class="source-line-no">116</span><span id="line-116">      for(final Map.Entry&lt;String, Account&gt; entry : TNECore.eco().account().getAccounts().entrySet()) {</span>
-<span class="source-line-no">117</span><span id="line-117"></span>
-<span class="source-line-no">118</span><span id="line-118">        if(i &lt; start) {</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">          i++;</span>
+<span class="source-line-no">115</span><span id="line-115">      addAccounts(callback, id, start, items);</span>
+<span class="source-line-no">116</span><span id="line-116">    }</span>
+<span class="source-line-no">117</span><span id="line-117">  }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">  private void addAccounts(final PageOpenCallback callback, final UUID id, final int start,</span>
+<span class="source-line-no">120</span><span id="line-120">                           final int items) {</span>
 <span class="source-line-no">121</span><span id="line-121"></span>
-<span class="source-line-no">122</span><span id="line-122">          continue;</span>
-<span class="source-line-no">123</span><span id="line-123">        }</span>
-<span class="source-line-no">124</span><span id="line-124">        if(i &gt;= (start + items)) break;</span>
-<span class="source-line-no">125</span><span id="line-125"></span>
-<span class="source-line-no">126</span><span id="line-126">        SkullProfile profile = null;</span>
-<span class="source-line-no">127</span><span id="line-127">        try {</span>
-<span class="source-line-no">128</span><span id="line-128"></span>
-<span class="source-line-no">129</span><span id="line-129">          if(entry.getValue() instanceof PlayerAccount) {</span>
-<span class="source-line-no">130</span><span id="line-130">            profile = new SkullProfile();</span>
+<span class="source-line-no">122</span><span id="line-122">    int index = 0;</span>
+<span class="source-line-no">123</span><span id="line-123">    for(final Map.Entry&lt;String, Account&gt; entry : TNECore.eco().account().getAccounts().entrySet()) {</span>
+<span class="source-line-no">124</span><span id="line-124">      if(index &lt; start) {</span>
+<span class="source-line-no">125</span><span id="line-125">        index++;</span>
+<span class="source-line-no">126</span><span id="line-126">        continue;</span>
+<span class="source-line-no">127</span><span id="line-127">      }</span>
+<span class="source-line-no">128</span><span id="line-128">      if(index &gt;= start + items) {</span>
+<span class="source-line-no">129</span><span id="line-129">        break;</span>
+<span class="source-line-no">130</span><span id="line-130">      }</span>
 <span class="source-line-no">131</span><span id="line-131"></span>
-<span class="source-line-no">132</span><span id="line-132">            if(PluginCore.server().playedBefore(UUID.fromString(entry.getKey()))) {</span>
-<span class="source-line-no">133</span><span id="line-133">              profile.uuid(UUID.fromString(entry.getKey()));</span>
-<span class="source-line-no">134</span><span id="line-134">            }</span>
-<span class="source-line-no">135</span><span id="line-135">          }</span>
-<span class="source-line-no">136</span><span id="line-136"></span>
-<span class="source-line-no">137</span><span id="line-137">        } catch(final Exception ignore) { }</span>
-<span class="source-line-no">138</span><span id="line-138"></span>
-<span class="source-line-no">139</span><span id="line-139">        AbstractItemStack&lt;?&gt; stack = PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)</span>
-<span class="source-line-no">140</span><span id="line-140">                .customName(Component.text(entry.getValue().getName()))</span>
-<span class="source-line-no">141</span><span id="line-141">                .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Account.Select"), id)));</span>
+<span class="source-line-no">132</span><span id="line-132">      callback.getPage().addIcon(new IconBuilder(accountStack(entry, id))</span>
+<span class="source-line-no">133</span><span id="line-133">                                         .withActions(new DataAction(accountDataID + "_ID", entry.getKey()),</span>
+<span class="source-line-no">134</span><span id="line-134">                                                      new DataAction(accountDataID + "_NAME", entry.getValue().getName()),</span>
+<span class="source-line-no">135</span><span id="line-135">                                                      new SwitchPageAction(returnMenu, returnPage))</span>
+<span class="source-line-no">136</span><span id="line-136">                                         .withSlot(9 + index - start).build());</span>
+<span class="source-line-no">137</span><span id="line-137">      index++;</span>
+<span class="source-line-no">138</span><span id="line-138">    }</span>
+<span class="source-line-no">139</span><span id="line-139">  }</span>
+<span class="source-line-no">140</span><span id="line-140"></span>
+<span class="source-line-no">141</span><span id="line-141">  private AbstractItemStack&lt;?&gt; accountStack(final Map.Entry&lt;String, Account&gt; entry, final UUID id) {</span>
 <span class="source-line-no">142</span><span id="line-142"></span>
-<span class="source-line-no">143</span><span id="line-143">        if(profile != null) {</span>
-<span class="source-line-no">144</span><span id="line-144">          stack = stack.profile(profile);</span>
-<span class="source-line-no">145</span><span id="line-145">        }</span>
-<span class="source-line-no">146</span><span id="line-146"></span>
-<span class="source-line-no">147</span><span id="line-147"></span>
-<span class="source-line-no">148</span><span id="line-148">        callback.getPage().addIcon(new IconBuilder(stack)</span>
-<span class="source-line-no">149</span><span id="line-149">                                           .withActions(new DataAction(accountDataID + "_ID", entry.getKey()),</span>
-<span class="source-line-no">150</span><span id="line-150">                                                        new DataAction(accountDataID + "_NAME", entry.getValue().getName()),</span>
-<span class="source-line-no">151</span><span id="line-151">                                                        new SwitchPageAction(returnMenu, returnPage))</span>
-<span class="source-line-no">152</span><span id="line-152">                                           .withSlot(9 + (i - start))</span>
-<span class="source-line-no">153</span><span id="line-153">                                           .build());</span>
-<span class="source-line-no">154</span><span id="line-154"></span>
-<span class="source-line-no">155</span><span id="line-155">        i++;</span>
-<span class="source-line-no">156</span><span id="line-156">      }</span>
-<span class="source-line-no">157</span><span id="line-157">    }</span>
-<span class="source-line-no">158</span><span id="line-158">  }</span>
-<span class="source-line-no">159</span><span id="line-159">}</span>
+<span class="source-line-no">143</span><span id="line-143">    AbstractItemStack&lt;?&gt; stack = PluginCore.server().stackBuilder().of("PLAYER_HEAD", 1)</span>
+<span class="source-line-no">144</span><span id="line-144">            .customName(Component.text(entry.getValue().getName()))</span>
+<span class="source-line-no">145</span><span id="line-145">            .lore(Collections.singletonList(</span>
+<span class="source-line-no">146</span><span id="line-146">                    MessageHandler.grab(new MessageData("Messages.Menu.MyEco.Account.Select"), id)));</span>
+<span class="source-line-no">147</span><span id="line-147">    final SkullProfile profile = skullProfile(entry);</span>
+<span class="source-line-no">148</span><span id="line-148">    if(profile != null) {</span>
+<span class="source-line-no">149</span><span id="line-149">      stack = stack.profile(profile);</span>
+<span class="source-line-no">150</span><span id="line-150">    }</span>
+<span class="source-line-no">151</span><span id="line-151">    return stack;</span>
+<span class="source-line-no">152</span><span id="line-152">  }</span>
+<span class="source-line-no">153</span><span id="line-153"></span>
+<span class="source-line-no">154</span><span id="line-154">  private SkullProfile skullProfile(final Map.Entry&lt;String, Account&gt; entry) {</span>
+<span class="source-line-no">155</span><span id="line-155"></span>
+<span class="source-line-no">156</span><span id="line-156">    try {</span>
+<span class="source-line-no">157</span><span id="line-157">      if(entry.getValue() instanceof PlayerAccount) {</span>
+<span class="source-line-no">158</span><span id="line-158">        final SkullProfile profile = new SkullProfile();</span>
+<span class="source-line-no">159</span><span id="line-159">        if(PluginCore.server().playedBefore(UUID.fromString(entry.getKey()))) {</span>
+<span class="source-line-no">160</span><span id="line-160">          profile.uuid(UUID.fromString(entry.getKey()));</span>
+<span class="source-line-no">161</span><span id="line-161">        }</span>
+<span class="source-line-no">162</span><span id="line-162">        return profile;</span>
+<span class="source-line-no">163</span><span id="line-163">      }</span>
+<span class="source-line-no">164</span><span id="line-164">    } catch(final Exception ignore) { }</span>
+<span class="source-line-no">165</span><span id="line-165">    return null;</span>
+<span class="source-line-no">166</span><span id="line-166">  }</span>
+<span class="source-line-no">167</span><span id="line-167">}</span>
 
 
 

@@ -40,7 +40,7 @@
 <span class="source-line-no">027</span><span id="line-27">import net.tnemc.core.command.parameters.resolver.annotation.InventorySupport;</span>
 <span class="source-line-no">028</span><span id="line-28">import net.tnemc.core.currency.Currency;</span>
 <span class="source-line-no">029</span><span id="line-29">import net.tnemc.core.currency.parser.ParseMoney;</span>
-<span class="source-line-no">030</span><span id="line-30">import net.tnemc.plugincore.paper.impl.PaperCMDSource;</span>
+<span class="source-line-no">030</span><span id="line-30">import net.tnemc.paper.impl.PaperCMDSource;</span>
 <span class="source-line-no">031</span><span id="line-31">import revxrsal.commands.annotation.Default;</span>
 <span class="source-line-no">032</span><span id="line-32">import revxrsal.commands.annotation.Description;</span>
 <span class="source-line-no">033</span><span id="line-33">import revxrsal.commands.annotation.Named;</span>
@@ -177,7 +177,7 @@
 <span class="source-line-no">164</span><span id="line-164">  @Subcommand({ "request" })</span>
 <span class="source-line-no">165</span><span id="line-165">  @Usage("Money.Request.Arguments")</span>
 <span class="source-line-no">166</span><span id="line-166">  @Description("Money.Request.Description")</span>
-<span class="source-line-no">167</span><span id="line-167">  @CommandPermission("tne.money.Request")</span>
+<span class="source-line-no">167</span><span id="line-167">  @CommandPermission("tne.money.request")</span>
 <span class="source-line-no">168</span><span id="line-168">  public void onRequest(final BukkitCommandActor sender, @Named("account") final Account player, @Named("amount") final ParseMoney amount) {</span>
 <span class="source-line-no">169</span><span id="line-169"></span>
 <span class="source-line-no">170</span><span id="line-170">    net.tnemc.core.command.MoneyCommand.onRequest(new PaperCMDSource(sender), player, amount, currency);</span>

@@ -33,7 +33,7 @@
 <span class="source-line-no">020</span><span id="line-20"></span>
 <span class="source-line-no">021</span><span id="line-21">import net.tnemc.core.TNECore;</span>
 <span class="source-line-no">022</span><span id="line-22">import net.tnemc.core.command.BaseCommand;</span>
-<span class="source-line-no">023</span><span id="line-23">import net.tnemc.plugincore.paper.impl.PaperCMDSource;</span>
+<span class="source-line-no">023</span><span id="line-23">import net.tnemc.paper.impl.PaperCMDSource;</span>
 <span class="source-line-no">024</span><span id="line-24">import revxrsal.commands.annotation.Command;</span>
 <span class="source-line-no">025</span><span id="line-25">import revxrsal.commands.annotation.Default;</span>
 <span class="source-line-no">026</span><span id="line-26">import revxrsal.commands.annotation.Description;</span>
@@ -91,7 +91,7 @@
 <span class="source-line-no">078</span><span id="line-78">  @Usage("Module.List.Arguments")</span>
 <span class="source-line-no">079</span><span id="line-79">  //@DefaultFor({ "module", "mod" })</span>
 <span class="source-line-no">080</span><span id="line-80">  @Description("Module.List.Description")</span>
-<span class="source-line-no">081</span><span id="line-81">  @CommandPermission("tne.list.available")</span>
+<span class="source-line-no">081</span><span id="line-81">  @CommandPermission("tne.module.list")</span>
 <span class="source-line-no">082</span><span id="line-82">  public void onList(final BukkitCommandActor sender) {</span>
 <span class="source-line-no">083</span><span id="line-83"></span>
 <span class="source-line-no">084</span><span id="line-84">    net.tnemc.core.command.ModuleCommand.onList(new PaperCMDSource(sender));</span>

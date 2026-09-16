@@ -76,14 +76,14 @@
 <span class="source-line-no">063</span><span id="line-63">    final Optional&lt;Account&gt; acc = TNECore.eco().account().findAccount(account);</span>
 <span class="source-line-no">064</span><span id="line-64"></span>
 <span class="source-line-no">065</span><span id="line-65">    if(acc.isPresent()) {</span>
-<span class="source-line-no">066</span><span id="line-66">      int i = 0;</span>
-<span class="source-line-no">067</span><span id="line-67">      for(final Receipt receipt : TransactionManager.receipts().getReceiptsByParticipant(acc.get().getIdentifier())) {</span>
-<span class="source-line-no">068</span><span id="line-68">        receipts.put(receipt.getTime(), receipt.getId());</span>
-<span class="source-line-no">069</span><span id="line-69"></span>
-<span class="source-line-no">070</span><span id="line-70">        if(i &gt;= 200) {</span>
-<span class="source-line-no">071</span><span id="line-71">          break;</span>
-<span class="source-line-no">072</span><span id="line-72">        }</span>
-<span class="source-line-no">073</span><span id="line-73"></span>
+<span class="source-line-no">066</span><span id="line-66">      receipts.clear();</span>
+<span class="source-line-no">067</span><span id="line-67">      int i = 0;</span>
+<span class="source-line-no">068</span><span id="line-68">      for(final Receipt receipt : TransactionManager.receipts().getReceiptsByParticipant(acc.get().getIdentifier())) {</span>
+<span class="source-line-no">069</span><span id="line-69">        if(i &gt;= 200) {</span>
+<span class="source-line-no">070</span><span id="line-70">          break;</span>
+<span class="source-line-no">071</span><span id="line-71">        }</span>
+<span class="source-line-no">072</span><span id="line-72"></span>
+<span class="source-line-no">073</span><span id="line-73">        receipts.put(receipt.getTime(), receipt.getId());</span>
 <span class="source-line-no">074</span><span id="line-74">        i++;</span>
 <span class="source-line-no">075</span><span id="line-75">      }</span>
 <span class="source-line-no">076</span><span id="line-76">    }</span>
@@ -94,19 +94,19 @@
 <span class="source-line-no">081</span><span id="line-81"></span>
 <span class="source-line-no">082</span><span id="line-82">    sort();</span>
 <span class="source-line-no">083</span><span id="line-83"></span>
-<span class="source-line-no">084</span><span id="line-84">    if(page &gt; maxPages()) page = 1;</span>
-<span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">    final NavigableMap&lt;Long, UUID&gt; values = new TreeMap&lt;&gt;();</span>
-<span class="source-line-no">087</span><span id="line-87">    final int start = ((page * 5) - 5) + 1;</span>
-<span class="source-line-no">088</span><span id="line-88">    final int end = start + 5;</span>
+<span class="source-line-no">084</span><span id="line-84">    if(page &lt; 1) page = 1;</span>
+<span class="source-line-no">085</span><span id="line-85">    if(page &gt; maxPages()) page = 1;</span>
+<span class="source-line-no">086</span><span id="line-86"></span>
+<span class="source-line-no">087</span><span id="line-87">    final NavigableMap&lt;Long, UUID&gt; values = new TreeMap&lt;&gt;();</span>
+<span class="source-line-no">088</span><span id="line-88">    final int start = (page - 1) * 5;</span>
 <span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90">    final int i = 1;</span>
+<span class="source-line-no">090</span><span id="line-90">    int i = 0;</span>
 <span class="source-line-no">091</span><span id="line-91">    for(final Map.Entry&lt;Long, UUID&gt; entry : receipts.entrySet()) {</span>
-<span class="source-line-no">092</span><span id="line-92">      if(i &lt; start) continue;</span>
+<span class="source-line-no">092</span><span id="line-92">      if(i++ &lt; start) continue;</span>
 <span class="source-line-no">093</span><span id="line-93"></span>
 <span class="source-line-no">094</span><span id="line-94">      values.put(entry.getKey(), entry.getValue());</span>
 <span class="source-line-no">095</span><span id="line-95"></span>
-<span class="source-line-no">096</span><span id="line-96">      if(i &gt;= end) break;</span>
+<span class="source-line-no">096</span><span id="line-96">      if(values.size() &gt;= 5) break;</span>
 <span class="source-line-no">097</span><span id="line-97">    }</span>
 <span class="source-line-no">098</span><span id="line-98">    return values;</span>
 <span class="source-line-no">099</span><span id="line-99">  }</span>

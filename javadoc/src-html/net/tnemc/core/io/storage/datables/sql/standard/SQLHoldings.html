@@ -137,66 +137,71 @@
 <span class="source-line-no">124</span><span id="line-124">    }</span>
 <span class="source-line-no">125</span><span id="line-125">  }</span>
 <span class="source-line-no">126</span><span id="line-126"></span>
-<span class="source-line-no">127</span><span id="line-127">  /**</span>
-<span class="source-line-no">128</span><span id="line-128">   * Used to load this object.</span>
-<span class="source-line-no">129</span><span id="line-129">   *</span>
-<span class="source-line-no">130</span><span id="line-130">   * @param connector  The storage connector to use for this transaction.</span>
-<span class="source-line-no">131</span><span id="line-131">   * @param identifier The identifier used to identify the object to load.</span>
-<span class="source-line-no">132</span><span id="line-132">   *</span>
-<span class="source-line-no">133</span><span id="line-133">   * @return The object to load.</span>
+<span class="source-line-no">127</span><span id="line-127">  @Override</span>
+<span class="source-line-no">128</span><span id="line-128">  public void delete(final StorageConnector&lt;?&gt; connector, @NotNull final String identifier) {</span>
+<span class="source-line-no">129</span><span id="line-129">    //nothing to do here</span>
+<span class="source-line-no">130</span><span id="line-130">  }</span>
+<span class="source-line-no">131</span><span id="line-131"></span>
+<span class="source-line-no">132</span><span id="line-132">  /**</span>
+<span class="source-line-no">133</span><span id="line-133">   * Used to load this object.</span>
 <span class="source-line-no">134</span><span id="line-134">   *</span>
-<span class="source-line-no">135</span><span id="line-135">   * @throws UnsupportedOperationException as this method is not valid for holdings.</span>
-<span class="source-line-no">136</span><span id="line-136">   */</span>
-<span class="source-line-no">137</span><span id="line-137">  @Override</span>
-<span class="source-line-no">138</span><span id="line-138">  public Optional&lt;HoldingsEntry&gt; load(final StorageConnector&lt;?&gt; connector, @NotNull final String identifier) {</span>
-<span class="source-line-no">139</span><span id="line-139"></span>
-<span class="source-line-no">140</span><span id="line-140">    throw new UnsupportedOperationException("load for HoldingsEntry is not a supported operation.");</span>
-<span class="source-line-no">141</span><span id="line-141">  }</span>
-<span class="source-line-no">142</span><span id="line-142"></span>
-<span class="source-line-no">143</span><span id="line-143">  /**</span>
-<span class="source-line-no">144</span><span id="line-144">   * Used to load all objects of this type.</span>
-<span class="source-line-no">145</span><span id="line-145">   *</span>
-<span class="source-line-no">146</span><span id="line-146">   * @param connector The storage connector to use for this transaction.</span>
-<span class="source-line-no">147</span><span id="line-147">   *</span>
-<span class="source-line-no">148</span><span id="line-148">   * @return A collection containing the objects loaded.</span>
-<span class="source-line-no">149</span><span id="line-149">   */</span>
-<span class="source-line-no">150</span><span id="line-150">  @Override</span>
-<span class="source-line-no">151</span><span id="line-151">  public Collection&lt;HoldingsEntry&gt; loadAll(final StorageConnector&lt;?&gt; connector, @Nullable final String identifier) {</span>
-<span class="source-line-no">152</span><span id="line-152"></span>
-<span class="source-line-no">153</span><span id="line-153">    final Collection&lt;HoldingsEntry&gt; holdings = new ArrayList&lt;&gt;();</span>
-<span class="source-line-no">154</span><span id="line-154"></span>
-<span class="source-line-no">155</span><span id="line-155">    if(connector instanceof final SQLConnector sql &amp;&amp; sql.dialect() instanceof final TNEDialect tne &amp;&amp; identifier != null) {</span>
-<span class="source-line-no">156</span><span id="line-156">      PluginCore.log().debug("SQLHoldings-loadAll-Account ID:" + identifier, DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">157</span><span id="line-157">      try(final ResultSet result = sql.executeQuery(tne.loadHoldings(),</span>
-<span class="source-line-no">158</span><span id="line-158">                                                    new Object[]{</span>
-<span class="source-line-no">159</span><span id="line-159">                                                            identifier,</span>
-<span class="source-line-no">160</span><span id="line-160">                                                            MainConfig.yaml().getString("Core.Server.Name")</span>
-<span class="source-line-no">161</span><span id="line-161">                                                    })) {</span>
-<span class="source-line-no">162</span><span id="line-162">        while(result.next()) {</span>
-<span class="source-line-no">163</span><span id="line-163"></span>
-<span class="source-line-no">164</span><span id="line-164">          final String currency = result.getString("currency");</span>
-<span class="source-line-no">165</span><span id="line-165"></span>
-<span class="source-line-no">166</span><span id="line-166">          if(TNECore.eco().currency().find(currency).isEmpty()) {</span>
-<span class="source-line-no">167</span><span id="line-167">            EconomyManager.invalidCurrencies().add(currency);</span>
-<span class="source-line-no">168</span><span id="line-168">          }</span>
-<span class="source-line-no">169</span><span id="line-169"></span>
-<span class="source-line-no">170</span><span id="line-170">          //region, currency, amount, type</span>
-<span class="source-line-no">171</span><span id="line-171">          final HoldingsEntry entry = new HoldingsEntry(result.getString("region"),</span>
-<span class="source-line-no">172</span><span id="line-172">                                                        UUID.fromString(currency),</span>
-<span class="source-line-no">173</span><span id="line-173">                                                        result.getBigDecimal("holdings"),</span>
-<span class="source-line-no">174</span><span id="line-174">                                                        Identifier.fromID(result.getString("holdings_type")));</span>
-<span class="source-line-no">175</span><span id="line-175"></span>
-<span class="source-line-no">176</span><span id="line-176">          PluginCore.log().debug("SQLHoldings-loadAll-Entry ID:" + entry.getHandler(), DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">177</span><span id="line-177">          PluginCore.log().debug("SQLHoldings-loadAll-Entry AMT:" + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">178</span><span id="line-178">          holdings.add(entry);</span>
-<span class="source-line-no">179</span><span id="line-179">        }</span>
-<span class="source-line-no">180</span><span id="line-180">      } catch(final SQLException e) {</span>
-<span class="source-line-no">181</span><span id="line-181">        e.printStackTrace();</span>
-<span class="source-line-no">182</span><span id="line-182">      }</span>
-<span class="source-line-no">183</span><span id="line-183">    }</span>
-<span class="source-line-no">184</span><span id="line-184">    return holdings;</span>
-<span class="source-line-no">185</span><span id="line-185">  }</span>
-<span class="source-line-no">186</span><span id="line-186">}</span>
+<span class="source-line-no">135</span><span id="line-135">   * @param connector  The storage connector to use for this transaction.</span>
+<span class="source-line-no">136</span><span id="line-136">   * @param identifier The identifier used to identify the object to load.</span>
+<span class="source-line-no">137</span><span id="line-137">   *</span>
+<span class="source-line-no">138</span><span id="line-138">   * @return The object to load.</span>
+<span class="source-line-no">139</span><span id="line-139">   *</span>
+<span class="source-line-no">140</span><span id="line-140">   * @throws UnsupportedOperationException as this method is not valid for holdings.</span>
+<span class="source-line-no">141</span><span id="line-141">   */</span>
+<span class="source-line-no">142</span><span id="line-142">  @Override</span>
+<span class="source-line-no">143</span><span id="line-143">  public Optional&lt;HoldingsEntry&gt; load(final StorageConnector&lt;?&gt; connector, @NotNull final String identifier) {</span>
+<span class="source-line-no">144</span><span id="line-144"></span>
+<span class="source-line-no">145</span><span id="line-145">    throw new UnsupportedOperationException("load for HoldingsEntry is not a supported operation.");</span>
+<span class="source-line-no">146</span><span id="line-146">  }</span>
+<span class="source-line-no">147</span><span id="line-147"></span>
+<span class="source-line-no">148</span><span id="line-148">  /**</span>
+<span class="source-line-no">149</span><span id="line-149">   * Used to load all objects of this type.</span>
+<span class="source-line-no">150</span><span id="line-150">   *</span>
+<span class="source-line-no">151</span><span id="line-151">   * @param connector The storage connector to use for this transaction.</span>
+<span class="source-line-no">152</span><span id="line-152">   *</span>
+<span class="source-line-no">153</span><span id="line-153">   * @return A collection containing the objects loaded.</span>
+<span class="source-line-no">154</span><span id="line-154">   */</span>
+<span class="source-line-no">155</span><span id="line-155">  @Override</span>
+<span class="source-line-no">156</span><span id="line-156">  public Collection&lt;HoldingsEntry&gt; loadAll(final StorageConnector&lt;?&gt; connector, @Nullable final String identifier) {</span>
+<span class="source-line-no">157</span><span id="line-157"></span>
+<span class="source-line-no">158</span><span id="line-158">    final Collection&lt;HoldingsEntry&gt; holdings = new ArrayList&lt;&gt;();</span>
+<span class="source-line-no">159</span><span id="line-159"></span>
+<span class="source-line-no">160</span><span id="line-160">    if(connector instanceof final SQLConnector sql &amp;&amp; sql.dialect() instanceof final TNEDialect tne &amp;&amp; identifier != null) {</span>
+<span class="source-line-no">161</span><span id="line-161">      PluginCore.log().debug("SQLHoldings-loadAll-Account ID:" + identifier, DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">162</span><span id="line-162">      try(final ResultSet result = sql.executeQuery(tne.loadHoldings(),</span>
+<span class="source-line-no">163</span><span id="line-163">                                                    new Object[]{</span>
+<span class="source-line-no">164</span><span id="line-164">                                                            identifier,</span>
+<span class="source-line-no">165</span><span id="line-165">                                                            MainConfig.yaml().getString("Core.Server.Name")</span>
+<span class="source-line-no">166</span><span id="line-166">                                                    })) {</span>
+<span class="source-line-no">167</span><span id="line-167">        while(result.next()) {</span>
+<span class="source-line-no">168</span><span id="line-168"></span>
+<span class="source-line-no">169</span><span id="line-169">          final String currency = result.getString("currency");</span>
+<span class="source-line-no">170</span><span id="line-170"></span>
+<span class="source-line-no">171</span><span id="line-171">          if(TNECore.eco().currency().find(currency).isEmpty()) {</span>
+<span class="source-line-no">172</span><span id="line-172">            EconomyManager.invalidCurrencies().add(currency);</span>
+<span class="source-line-no">173</span><span id="line-173">          }</span>
+<span class="source-line-no">174</span><span id="line-174"></span>
+<span class="source-line-no">175</span><span id="line-175">          //region, currency, amount, type</span>
+<span class="source-line-no">176</span><span id="line-176">          final HoldingsEntry entry = new HoldingsEntry(result.getString("region"),</span>
+<span class="source-line-no">177</span><span id="line-177">                                                        UUID.fromString(currency),</span>
+<span class="source-line-no">178</span><span id="line-178">                                                        result.getBigDecimal("holdings"),</span>
+<span class="source-line-no">179</span><span id="line-179">                                                        Identifier.fromID(result.getString("holdings_type")));</span>
+<span class="source-line-no">180</span><span id="line-180"></span>
+<span class="source-line-no">181</span><span id="line-181">          PluginCore.log().debug("SQLHoldings-loadAll-Entry ID:" + entry.getHandler(), DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">182</span><span id="line-182">          PluginCore.log().debug("SQLHoldings-loadAll-Entry AMT:" + entry.getAmount().toPlainString(), DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">183</span><span id="line-183">          holdings.add(entry);</span>
+<span class="source-line-no">184</span><span id="line-184">        }</span>
+<span class="source-line-no">185</span><span id="line-185">      } catch(final SQLException e) {</span>
+<span class="source-line-no">186</span><span id="line-186">        e.printStackTrace();</span>
+<span class="source-line-no">187</span><span id="line-187">      }</span>
+<span class="source-line-no">188</span><span id="line-188">    }</span>
+<span class="source-line-no">189</span><span id="line-189">    return holdings;</span>
+<span class="source-line-no">190</span><span id="line-190">  }</span>
+<span class="source-line-no">191</span><span id="line-191">}</span>
 
 
 

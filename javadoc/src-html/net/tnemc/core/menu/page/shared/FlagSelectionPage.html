@@ -135,7 +135,7 @@
 <span class="source-line-no">122</span><span id="line-122">                                             final StringBuilder builder = new StringBuilder();</span>
 <span class="source-line-no">123</span><span id="line-123">                                             for(final String flag : MenuManager.instance().getHelper().flags()) {</span>
 <span class="source-line-no">124</span><span id="line-124"></span>
-<span class="source-line-no">125</span><span id="line-125">                                               final String value = (String)viewer.get().dataOrDefault(menuName + "_" + flag, "Disabled");</span>
+<span class="source-line-no">125</span><span id="line-125">                                               final String value = (String)viewer.get().dataOrDefault(flagsID + "_" + flag, "Disabled");</span>
 <span class="source-line-no">126</span><span id="line-126">                                               final boolean enabled = value.equalsIgnoreCase("enabled");</span>
 <span class="source-line-no">127</span><span id="line-127">                                               if(enabled) {</span>
 <span class="source-line-no">128</span><span id="line-128"></span>
@@ -163,7 +163,7 @@
 <span class="source-line-no">150</span><span id="line-150">        final AbstractItemStack&lt;?&gt; enabledStack = PluginCore.server().stackBuilder().customName(Component.text(flagName + "(Enabled)")).of("GREEN_WOOL", 1);</span>
 <span class="source-line-no">151</span><span id="line-151"></span>
 <span class="source-line-no">152</span><span id="line-152">        //ender chest icon</span>
-<span class="source-line-no">153</span><span id="line-153">        final StateIcon flag = new StateIcon(disabledStack, null, menuName + "_" + flagName, "DISABLED", (currentState)-&gt;{</span>
+<span class="source-line-no">153</span><span id="line-153">        final StateIcon flag = new StateIcon(disabledStack, null, flagsID + "_" + flagName, "DISABLED", (currentState)-&gt;{</span>
 <span class="source-line-no">154</span><span id="line-154">          if(currentState.toUpperCase(Locale.ROOT).equals("ENABLED")) {</span>
 <span class="source-line-no">155</span><span id="line-155">            return "DISABLED";</span>
 <span class="source-line-no">156</span><span id="line-156">          }</span>

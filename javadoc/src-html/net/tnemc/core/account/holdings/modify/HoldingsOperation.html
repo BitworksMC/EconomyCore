@@ -96,7 +96,7 @@
 <span class="source-line-no">083</span><span id="line-83">    @Override</span>
 <span class="source-line-no">084</span><span id="line-84">    public BigDecimal perform(final BigDecimal value, final BigDecimal modifier) {</span>
 <span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">      return value.divide(modifier, RoundingMode.valueOf(9));</span>
+<span class="source-line-no">086</span><span id="line-86">      return value.divide(modifier, RoundingMode.DOWN);</span>
 <span class="source-line-no">087</span><span id="line-87">    }</span>
 <span class="source-line-no">088</span><span id="line-88">  };</span>
 <span class="source-line-no">089</span><span id="line-89"></span>

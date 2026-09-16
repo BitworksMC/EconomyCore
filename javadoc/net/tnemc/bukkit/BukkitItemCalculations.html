@@ -50,7 +50,7 @@ loadScripts(document, 'script');</script>
 <ul>
 <li>Field</li>
 <li><a href="#constructor-detail">Constr</a></li>
-<li>Method</li>
+<li><a href="#method-detail">Method</a></li>
 </ul>
 </li>
 </ul>
@@ -68,7 +68,7 @@ loadScripts(document, 'script');</script>
 <li>Detail:&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor-detail">Constr</a>&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method-detail">Method</a></li>
 </ul>
 </div>
 <div class="nav-list-search"><a href="../../../search.html">SEARCH</a>
@@ -93,7 +93,7 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/net/tnemc/bukkit/BukkitItemCalculations.html#line-30">BukkitItemCalculations</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/net/tnemc/bukkit/BukkitItemCalculations.html#line-45">BukkitItemCalculations</a></span>
 <span class="extends-implements">extends <a href="../core/currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a>&lt;org.bukkit.inventory.Inventory&gt;</span></div>
 <div class="block">BukkitItemCalculations</div>
 <dl class="notes">
@@ -122,6 +122,23 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
+<div id="method-summary-table">
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;net.tnemc.item.AbstractItemStack&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#tryInsertIntoContainers(java.util.Collection,org.bukkit.inventory.Inventory,net.tnemc.core.currency.item.ItemCurrency)" class="member-name-link">tryInsertIntoContainers</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;net.tnemc.item.AbstractItemStack&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;&nbsp;left,
+ org.bukkit.inventory.Inventory&nbsp;inventory,
+ <a href="../core/currency/item/ItemCurrency.html" title="class in net.tnemc.core.currency.item">ItemCurrency</a>&nbsp;currency)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Platform hook used to place item payouts into nested containers (such as shulkers).</div>
+</div>
+</div>
+</div>
+</div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.tnemc.core.currency.calculations.ItemCalculations">Methods inherited from class&nbsp;net.tnemc.core.currency.calculations.<a href="../core/currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a></h3>
 <code><a href="../core/currency/calculations/ItemCalculations.html#calculateHoldings(net.tnemc.core.currency.calculations.CalculationData)">calculateHoldings</a>, <a href="../core/currency/calculations/ItemCalculations.html#calculation(net.tnemc.core.currency.calculations.CalculationData,java.math.BigDecimal)">calculation</a>, <a href="../core/currency/calculations/ItemCalculations.html#provideMaterials(net.tnemc.core.currency.calculations.CalculationData,java.math.BigDecimal)">provideMaterials</a>, <a href="../core/currency/calculations/ItemCalculations.html#removeMaterials(net.tnemc.core.currency.calculations.CalculationData,net.tnemc.core.currency.Denomination,java.lang.Integer)">removeMaterials</a>, <a href="../core/currency/calculations/ItemCalculations.html#setItems(net.tnemc.core.currency.calculations.CalculationData,java.math.BigDecimal)">setItems</a></code></div>
@@ -142,7 +159,35 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;()">
 <h3>BukkitItemCalculations</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/bukkit/BukkitItemCalculations.html#line-30">BukkitItemCalculations</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/bukkit/BukkitItemCalculations.html#line-45">BukkitItemCalculations</a></span>()</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<!-- ============ METHOD DETAIL ========== -->
+<li>
+<section class="method-details" id="method-detail">
+<h2>Method Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="tryInsertIntoContainers(java.util.Collection,org.bukkit.inventory.Inventory,net.tnemc.core.currency.item.ItemCurrency)">
+<h3>tryInsertIntoContainers</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;net.tnemc.item.AbstractItemStack&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/bukkit/BukkitItemCalculations.html#line-47">tryInsertIntoContainers</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;net.tnemc.item.AbstractItemStack&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;&gt;&nbsp;left,
+ org.bukkit.inventory.Inventory&nbsp;inventory,
+ <a href="../core/currency/item/ItemCurrency.html" title="class in net.tnemc.core.currency.item">ItemCurrency</a>&nbsp;currency)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../core/currency/calculations/ItemCalculations.html#tryInsertIntoContainers(java.util.Collection,I,net.tnemc.core.currency.item.ItemCurrency)">ItemCalculations</a></code></span></div>
+<div class="block">Platform hook used to place item payouts into nested containers (such as shulkers).</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../core/currency/calculations/ItemCalculations.html#tryInsertIntoContainers(java.util.Collection,I,net.tnemc.core.currency.item.ItemCurrency)">tryInsertIntoContainers</a></code>&nbsp;in class&nbsp;<code><a href="../core/currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a>&lt;org.bukkit.inventory.Inventory&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>left</code> - The stacks still left after normal insertion attempts.</dd>
+<dd><code>inventory</code> - The target inventory object.</dd>
+<dd><code>currency</code> - The item currency being processed.</dd>
+<dt>Returns:</dt>
+<dd>The stacks that still could not be inserted.</dd>
+</dl>
 </section>
 </li>
 </ul>

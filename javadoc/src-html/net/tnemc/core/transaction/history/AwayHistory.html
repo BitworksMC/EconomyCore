@@ -65,19 +65,19 @@
 <span class="source-line-no">052</span><span id="line-52"></span>
 <span class="source-line-no">053</span><span id="line-53">  public NavigableMap&lt;Long, UUID&gt; getPage(int page) {</span>
 <span class="source-line-no">054</span><span id="line-54"></span>
-<span class="source-line-no">055</span><span id="line-55">    if(page &gt; maxPages()) page = 1;</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
-<span class="source-line-no">057</span><span id="line-57">    final NavigableMap&lt;Long, UUID&gt; values = new TreeMap&lt;&gt;();</span>
-<span class="source-line-no">058</span><span id="line-58">    final int start = ((page * 5) - 5) + 1;</span>
-<span class="source-line-no">059</span><span id="line-59">    final int end = start + 5;</span>
+<span class="source-line-no">055</span><span id="line-55">    if(page &lt; 1) page = 1;</span>
+<span class="source-line-no">056</span><span id="line-56">    if(page &gt; maxPages()) page = 1;</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">    final NavigableMap&lt;Long, UUID&gt; values = new TreeMap&lt;&gt;();</span>
+<span class="source-line-no">059</span><span id="line-59">    final int start = (page - 1) * 5;</span>
 <span class="source-line-no">060</span><span id="line-60"></span>
-<span class="source-line-no">061</span><span id="line-61">    final int i = 1;</span>
+<span class="source-line-no">061</span><span id="line-61">    int i = 0;</span>
 <span class="source-line-no">062</span><span id="line-62">    for(final Map.Entry&lt;Long, UUID&gt; entry : receipts.entrySet()) {</span>
-<span class="source-line-no">063</span><span id="line-63">      if(i &lt; start) continue;</span>
+<span class="source-line-no">063</span><span id="line-63">      if(i++ &lt; start) continue;</span>
 <span class="source-line-no">064</span><span id="line-64"></span>
 <span class="source-line-no">065</span><span id="line-65">      values.put(entry.getKey(), entry.getValue());</span>
 <span class="source-line-no">066</span><span id="line-66"></span>
-<span class="source-line-no">067</span><span id="line-67">      if(i &gt;= end) break;</span>
+<span class="source-line-no">067</span><span id="line-67">      if(values.size() &gt;= 5) break;</span>
 <span class="source-line-no">068</span><span id="line-68">    }</span>
 <span class="source-line-no">069</span><span id="line-69">    return values;</span>
 <span class="source-line-no">070</span><span id="line-70">  }</span>

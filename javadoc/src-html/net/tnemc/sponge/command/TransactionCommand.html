@@ -75,7 +75,7 @@
 <span class="source-line-no">062</span><span id="line-62">  @Subcommand({ "info", "i", "about", "brief" })</span>
 <span class="source-line-no">063</span><span id="line-63">  @Usage("Transaction.Info.Arguments")</span>
 <span class="source-line-no">064</span><span id="line-64">  @Description("Transaction.Info.Description")</span>
-<span class="source-line-no">065</span><span id="line-65">  @CommandPermission("tne.info.history")</span>
+<span class="source-line-no">065</span><span id="line-65">  @CommandPermission("tne.transaction.info")</span>
 <span class="source-line-no">066</span><span id="line-66">  public void info(final SpongeCommandActor sender, final UUID uuid) {</span>
 <span class="source-line-no">067</span><span id="line-67"></span>
 <span class="source-line-no">068</span><span id="line-68">    net.tnemc.core.command.TransactionCommand.info(new SpongeCMDSource(sender), uuid);</span>
@@ -84,7 +84,7 @@
 <span class="source-line-no">071</span><span id="line-71">  @Subcommand({ "void", "retract", "undo" })</span>
 <span class="source-line-no">072</span><span id="line-72">  @Usage("Transaction.Void.Arguments")</span>
 <span class="source-line-no">073</span><span id="line-73">  @Description("Transaction.Void.Description")</span>
-<span class="source-line-no">074</span><span id="line-74">  @CommandPermission("tne.void.history")</span>
+<span class="source-line-no">074</span><span id="line-74">  @CommandPermission("tne.transaction.void")</span>
 <span class="source-line-no">075</span><span id="line-75">  public void voidT(final SpongeCommandActor sender, final Account account, final UUID uuid) {</span>
 <span class="source-line-no">076</span><span id="line-76"></span>
 <span class="source-line-no">077</span><span id="line-77">    net.tnemc.core.command.TransactionCommand.voidT(new SpongeCMDSource(sender), account, uuid);</span>

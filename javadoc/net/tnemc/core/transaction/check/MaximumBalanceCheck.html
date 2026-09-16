@@ -95,7 +95,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="../TransactionCheck.html" title="interface in net.tnemc.core.transaction">TransactionCheck</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-42">MaximumBalanceCheck</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-46">MaximumBalanceCheck</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>
 implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core.transaction">TransactionCheck</a></span></div>
 <div class="block">MaximumBalanceCheck</div>
@@ -140,9 +140,13 @@ implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core
 <div class="block">This method is utilized to run the check on specific
  <a href="../TransactionParticipant.html" title="class in net.tnemc.core.transaction"><code>participants</code></a>.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#identifier()" class="member-name-link">identifier</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#findApplicablePermission(net.tnemc.core.currency.Currency,net.tnemc.plugincore.core.compatibility.PlayerProvider)" class="member-name-link">findApplicablePermission</a><wbr>(<a href="../../currency/Currency.html" title="class in net.tnemc.core.currency">Currency</a>&nbsp;currency,
+ net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;player)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#identifier()" class="member-name-link">identifier</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">The unique string-based identifier for this check in order to be able to allow control over
  what checks are running, and which ones may not have to be utilized.</div>
 </div>
@@ -169,7 +173,7 @@ implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core
 <li>
 <section class="detail" id="&lt;init&gt;()">
 <h3>MaximumBalanceCheck</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-42">MaximumBalanceCheck</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-46">MaximumBalanceCheck</a></span>()</div>
 </section>
 </li>
 </ul>
@@ -183,7 +187,7 @@ implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core
 <li>
 <section class="detail" id="identifier()">
 <h3>identifier</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-52">identifier</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-56">identifier</a></span>()</div>
 <div class="block">The unique string-based identifier for this check in order to be able to allow control over
  what checks are running, and which ones may not have to be utilized. For instance, we don't
  want to waste resources with inventory-based checks when it may not involve item-based
@@ -199,7 +203,7 @@ implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core
 <li>
 <section class="detail" id="checkParticipant(net.tnemc.core.transaction.Transaction,net.tnemc.core.transaction.TransactionParticipant,net.tnemc.core.account.holdings.modify.HoldingsModifier)">
 <h3>checkParticipant</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../actions/EconomyResponse.html" title="interface in net.tnemc.core.actions">EconomyResponse</a></span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-72">checkParticipant</a></span><wbr><span class="parameters">(<a href="../Transaction.html" title="class in net.tnemc.core.transaction">Transaction</a>&nbsp;transaction,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="../../actions/EconomyResponse.html" title="interface in net.tnemc.core.actions">EconomyResponse</a></span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-76">checkParticipant</a></span><wbr><span class="parameters">(<a href="../Transaction.html" title="class in net.tnemc.core.transaction">Transaction</a>&nbsp;transaction,
  @NotNull
  @NotNull <a href="../TransactionParticipant.html" title="class in net.tnemc.core.transaction">TransactionParticipant</a>&nbsp;participant,
  <a href="../../account/holdings/modify/HoldingsModifier.html" title="class in net.tnemc.core.account.holdings.modify">HoldingsModifier</a>&nbsp;modifier)</span></div>
@@ -218,6 +222,13 @@ implements <a href="../TransactionCheck.html" title="interface in net.tnemc.core
  failure boolean along with a message for why it failed if it did. The messages for this
  response are ignored if the check was successful.</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="findApplicablePermission(net.tnemc.core.currency.Currency,net.tnemc.plugincore.core.compatibility.PlayerProvider)">
+<h3>findApplicablePermission</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/transaction/check/MaximumBalanceCheck.html#line-98">findApplicablePermission</a></span><wbr><span class="parameters">(<a href="../../currency/Currency.html" title="class in net.tnemc.core.currency">Currency</a>&nbsp;currency,
+ net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;player)</span></div>
 </section>
 </li>
 </ul>

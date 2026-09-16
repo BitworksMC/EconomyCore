@@ -71,81 +71,103 @@
 <span class="source-line-no">058</span><span id="line-58">  public HandlerResponse handle(final PlayerProvider provider, final AbstractItemStack&lt;?&gt; item) {</span>
 <span class="source-line-no">059</span><span id="line-59"></span>
 <span class="source-line-no">060</span><span id="line-60">    final HandlerResponse response = new HandlerResponse("", false);</span>
-<span class="source-line-no">061</span><span id="line-61"></span>
-<span class="source-line-no">062</span><span id="line-62">    final Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(provider.identifier());</span>
-<span class="source-line-no">063</span><span id="line-63">    if(account.isPresent() &amp;&amp; (account.get() instanceof PlayerAccount) &amp;&amp; item.customName().isPresent()</span>
-<span class="source-line-no">064</span><span id="line-64">       &amp;&amp; Component.EQUALS.test(item.customName().get().customName(), Component.text(MessageConfig.yaml().getString("Messages.Note.Name")))) {</span>
+<span class="source-line-no">061</span><span id="line-61">    final Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(provider.identifier());</span>
+<span class="source-line-no">062</span><span id="line-62">    if(!isRedeemableNote(account, item)) {</span>
+<span class="source-line-no">063</span><span id="line-63">      return response;</span>
+<span class="source-line-no">064</span><span id="line-64">    }</span>
 <span class="source-line-no">065</span><span id="line-65"></span>
-<span class="source-line-no">066</span><span id="line-66">      String currency = null;</span>
-<span class="source-line-no">067</span><span id="line-67">      String region = null;</span>
-<span class="source-line-no">068</span><span id="line-68">      String amount = null;</span>
-<span class="source-line-no">069</span><span id="line-69"></span>
-<span class="source-line-no">070</span><span id="line-70">      final String curCompare = MessageConfig.yaml().getString("Messages.Note.Currency").split(":")[0];</span>
-<span class="source-line-no">071</span><span id="line-71">      final String regionCompare = MessageConfig.yaml().getString("Messages.Note.Region").split(":")[0];</span>
-<span class="source-line-no">072</span><span id="line-72">      final String amtCompare = MessageConfig.yaml().getString("Messages.Note.Amount").split(":")[0];</span>
+<span class="source-line-no">066</span><span id="line-66">    final NoteData data = readNoteData(item);</span>
+<span class="source-line-no">067</span><span id="line-67">    if(!data.complete()) {</span>
+<span class="source-line-no">068</span><span id="line-68">      return response;</span>
+<span class="source-line-no">069</span><span id="line-69">    }</span>
+<span class="source-line-no">070</span><span id="line-70">    redeemNote(provider, account.get(), data, response);</span>
+<span class="source-line-no">071</span><span id="line-71">    return response;</span>
+<span class="source-line-no">072</span><span id="line-72">  }</span>
 <span class="source-line-no">073</span><span id="line-73"></span>
-<span class="source-line-no">074</span><span id="line-74">      final Optional&lt;? extends LoreComponent&lt;? extends AbstractItemStack&lt;?&gt;, ?&gt;&gt; loreOptional = item.lore();</span>
+<span class="source-line-no">074</span><span id="line-74">  private boolean isRedeemableNote(final Optional&lt;Account&gt; account, final AbstractItemStack&lt;?&gt; item) {</span>
 <span class="source-line-no">075</span><span id="line-75"></span>
-<span class="source-line-no">076</span><span id="line-76">      if(loreOptional.isPresent()) {</span>
-<span class="source-line-no">077</span><span id="line-77"></span>
-<span class="source-line-no">078</span><span id="line-78">        for(final Component component : loreOptional.get().lore()) {</span>
-<span class="source-line-no">079</span><span id="line-79">          //TODO: Fix</span>
-<span class="source-line-no">080</span><span id="line-80">          final String[] info = component.toString().split(":");</span>
-<span class="source-line-no">081</span><span id="line-81">          if(info.length &lt; 2) continue;</span>
+<span class="source-line-no">076</span><span id="line-76">    return account.isPresent() &amp;&amp; account.get() instanceof PlayerAccount &amp;&amp; item.customName().isPresent()</span>
+<span class="source-line-no">077</span><span id="line-77">           &amp;&amp; Component.EQUALS.test(item.customName().get().customName(),</span>
+<span class="source-line-no">078</span><span id="line-78">                                    Component.text(MessageConfig.yaml().getString("Messages.Note.Name")));</span>
+<span class="source-line-no">079</span><span id="line-79">  }</span>
+<span class="source-line-no">080</span><span id="line-80"></span>
+<span class="source-line-no">081</span><span id="line-81">  private NoteData readNoteData(final AbstractItemStack&lt;?&gt; item) {</span>
 <span class="source-line-no">082</span><span id="line-82"></span>
-<span class="source-line-no">083</span><span id="line-83"></span>
-<span class="source-line-no">084</span><span id="line-84">          if(info[0].contains(curCompare)) {</span>
-<span class="source-line-no">085</span><span id="line-85">            currency = info[1].split("\"")[0].trim();</span>
-<span class="source-line-no">086</span><span id="line-86">          } else if(info[0].contains(regionCompare)) {</span>
-<span class="source-line-no">087</span><span id="line-87">            region = info[1].split("\"")[0].trim();</span>
-<span class="source-line-no">088</span><span id="line-88">          } else if(info[0].contains(amtCompare)) {</span>
-<span class="source-line-no">089</span><span id="line-89">            amount = info[1].split("\"")[0].trim();</span>
-<span class="source-line-no">090</span><span id="line-90">          }</span>
-<span class="source-line-no">091</span><span id="line-91"></span>
-<span class="source-line-no">092</span><span id="line-92">        }</span>
-<span class="source-line-no">093</span><span id="line-93">      }</span>
-<span class="source-line-no">094</span><span id="line-94"></span>
-<span class="source-line-no">095</span><span id="line-95">      if(currency == null || region == null || amount == null) return response;</span>
-<span class="source-line-no">096</span><span id="line-96"></span>
-<span class="source-line-no">097</span><span id="line-97"></span>
-<span class="source-line-no">098</span><span id="line-98">      final Optional&lt;Currency&gt; curObj = TNECore.eco().currency().find(currency);</span>
-<span class="source-line-no">099</span><span id="line-99">      if(curObj.isEmpty() || curObj.get().getNote().isEmpty()) return response;</span>
-<span class="source-line-no">100</span><span id="line-100"></span>
-<span class="source-line-no">101</span><span id="line-101">      final BigDecimal value = new BigDecimal(amount);</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">      final HoldingsModifier modifier = new HoldingsModifier(region, curObj.get().getUid(), value);</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">      final Transaction transaction = new Transaction("note")</span>
-<span class="source-line-no">106</span><span id="line-106">              .from(account.get(), modifier)</span>
-<span class="source-line-no">107</span><span id="line-107">              .processor(EconomyManager.baseProcessor())</span>
-<span class="source-line-no">108</span><span id="line-108">              .source(new PlayerSource(provider.identifier()));</span>
-<span class="source-line-no">109</span><span id="line-109"></span>
-<span class="source-line-no">110</span><span id="line-110">      try {</span>
-<span class="source-line-no">111</span><span id="line-111">        final TransactionResult result = transaction.process();</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">        if(!result.isSuccessful()) {</span>
-<span class="source-line-no">114</span><span id="line-114">          provider.message(new MessageData(result.getMessage()));</span>
-<span class="source-line-no">115</span><span id="line-115">          return response;</span>
-<span class="source-line-no">116</span><span id="line-116">        }</span>
-<span class="source-line-no">117</span><span id="line-117"></span>
-<span class="source-line-no">118</span><span id="line-118">        if(result.getReceipt().isPresent()) {</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">          PluginCore.server().calculations().removeItem(curObj.get().getNote().get().stack(currency, region, value), provider.identifier());</span>
-<span class="source-line-no">121</span><span id="line-121"></span>
-<span class="source-line-no">122</span><span id="line-122">          final MessageData claimed = new MessageData("Messages.Note.Claimed");</span>
-<span class="source-line-no">123</span><span id="line-123">          claimed.addReplacement("$currency", currency);</span>
-<span class="source-line-no">124</span><span id="line-124">          claimed.addReplacement("$amount", amount);</span>
-<span class="source-line-no">125</span><span id="line-125">          provider.message(claimed);</span>
-<span class="source-line-no">126</span><span id="line-126">          return response;</span>
-<span class="source-line-no">127</span><span id="line-127">        }</span>
-<span class="source-line-no">128</span><span id="line-128">      } catch(final InvalidTransactionException e) {</span>
-<span class="source-line-no">129</span><span id="line-129">        e.printStackTrace();</span>
-<span class="source-line-no">130</span><span id="line-130">      }</span>
-<span class="source-line-no">131</span><span id="line-131">      provider.message(new MessageData("Messages.Note.Failed"));</span>
-<span class="source-line-no">132</span><span id="line-132">    }</span>
-<span class="source-line-no">133</span><span id="line-133">    return response;</span>
-<span class="source-line-no">134</span><span id="line-134">  }</span>
-<span class="source-line-no">135</span><span id="line-135">}</span>
+<span class="source-line-no">083</span><span id="line-83">    String currency = null;</span>
+<span class="source-line-no">084</span><span id="line-84">    String region = null;</span>
+<span class="source-line-no">085</span><span id="line-85">    String amount = null;</span>
+<span class="source-line-no">086</span><span id="line-86">    final String curCompare = MessageConfig.yaml().getString("Messages.Note.Currency").split(":")[0];</span>
+<span class="source-line-no">087</span><span id="line-87">    final String regionCompare = MessageConfig.yaml().getString("Messages.Note.Region").split(":")[0];</span>
+<span class="source-line-no">088</span><span id="line-88">    final String amtCompare = MessageConfig.yaml().getString("Messages.Note.Amount").split(":")[0];</span>
+<span class="source-line-no">089</span><span id="line-89">    final Optional&lt;? extends LoreComponent&lt;? extends AbstractItemStack&lt;?&gt;, ?&gt;&gt; loreOptional = item.lore();</span>
+<span class="source-line-no">090</span><span id="line-90"></span>
+<span class="source-line-no">091</span><span id="line-91">    if(loreOptional.isEmpty()) {</span>
+<span class="source-line-no">092</span><span id="line-92">      return new NoteData(null, null, null);</span>
+<span class="source-line-no">093</span><span id="line-93">    }</span>
+<span class="source-line-no">094</span><span id="line-94">    for(final Component component : loreOptional.get().lore()) {</span>
+<span class="source-line-no">095</span><span id="line-95">      final String[] info = component.toString().split(":");</span>
+<span class="source-line-no">096</span><span id="line-96">      if(info.length &lt; 2) {</span>
+<span class="source-line-no">097</span><span id="line-97">        continue;</span>
+<span class="source-line-no">098</span><span id="line-98">      }</span>
+<span class="source-line-no">099</span><span id="line-99">      final String value = info[1].split("\"")[0].trim();</span>
+<span class="source-line-no">100</span><span id="line-100">      if(info[0].contains(curCompare)) {</span>
+<span class="source-line-no">101</span><span id="line-101">        currency = value;</span>
+<span class="source-line-no">102</span><span id="line-102">      } else if(info[0].contains(regionCompare)) {</span>
+<span class="source-line-no">103</span><span id="line-103">        region = value;</span>
+<span class="source-line-no">104</span><span id="line-104">      } else if(info[0].contains(amtCompare)) {</span>
+<span class="source-line-no">105</span><span id="line-105">        amount = value;</span>
+<span class="source-line-no">106</span><span id="line-106">      }</span>
+<span class="source-line-no">107</span><span id="line-107">    }</span>
+<span class="source-line-no">108</span><span id="line-108">    return new NoteData(currency, region, amount);</span>
+<span class="source-line-no">109</span><span id="line-109">  }</span>
+<span class="source-line-no">110</span><span id="line-110"></span>
+<span class="source-line-no">111</span><span id="line-111">  private void redeemNote(final PlayerProvider provider, final Account account, final NoteData data,</span>
+<span class="source-line-no">112</span><span id="line-112">                          final HandlerResponse response) {</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    final Optional&lt;Currency&gt; currency = TNECore.eco().currency().find(data.currency());</span>
+<span class="source-line-no">115</span><span id="line-115">    if(currency.isEmpty() || currency.get().getNote().isEmpty()) {</span>
+<span class="source-line-no">116</span><span id="line-116">      return;</span>
+<span class="source-line-no">117</span><span id="line-117">    }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">    final BigDecimal value = new BigDecimal(data.amount());</span>
+<span class="source-line-no">120</span><span id="line-120">    final HoldingsModifier modifier = new HoldingsModifier(data.region(), currency.get().getUid(), value);</span>
+<span class="source-line-no">121</span><span id="line-121">    final Transaction transaction = new Transaction("note").from(account, modifier)</span>
+<span class="source-line-no">122</span><span id="line-122">            .processor(EconomyManager.baseProcessor()).source(new PlayerSource(provider.identifier()));</span>
+<span class="source-line-no">123</span><span id="line-123">    try {</span>
+<span class="source-line-no">124</span><span id="line-124">      final TransactionResult result = transaction.process();</span>
+<span class="source-line-no">125</span><span id="line-125">      if(!result.isSuccessful()) {</span>
+<span class="source-line-no">126</span><span id="line-126">        provider.message(new MessageData(result.getMessage()));</span>
+<span class="source-line-no">127</span><span id="line-127">        return;</span>
+<span class="source-line-no">128</span><span id="line-128">      }</span>
+<span class="source-line-no">129</span><span id="line-129">      if(result.getReceipt().isPresent()) {</span>
+<span class="source-line-no">130</span><span id="line-130">        claimNote(provider, currency.get(), data, value);</span>
+<span class="source-line-no">131</span><span id="line-131">        return;</span>
+<span class="source-line-no">132</span><span id="line-132">      }</span>
+<span class="source-line-no">133</span><span id="line-133">    } catch(final InvalidTransactionException e) {</span>
+<span class="source-line-no">134</span><span id="line-134">      e.printStackTrace();</span>
+<span class="source-line-no">135</span><span id="line-135">    }</span>
+<span class="source-line-no">136</span><span id="line-136">    provider.message(new MessageData("Messages.Note.Failed"));</span>
+<span class="source-line-no">137</span><span id="line-137">  }</span>
+<span class="source-line-no">138</span><span id="line-138"></span>
+<span class="source-line-no">139</span><span id="line-139">  private void claimNote(final PlayerProvider provider, final Currency currency, final NoteData data,</span>
+<span class="source-line-no">140</span><span id="line-140">                         final BigDecimal value) {</span>
+<span class="source-line-no">141</span><span id="line-141"></span>
+<span class="source-line-no">142</span><span id="line-142">    PluginCore.server().calculations().removeItem(</span>
+<span class="source-line-no">143</span><span id="line-143">            currency.getNote().get().stack(data.currency(), data.region(), value), provider.identifier());</span>
+<span class="source-line-no">144</span><span id="line-144">    final MessageData claimed = new MessageData("Messages.Note.Claimed");</span>
+<span class="source-line-no">145</span><span id="line-145">    claimed.addReplacement("$currency", data.currency());</span>
+<span class="source-line-no">146</span><span id="line-146">    claimed.addReplacement("$amount", data.amount());</span>
+<span class="source-line-no">147</span><span id="line-147">    provider.message(claimed);</span>
+<span class="source-line-no">148</span><span id="line-148">  }</span>
+<span class="source-line-no">149</span><span id="line-149"></span>
+<span class="source-line-no">150</span><span id="line-150">  private record NoteData(String currency, String region, String amount) {</span>
+<span class="source-line-no">151</span><span id="line-151"></span>
+<span class="source-line-no">152</span><span id="line-152">    private boolean complete() {</span>
+<span class="source-line-no">153</span><span id="line-153"></span>
+<span class="source-line-no">154</span><span id="line-154">      return currency != null &amp;&amp; region != null &amp;&amp; amount != null;</span>
+<span class="source-line-no">155</span><span id="line-155">    }</span>
+<span class="source-line-no">156</span><span id="line-156">  }</span>
+<span class="source-line-no">157</span><span id="line-157">}</span>
 
 
 

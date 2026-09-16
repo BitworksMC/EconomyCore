@@ -120,58 +120,60 @@
 <span class="source-line-no">107</span><span id="line-107">      final AccountAPIResponse response = TNECore.eco().account().createAccount(identifier,</span>
 <span class="source-line-no">108</span><span id="line-108">                                                                                name,</span>
 <span class="source-line-no">109</span><span id="line-109">                                                                                !(type.equalsIgnoreCase("player") ||</span>
-<span class="source-line-no">110</span><span id="line-110">                                                                                  type.equalsIgnoreCase("bedrock")));</span>
-<span class="source-line-no">111</span><span id="line-111">      if(response.getResponse().success()) {</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">        final Optional&lt;Account&gt; account = response.getAccount();</span>
-<span class="source-line-no">114</span><span id="line-114">        if(account.isPresent()) {</span>
-<span class="source-line-no">115</span><span id="line-115"></span>
-<span class="source-line-no">116</span><span id="line-116">          //Basic account variables</span>
-<span class="source-line-no">117</span><span id="line-117">          account.get().setPin((String)json.get("pin"));</span>
-<span class="source-line-no">118</span><span id="line-118">          account.get().setCreationDate((Long)json.get("creationDate"));</span>
-<span class="source-line-no">119</span><span id="line-119">          account.get().setStatus(TNECore.eco().account().findStatus((String)json.get("status")));</span>
-<span class="source-line-no">120</span><span id="line-120"></span>
-<span class="source-line-no">121</span><span id="line-121">          final JSONArray holdingsArray = (JSONArray)json.get("holdings");</span>
-<span class="source-line-no">122</span><span id="line-122">          final Wallet wallet = new Wallet();</span>
-<span class="source-line-no">123</span><span id="line-123">          for(final Object entryObj : holdingsArray) {</span>
-<span class="source-line-no">124</span><span id="line-124">            final JSONObject entryJson = (JSONObject)entryObj;</span>
-<span class="source-line-no">125</span><span id="line-125">            final HoldingsEntry entry = new SerialHoldings().fromJSON(entryJson.toJSONString());</span>
-<span class="source-line-no">126</span><span id="line-126">            wallet.setHoldings(entry);</span>
-<span class="source-line-no">127</span><span id="line-127">          }</span>
-<span class="source-line-no">128</span><span id="line-128"></span>
+<span class="source-line-no">110</span><span id="line-110">                                                                                  type.equalsIgnoreCase("bedrock")),</span>
+<span class="source-line-no">111</span><span id="line-111">                                                                                true);</span>
+<span class="source-line-no">112</span><span id="line-112">      if(response.getResponse().success()) {</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">        final Optional&lt;Account&gt; account = response.getAccount();</span>
+<span class="source-line-no">115</span><span id="line-115">        if(account.isPresent()) {</span>
+<span class="source-line-no">116</span><span id="line-116"></span>
+<span class="source-line-no">117</span><span id="line-117">          //Basic account variables</span>
+<span class="source-line-no">118</span><span id="line-118">          account.get().setPin((String)json.get("pin"));</span>
+<span class="source-line-no">119</span><span id="line-119">          account.get().setCreationDate((Long)json.get("creationDate"));</span>
+<span class="source-line-no">120</span><span id="line-120">          account.get().setStatus(TNECore.eco().account().findStatus((String)json.get("status")));</span>
+<span class="source-line-no">121</span><span id="line-121"></span>
+<span class="source-line-no">122</span><span id="line-122">          final JSONArray holdingsArray = (JSONArray)json.get("holdings");</span>
+<span class="source-line-no">123</span><span id="line-123">          final Wallet wallet = new Wallet();</span>
+<span class="source-line-no">124</span><span id="line-124">          for(final Object entryObj : holdingsArray) {</span>
+<span class="source-line-no">125</span><span id="line-125">            final JSONObject entryJson = (JSONObject)entryObj;</span>
+<span class="source-line-no">126</span><span id="line-126">            final HoldingsEntry entry = new SerialHoldings().fromJSON(entryJson.toJSONString());</span>
+<span class="source-line-no">127</span><span id="line-127">            wallet.setHoldings(entry);</span>
+<span class="source-line-no">128</span><span id="line-128">          }</span>
 <span class="source-line-no">129</span><span id="line-129"></span>
-<span class="source-line-no">130</span><span id="line-130">          //Shared accounts.</span>
-<span class="source-line-no">131</span><span id="line-131">          if(account.get() instanceof SharedAccount shared) {</span>
-<span class="source-line-no">132</span><span id="line-132">            shared.setOwner((UUID)json.get("owner"));</span>
-<span class="source-line-no">133</span><span id="line-133"></span>
-<span class="source-line-no">134</span><span id="line-134">            if(json.containsKey("members")) {</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">              final JSONArray membersArray = (JSONArray)json.get("members");</span>
-<span class="source-line-no">137</span><span id="line-137">              for(final Object memberObj : membersArray) {</span>
-<span class="source-line-no">138</span><span id="line-138"></span>
-<span class="source-line-no">139</span><span id="line-139">                final JSONObject memberJson = (JSONObject)memberObj;</span>
-<span class="source-line-no">140</span><span id="line-140">                final Member member = new SerialMember().fromJSON(memberJson.toJSONString());</span>
-<span class="source-line-no">141</span><span id="line-141">                shared.getMembers().put(member.getId(), member);</span>
-<span class="source-line-no">142</span><span id="line-142">              }</span>
-<span class="source-line-no">143</span><span id="line-143">            }</span>
-<span class="source-line-no">144</span><span id="line-144">          }</span>
-<span class="source-line-no">145</span><span id="line-145"></span>
-<span class="source-line-no">146</span><span id="line-146">          //Player-based accounts.</span>
-<span class="source-line-no">147</span><span id="line-147">          if(account.get() instanceof PlayerAccount player) {</span>
-<span class="source-line-no">148</span><span id="line-148"></span>
-<span class="source-line-no">149</span><span id="line-149">            player.setLastOnline((Long)json.get("lastOnline"));</span>
-<span class="source-line-no">150</span><span id="line-150">            player.setLanguage((String)json.get("language"));</span>
-<span class="source-line-no">151</span><span id="line-151">          }</span>
-<span class="source-line-no">152</span><span id="line-152">          return account.get();</span>
-<span class="source-line-no">153</span><span id="line-153">        }</span>
-<span class="source-line-no">154</span><span id="line-154">      }</span>
-<span class="source-line-no">155</span><span id="line-155">    } catch(ParseException | NumberFormatException | ClassCastException e) {</span>
-<span class="source-line-no">156</span><span id="line-156">      e.printStackTrace();</span>
-<span class="source-line-no">157</span><span id="line-157">      return null;</span>
-<span class="source-line-no">158</span><span id="line-158">    }</span>
-<span class="source-line-no">159</span><span id="line-159">    return null;</span>
-<span class="source-line-no">160</span><span id="line-160">  }</span>
-<span class="source-line-no">161</span><span id="line-161">}</span>
+<span class="source-line-no">130</span><span id="line-130"></span>
+<span class="source-line-no">131</span><span id="line-131">          //Shared accounts.</span>
+<span class="source-line-no">132</span><span id="line-132">          if(account.get() instanceof SharedAccount shared) {</span>
+<span class="source-line-no">133</span><span id="line-133">            shared.setOwner((UUID)json.get("owner"));</span>
+<span class="source-line-no">134</span><span id="line-134"></span>
+<span class="source-line-no">135</span><span id="line-135">            if(json.containsKey("members")) {</span>
+<span class="source-line-no">136</span><span id="line-136"></span>
+<span class="source-line-no">137</span><span id="line-137">              final JSONArray membersArray = (JSONArray)json.get("members");</span>
+<span class="source-line-no">138</span><span id="line-138">              for(final Object memberObj : membersArray) {</span>
+<span class="source-line-no">139</span><span id="line-139"></span>
+<span class="source-line-no">140</span><span id="line-140">                final JSONObject memberJson = (JSONObject)memberObj;</span>
+<span class="source-line-no">141</span><span id="line-141">                final Member member = new SerialMember().fromJSON(memberJson.toJSONString());</span>
+<span class="source-line-no">142</span><span id="line-142">                shared.getMembers().put(member.getId(), member);</span>
+<span class="source-line-no">143</span><span id="line-143">              }</span>
+<span class="source-line-no">144</span><span id="line-144">            }</span>
+<span class="source-line-no">145</span><span id="line-145">          }</span>
+<span class="source-line-no">146</span><span id="line-146"></span>
+<span class="source-line-no">147</span><span id="line-147">          //Player-based accounts.</span>
+<span class="source-line-no">148</span><span id="line-148">          if(account.get() instanceof PlayerAccount player) {</span>
+<span class="source-line-no">149</span><span id="line-149"></span>
+<span class="source-line-no">150</span><span id="line-150">            player.setLastOnline((Long)json.get("lastOnline"));</span>
+<span class="source-line-no">151</span><span id="line-151">            player.setLanguage((String)json.get("language"));</span>
+<span class="source-line-no">152</span><span id="line-152">          }</span>
+<span class="source-line-no">153</span><span id="line-153">          account.get().clearDirty();</span>
+<span class="source-line-no">154</span><span id="line-154">          return account.get();</span>
+<span class="source-line-no">155</span><span id="line-155">        }</span>
+<span class="source-line-no">156</span><span id="line-156">      }</span>
+<span class="source-line-no">157</span><span id="line-157">    } catch(ParseException | NumberFormatException | ClassCastException e) {</span>
+<span class="source-line-no">158</span><span id="line-158">      e.printStackTrace();</span>
+<span class="source-line-no">159</span><span id="line-159">      return null;</span>
+<span class="source-line-no">160</span><span id="line-160">    }</span>
+<span class="source-line-no">161</span><span id="line-161">    return null;</span>
+<span class="source-line-no">162</span><span id="line-162">  }</span>
+<span class="source-line-no">163</span><span id="line-163">}</span>
 
 
 

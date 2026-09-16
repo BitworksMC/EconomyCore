@@ -82,55 +82,55 @@
 <span class="source-line-no">069</span><span id="line-69"></span>
 <span class="source-line-no">070</span><span id="line-70">    final UUID id = callback.getPlayer().identifier();</span>
 <span class="source-line-no">071</span><span id="line-71">    final Optional&lt;Account&gt; account = TNECore.eco().account().findAccount(callback.getPlayer().identifier());</span>
-<span class="source-line-no">072</span><span id="line-72"></span>
-<span class="source-line-no">073</span><span id="line-73">    if(account.isPresent()) {</span>
-<span class="source-line-no">074</span><span id="line-74"></span>
-<span class="source-line-no">075</span><span id="line-75">      final SortedHistory sorted = account.get().getSorted(account.get().getIdentifier());</span>
-<span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77">      final int pagesPer = TOP_COUNT / 5;</span>
-<span class="source-line-no">078</span><span id="line-78">      final int pageDiv = (sorted.maxPages() / pagesPer);</span>
-<span class="source-line-no">079</span><span id="line-79">      final int maxPages = (sorted.maxPages() % pagesPer &gt; 0)? pageDiv + 1 : pageDiv;</span>
-<span class="source-line-no">080</span><span id="line-80"></span>
-<span class="source-line-no">081</span><span id="line-81">      final int page = (callback.getPlayer().viewer().isPresent())? (Integer)callback.getPlayer().viewer().get().dataOrDefault(TOP_PAGE_ID, 1) : 1;</span>
-<span class="source-line-no">082</span><span id="line-82"></span>
-<span class="source-line-no">083</span><span id="line-83">      final int prev = (page &lt;= 1)? maxPages : page - 1;</span>
-<span class="source-line-no">084</span><span id="line-84">      final int next = (page &gt;= maxPages)? 1 : page + 1;</span>
+<span class="source-line-no">072</span><span id="line-72">    if(account.isEmpty()) {</span>
+<span class="source-line-no">073</span><span id="line-73">      return;</span>
+<span class="source-line-no">074</span><span id="line-74">    }</span>
+<span class="source-line-no">075</span><span id="line-75"></span>
+<span class="source-line-no">076</span><span id="line-76">    final SortedHistory sorted = account.get().getSorted(account.get().getIdentifier());</span>
+<span class="source-line-no">077</span><span id="line-77">    final int pagesPer = TOP_COUNT / 5;</span>
+<span class="source-line-no">078</span><span id="line-78">    final int pageDiv = sorted.maxPages() / pagesPer;</span>
+<span class="source-line-no">079</span><span id="line-79">    final int maxPages = sorted.maxPages() % pagesPer &gt; 0? pageDiv + 1 : pageDiv;</span>
+<span class="source-line-no">080</span><span id="line-80">    final int page = callback.getPlayer().viewer().isPresent()</span>
+<span class="source-line-no">081</span><span id="line-81">                     ? (Integer)callback.getPlayer().viewer().get().dataOrDefault(TOP_PAGE_ID, 1) : 1;</span>
+<span class="source-line-no">082</span><span id="line-82">    addNavigation(callback, id, page, maxPages);</span>
+<span class="source-line-no">083</span><span id="line-83">    addTransactions(callback, account.get(), sorted, page);</span>
+<span class="source-line-no">084</span><span id="line-84">  }</span>
 <span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">      if(maxPages &gt; 1) {</span>
-<span class="source-line-no">087</span><span id="line-87"></span>
-<span class="source-line-no">088</span><span id="line-88">        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)</span>
-<span class="source-line-no">089</span><span id="line-89">                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))</span>
-<span class="source-line-no">090</span><span id="line-90">                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))</span>
-<span class="source-line-no">091</span><span id="line-91">                                           .withActions(new DataAction(TOP_PAGE_ID, prev), new SwitchPageAction(this.name, 1))</span>
-<span class="source-line-no">092</span><span id="line-92">                                           .withSlot(0)</span>
-<span class="source-line-no">093</span><span id="line-93">                                           .build());</span>
-<span class="source-line-no">094</span><span id="line-94"></span>
-<span class="source-line-no">095</span><span id="line-95">        callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)</span>
-<span class="source-line-no">096</span><span id="line-96">                                                           .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))</span>
-<span class="source-line-no">097</span><span id="line-97">                                                           .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))</span>
-<span class="source-line-no">098</span><span id="line-98">                                           .withActions(new DataAction(TOP_PAGE_ID, next), new SwitchPageAction(this.name, 1))</span>
-<span class="source-line-no">099</span><span id="line-99">                                           .withSlot(8)</span>
-<span class="source-line-no">100</span><span id="line-100">                                           .build());</span>
-<span class="source-line-no">101</span><span id="line-101">      }</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">      int slot = 9;</span>
-<span class="source-line-no">104</span><span id="line-104">      for(int i = 1; i &lt;= 2; i++) {</span>
+<span class="source-line-no">086</span><span id="line-86">  private void addNavigation(final PageOpenCallback callback, final UUID id, final int page,</span>
+<span class="source-line-no">087</span><span id="line-87">                             final int maxPages) {</span>
+<span class="source-line-no">088</span><span id="line-88"></span>
+<span class="source-line-no">089</span><span id="line-89">    if(maxPages &lt;= 1) {</span>
+<span class="source-line-no">090</span><span id="line-90">      return;</span>
+<span class="source-line-no">091</span><span id="line-91">    }</span>
+<span class="source-line-no">092</span><span id="line-92">    final int prev = page &lt;= 1? maxPages : page - 1;</span>
+<span class="source-line-no">093</span><span id="line-93">    final int next = page &gt;= maxPages? 1 : page + 1;</span>
+<span class="source-line-no">094</span><span id="line-94">    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("RED_WOOL", 1)</span>
+<span class="source-line-no">095</span><span id="line-95">                                                       .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPageDisplay"), id))</span>
+<span class="source-line-no">096</span><span id="line-96">                                                       .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.PreviousPage"), id))))</span>
+<span class="source-line-no">097</span><span id="line-97">                                       .withActions(new DataAction(TOP_PAGE_ID, prev), new SwitchPageAction(this.name, 1))</span>
+<span class="source-line-no">098</span><span id="line-98">                                       .withSlot(0).build());</span>
+<span class="source-line-no">099</span><span id="line-99">    callback.getPage().addIcon(new IconBuilder(PluginCore.server().stackBuilder().of("GREEN_WOOL", 1)</span>
+<span class="source-line-no">100</span><span id="line-100">                                                       .customName(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPageDisplay"), id))</span>
+<span class="source-line-no">101</span><span id="line-101">                                                       .lore(Collections.singletonList(MessageHandler.grab(new MessageData("Messages.Menu.Shared.NextPage"), id))))</span>
+<span class="source-line-no">102</span><span id="line-102">                                       .withActions(new DataAction(TOP_PAGE_ID, next), new SwitchPageAction(this.name, 1))</span>
+<span class="source-line-no">103</span><span id="line-103">                                       .withSlot(8).build());</span>
+<span class="source-line-no">104</span><span id="line-104">  }</span>
 <span class="source-line-no">105</span><span id="line-105"></span>
-<span class="source-line-no">106</span><span id="line-106">        final int adjustedPage = i + (page - 1);</span>
-<span class="source-line-no">107</span><span id="line-107">        if(adjustedPage &gt; sorted.maxPages()) {</span>
-<span class="source-line-no">108</span><span id="line-108">          break;</span>
-<span class="source-line-no">109</span><span id="line-109">        }</span>
-<span class="source-line-no">110</span><span id="line-110"></span>
-<span class="source-line-no">111</span><span id="line-111">        for(final Map.Entry&lt;Long, UUID&gt; entry : sorted.getPage(adjustedPage).entrySet()) {</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">          final Optional&lt;Receipt&gt; receipt = account.get().findReceipt(entry.getValue());</span>
-<span class="source-line-no">114</span><span id="line-114">          if(receipt.isEmpty()) {</span>
-<span class="source-line-no">115</span><span id="line-115">            continue;</span>
-<span class="source-line-no">116</span><span id="line-116">          }</span>
-<span class="source-line-no">117</span><span id="line-117">          callback.getPage().addIcon(buildTransactionIcon(slot, receipt.get()));</span>
-<span class="source-line-no">118</span><span id="line-118">        }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">        slot += 2;</span>
+<span class="source-line-no">106</span><span id="line-106">  private void addTransactions(final PageOpenCallback callback, final Account account,</span>
+<span class="source-line-no">107</span><span id="line-107">                               final SortedHistory sorted, final int page) {</span>
+<span class="source-line-no">108</span><span id="line-108"></span>
+<span class="source-line-no">109</span><span id="line-109">    int slot = 9;</span>
+<span class="source-line-no">110</span><span id="line-110">    for(int i = 1; i &lt;= 2; i++) {</span>
+<span class="source-line-no">111</span><span id="line-111">      final int adjustedPage = i + page - 1;</span>
+<span class="source-line-no">112</span><span id="line-112">      if(adjustedPage &gt; sorted.maxPages()) {</span>
+<span class="source-line-no">113</span><span id="line-113">        break;</span>
+<span class="source-line-no">114</span><span id="line-114">      }</span>
+<span class="source-line-no">115</span><span id="line-115">      for(final Map.Entry&lt;Long, UUID&gt; entry : sorted.getPage(adjustedPage).entrySet()) {</span>
+<span class="source-line-no">116</span><span id="line-116">        final Optional&lt;Receipt&gt; receipt = account.findReceipt(entry.getValue());</span>
+<span class="source-line-no">117</span><span id="line-117">        if(receipt.isPresent()) {</span>
+<span class="source-line-no">118</span><span id="line-118">          callback.getPage().addIcon(buildTransactionIcon(slot, receipt.get()));</span>
+<span class="source-line-no">119</span><span id="line-119">          slot += 2;</span>
+<span class="source-line-no">120</span><span id="line-120">        }</span>
 <span class="source-line-no">121</span><span id="line-121">      }</span>
 <span class="source-line-no">122</span><span id="line-122">    }</span>
 <span class="source-line-no">123</span><span id="line-123">  }</span>
