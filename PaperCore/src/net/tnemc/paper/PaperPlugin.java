@@ -39,7 +39,7 @@ import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.ServerConnector;
 import net.tnemc.plugincore.paper.PaperPluginCore;
 import net.tnemc.plugincore.paper.impl.PaperServerProvider;
-import org.bstats.bukkit.Metrics;
+import net.tnemc.bukkit.metrics.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -98,6 +98,9 @@ public class PaperPlugin {
    */
   public void enable(final JavaPlugin plugin) {
 
+    DamageTypeConversions.register();
+    PaperComponentCompatibility.register();
+
     this.pluginCore.enable();
 
     //Register our event listeners
@@ -129,7 +132,7 @@ public class PaperPlugin {
       Bukkit.getPluginManager().registerEvents(new PluginEnableListener(), plugin);
     }
 
-    final Metrics metrics = new Metrics(plugin, 602);
+    final Metrics metrics = new Metrics(plugin, 34093);
 
     plugin.getLogger().log(Level.INFO, "The New Economy has been enabled!");
   }

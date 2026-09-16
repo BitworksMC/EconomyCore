@@ -20,12 +20,15 @@ package net.tnemc.core.hook.papi.impl.top;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.hook.papi.Placeholder;
-import net.tnemc.plugincore.core.io.message.MessageData;
+import net.tnemc.core.manager.TopManager;
+import net.tnemc.core.manager.top.TopPage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+
+import static net.tnemc.core.EconomyManager.TOP_PER_PAGE;
 
 /**
  * TopPosPlaceholder
@@ -83,19 +86,18 @@ public class TopPosBalancePlaceholder implements Placeholder {
       return null;
     }
 
-    final MessageData message = TNECore.eco().getTopManager().getFor(pos, currency.get().getUid());
-    if(message.getReplacements().getOrDefault("$account", "no one").equalsIgnoreCase("no one")) {
+    final TopManager manager = TNECore.eco().getTopManager();
+    if(pos < 1 || pos > manager.page(currency.get().getUid()) * TOP_PER_PAGE) {
       return null;
     }
 
-    final BigDecimal balance;
-
-    try {
-      balance = new BigDecimal(message.getReplacements().get("$balance"));
-    } catch(final Exception ignore) {
+    final TopPage<String> page = manager.page(manager.positionToPage(pos), currency.get().getUid());
+    if(page == null) {
       return null;
     }
 
-    return balance.toPlainString();
+    final int pagePosition = (pos - 1) % TOP_PER_PAGE + 1;
+    final BigDecimal balance = page.getValues().get(page.getAt(pagePosition));
+    return balance == null ? null : balance.toPlainString();
   }
 }

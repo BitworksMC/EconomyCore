@@ -7,5 +7,7 @@
         Project-wide cyclomatic complexity limits.
     </description>
 
+    <exclude-pattern>.*/net/tnemc/bukkit/metrics/Metrics.java</exclude-pattern>
+
     <rule ref="category/java/design.xml/CyclomaticComplexity"/>
 </ruleset>
