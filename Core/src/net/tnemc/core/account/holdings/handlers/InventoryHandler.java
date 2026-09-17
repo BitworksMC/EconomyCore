@@ -67,6 +67,12 @@ public class InventoryHandler implements HoldingsHandler {
     return type.supportsItems();
   }
 
+  @Override
+  public boolean database() {
+
+    return false;
+  }
+
   /**
    * Used to set the holdings for a specific account.
    *
@@ -82,16 +88,14 @@ public class InventoryHandler implements HoldingsHandler {
   @Override
   public boolean setHoldings(final Account account, final String region, final Currency currency, final CurrencyType type, final BigDecimal amount) {
 
-    account.getWallet().setHoldings(new HoldingsEntry(region, currency.getUid(), amount, identifier()));
-
     if(account.isPlayer() && PluginCore.server().online(account.getIdentifier().toString()) && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
       final CalculationData<Object> data = new CalculationData<>((ItemCurrency)currency,
                                                                  ((PlayerAccount)account).getPlayer()
                                                                          .get().inventory().getInventory(false),
                                                                  ((PlayerAccount)account).getUUID());
       TNECore.instance().itemCalculations().setItems(data, amount);
-      return true;
     }
+    account.getWallet().setHoldings(new HoldingsEntry(region, currency.getUid(), amount, identifier()));
     return true;
   }
 

@@ -22,6 +22,7 @@ import com.destroystokyo.paper.profile.PlayerProfile;
 import net.tnemc.folia.impl.scheduler.FoliaScheduler;
 import net.tnemc.item.AbstractItemStack;
 import net.tnemc.item.paper.PaperCalculationsProvider;
+import net.tnemc.paper.PaperInventoryCalculations;
 import net.tnemc.item.paper.PaperItemStack;
 import net.tnemc.paper.PaperCore;
 import net.tnemc.plugincore.PluginCore;
@@ -63,7 +64,7 @@ import java.util.stream.Collectors;
  */
 public class FoliaServerProvider implements ServerConnector {
 
-  private final PaperCalculationsProvider calc = new PaperCalculationsProvider();
+  private final PaperCalculationsProvider calc = new PaperInventoryCalculations();
   private final PaperProxyProvider proxy = new PaperProxyProvider();
 
   private final FoliaScheduler scheduler;

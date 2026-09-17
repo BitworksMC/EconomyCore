@@ -5,6 +5,9 @@ import net.tnemc.item.paper.PaperItemStack;
 import net.tnemc.item.paper.platform.PaperItemPlatform;
 import net.tnemc.item.paper.platform.impl.modern.PaperAttackRangeComponent;
 import net.tnemc.item.paper.platform.impl.modern.PaperMinimumAttackChargeComponent;
+import net.tnemc.item.paper.platform.impl.modern.PaperBreakSoundComponent;
+import net.tnemc.item.paper.platform.impl.modern.PaperPotionDurationScaleComponent;
+import net.tnemc.item.paper.platform.impl.old.PaperOldUnbreakableComponent;
 import org.bukkit.inventory.ItemStack;
 
 final class PaperComponentCompatibility {
@@ -14,6 +17,9 @@ final class PaperComponentCompatibility {
 
   static void register() {
 
+    if(available("UNBREAKABLE")) {
+      register(new PaperOldUnbreakableComponent());
+    }
     final boolean attackRange = available("ATTACK_RANGE");
     register(new PaperAttackRangeComponent() {
       @Override
@@ -29,6 +35,22 @@ final class PaperComponentCompatibility {
       public boolean enabled(final String version) {
 
         return minimumAttackCharge && super.enabled(version);
+      }
+    });
+    final boolean breakSound = available("BREAK_SOUND");
+    register(new PaperBreakSoundComponent() {
+      @Override
+      public boolean enabled(final String version) {
+
+        return breakSound && super.enabled(version);
+      }
+    });
+    final boolean potionDurationScale = available("POTION_DURATION_SCALE");
+    register(new PaperPotionDurationScaleComponent() {
+      @Override
+      public boolean enabled(final String version) {
+
+        return potionDurationScale && super.enabled(version);
       }
     });
   }

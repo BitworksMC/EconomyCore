@@ -29,7 +29,7 @@ import net.tnemc.core.TNECore;
 import net.tnemc.core.api.callback.TNECallbackProvider;
 import net.tnemc.core.currency.format.CurrencyFormatter;
 import net.tnemc.core.io.message.BaseTranslationProvider;
-import net.tnemc.item.paper.PaperCalculationsProvider;
+import net.tnemc.item.paper.platform.PaperItemPlatform;
 import net.tnemc.paper.hook.economy.VaultHook;
 import net.tnemc.paper.hook.economy.VaultUnlockedHook;
 import net.tnemc.paper.hook.misc.PAPIHook;
@@ -59,7 +59,7 @@ public class PaperPlugin {
 
   public void load(final JavaPlugin plugin) {
 
-    load(plugin, new PaperCore(plugin), new PaperServerProvider(new PaperCalculationsProvider()));
+    load(plugin, new PaperCore(plugin), new PaperServerProvider(new PaperInventoryCalculations()));
   }
 
   /**
@@ -98,8 +98,14 @@ public class PaperPlugin {
    */
   public void enable(final JavaPlugin plugin) {
 
-    DamageTypeConversions.register();
+    PaperRegistryConversions.register();
     PaperComponentCompatibility.register();
+    PaperItemPlatform.instance().addItemProvider(new PaperVanillaProvider());
+    if(PaperItemPlatform.instance().useModern()) {
+      PaperNestedItems.register();
+      PaperPreservedComponents.register();
+      PaperItemPlatform.instance().addMulti(new PaperPersistentItemComponent());
+    }
 
     this.pluginCore.enable();
 
