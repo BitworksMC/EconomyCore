@@ -94,6 +94,7 @@ net.tnemc.core.utils.exceptions
 net.tnemc.folia
 net.tnemc.folia.impl
 net.tnemc.folia.impl.scheduler
+net.tnemc.item.platform.conversion
 net.tnemc.paper
 net.tnemc.paper.command
 net.tnemc.paper.hook.economy

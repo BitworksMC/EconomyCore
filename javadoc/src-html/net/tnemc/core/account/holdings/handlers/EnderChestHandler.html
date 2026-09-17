@@ -99,69 +99,73 @@
 <span class="source-line-no">086</span><span id="line-86">  @Override</span>
 <span class="source-line-no">087</span><span id="line-87">  public boolean setHoldings(final Account account, final String region, final Currency currency, final CurrencyType type, final BigDecimal amount) {</span>
 <span class="source-line-no">088</span><span id="line-88"></span>
-<span class="source-line-no">089</span><span id="line-89">    account.getWallet().setHoldings(new HoldingsEntry(region, currency.getUid(), amount, identifier()));</span>
-<span class="source-line-no">090</span><span id="line-90"></span>
-<span class="source-line-no">091</span><span id="line-91">    if(account.isPlayer() &amp;&amp; PluginCore.server().online(account.getIdentifier().toString()) &amp;&amp; !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {</span>
-<span class="source-line-no">092</span><span id="line-92">      final CalculationData&lt;Object&gt; data = new CalculationData&lt;&gt;((ItemCurrency)currency,</span>
-<span class="source-line-no">093</span><span id="line-93">                                                                 ((PlayerAccount)account).getPlayer()</span>
-<span class="source-line-no">094</span><span id="line-94">                                                                         .get().inventory().getInventory(true),</span>
-<span class="source-line-no">095</span><span id="line-95">                                                                 ((PlayerAccount)account).getUUID());</span>
-<span class="source-line-no">096</span><span id="line-96">      TNECore.instance().itemCalculations().setItems(data, amount);</span>
-<span class="source-line-no">097</span><span id="line-97">      return true;</span>
-<span class="source-line-no">098</span><span id="line-98">    }</span>
-<span class="source-line-no">099</span><span id="line-99">    return true;</span>
-<span class="source-line-no">100</span><span id="line-100">  }</span>
-<span class="source-line-no">101</span><span id="line-101"></span>
-<span class="source-line-no">102</span><span id="line-102">  /**</span>
-<span class="source-line-no">103</span><span id="line-103">   * Used to get the holdings for a specific account from this handler.</span>
-<span class="source-line-no">104</span><span id="line-104">   *</span>
-<span class="source-line-no">105</span><span id="line-105">   * @param account  The Account.</span>
-<span class="source-line-no">106</span><span id="line-106">   * @param region   The name of the region involved. This is usually a world, but could be</span>
-<span class="source-line-no">107</span><span id="line-107">   *                 something else such as a world guard region name/identifier.</span>
-<span class="source-line-no">108</span><span id="line-108">   * @param currency The instance of the currency to use.</span>
-<span class="source-line-no">109</span><span id="line-109">   * @param type     The currency type.</span>
-<span class="source-line-no">110</span><span id="line-110">   *</span>
-<span class="source-line-no">111</span><span id="line-111">   * @return The holdings for the specific account.</span>
-<span class="source-line-no">112</span><span id="line-112">   */</span>
-<span class="source-line-no">113</span><span id="line-113">  @Override</span>
-<span class="source-line-no">114</span><span id="line-114">  public HoldingsEntry getHoldings(final Account account, final String region, final Currency currency, final CurrencyType type) {</span>
-<span class="source-line-no">115</span><span id="line-115"></span>
-<span class="source-line-no">116</span><span id="line-116">    if((currency instanceof ItemCurrency) &amp;&amp; account.isPlayer()) {</span>
-<span class="source-line-no">117</span><span id="line-117">      if(!PluginCore.server().online(account.getIdentifier().toString()) ||</span>
-<span class="source-line-no">118</span><span id="line-118">         TNECore.eco().account().getLoading().contains(account.getIdentifier())</span>
-<span class="source-line-no">119</span><span id="line-119">         &amp;&amp; !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {</span>
-<span class="source-line-no">120</span><span id="line-120"></span>
-<span class="source-line-no">121</span><span id="line-121">        //Offline players have their balances saved to their wallet so check it.</span>
-<span class="source-line-no">122</span><span id="line-122">        final Optional&lt;HoldingsEntry&gt; holdings = account.getWallet().getHoldings(region,</span>
-<span class="source-line-no">123</span><span id="line-123">                                                                                 currency.getUid(),</span>
-<span class="source-line-no">124</span><span id="line-124">                                                                                 identifier()</span>
-<span class="source-line-no">125</span><span id="line-125">                                                                                );</span>
-<span class="source-line-no">126</span><span id="line-126">        PluginCore.log().debug("Getting holdings from DB", DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">127</span><span id="line-127"></span>
-<span class="source-line-no">128</span><span id="line-128">        if(holdings.isPresent()) {</span>
-<span class="source-line-no">129</span><span id="line-129">          return holdings.get();</span>
-<span class="source-line-no">130</span><span id="line-130">        }</span>
-<span class="source-line-no">131</span><span id="line-131">        return new HoldingsEntry(region,</span>
-<span class="source-line-no">132</span><span id="line-132">                                 currency.getUid(),</span>
-<span class="source-line-no">133</span><span id="line-133">                                 BigDecimal.ZERO,</span>
-<span class="source-line-no">134</span><span id="line-134">                                 identifier());</span>
-<span class="source-line-no">135</span><span id="line-135">      }</span>
-<span class="source-line-no">136</span><span id="line-136">      PluginCore.log().debug("Getting holdings from Ender Chest", DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">137</span><span id="line-137">      final CalculationData&lt;Object&gt; data = new CalculationData&lt;&gt;((ItemCurrency)currency,</span>
-<span class="source-line-no">138</span><span id="line-138">                                                                 ((PlayerAccount)account).getPlayer()</span>
-<span class="source-line-no">139</span><span id="line-139">                                                                         .get().inventory().getInventory(true),</span>
-<span class="source-line-no">140</span><span id="line-140">                                                                 ((PlayerAccount)account).getUUID());</span>
-<span class="source-line-no">141</span><span id="line-141"></span>
-<span class="source-line-no">142</span><span id="line-142">      return new HoldingsEntry(region, currency.getUid(),</span>
-<span class="source-line-no">143</span><span id="line-143">                               TNECore.instance().itemCalculations().calculateHoldings(data), identifier());</span>
-<span class="source-line-no">144</span><span id="line-144">    }</span>
-<span class="source-line-no">145</span><span id="line-145">    //Non-players can't have e-chest holdings so this is always zero.</span>
-<span class="source-line-no">146</span><span id="line-146">    return new HoldingsEntry(region,</span>
-<span class="source-line-no">147</span><span id="line-147">                             currency.getUid(),</span>
-<span class="source-line-no">148</span><span id="line-148">                             BigDecimal.ZERO,</span>
-<span class="source-line-no">149</span><span id="line-149">                             identifier());</span>
-<span class="source-line-no">150</span><span id="line-150">  }</span>
-<span class="source-line-no">151</span><span id="line-151">}</span>
+<span class="source-line-no">089</span><span id="line-89">    if(account.isPlayer() &amp;&amp; PluginCore.server().online(account.getIdentifier().toString()) &amp;&amp; !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {</span>
+<span class="source-line-no">090</span><span id="line-90">      final CalculationData&lt;Object&gt; data = new CalculationData&lt;&gt;((ItemCurrency)currency,</span>
+<span class="source-line-no">091</span><span id="line-91">                                                                 ((PlayerAccount)account).getPlayer()</span>
+<span class="source-line-no">092</span><span id="line-92">                                                                         .get().inventory().getInventory(true),</span>
+<span class="source-line-no">093</span><span id="line-93">                                                                 ((PlayerAccount)account).getUUID());</span>
+<span class="source-line-no">094</span><span id="line-94">      TNECore.instance().itemCalculations().setItems(data, amount);</span>
+<span class="source-line-no">095</span><span id="line-95">    }</span>
+<span class="source-line-no">096</span><span id="line-96">    account.getWallet().setHoldings(new HoldingsEntry(region, currency.getUid(), amount, identifier()));</span>
+<span class="source-line-no">097</span><span id="line-97">    return true;</span>
+<span class="source-line-no">098</span><span id="line-98">  }</span>
+<span class="source-line-no">099</span><span id="line-99"></span>
+<span class="source-line-no">100</span><span id="line-100">  @Override</span>
+<span class="source-line-no">101</span><span id="line-101">  public boolean database() {</span>
+<span class="source-line-no">102</span><span id="line-102"></span>
+<span class="source-line-no">103</span><span id="line-103">    return false;</span>
+<span class="source-line-no">104</span><span id="line-104">  }</span>
+<span class="source-line-no">105</span><span id="line-105"></span>
+<span class="source-line-no">106</span><span id="line-106">  /**</span>
+<span class="source-line-no">107</span><span id="line-107">   * Used to get the holdings for a specific account from this handler.</span>
+<span class="source-line-no">108</span><span id="line-108">   *</span>
+<span class="source-line-no">109</span><span id="line-109">   * @param account  The Account.</span>
+<span class="source-line-no">110</span><span id="line-110">   * @param region   The name of the region involved. This is usually a world, but could be</span>
+<span class="source-line-no">111</span><span id="line-111">   *                 something else such as a world guard region name/identifier.</span>
+<span class="source-line-no">112</span><span id="line-112">   * @param currency The instance of the currency to use.</span>
+<span class="source-line-no">113</span><span id="line-113">   * @param type     The currency type.</span>
+<span class="source-line-no">114</span><span id="line-114">   *</span>
+<span class="source-line-no">115</span><span id="line-115">   * @return The holdings for the specific account.</span>
+<span class="source-line-no">116</span><span id="line-116">   */</span>
+<span class="source-line-no">117</span><span id="line-117">  @Override</span>
+<span class="source-line-no">118</span><span id="line-118">  public HoldingsEntry getHoldings(final Account account, final String region, final Currency currency, final CurrencyType type) {</span>
+<span class="source-line-no">119</span><span id="line-119"></span>
+<span class="source-line-no">120</span><span id="line-120">    if((currency instanceof ItemCurrency) &amp;&amp; account.isPlayer()) {</span>
+<span class="source-line-no">121</span><span id="line-121">      if(!PluginCore.server().online(account.getIdentifier().toString()) ||</span>
+<span class="source-line-no">122</span><span id="line-122">         TNECore.eco().account().getLoading().contains(account.getIdentifier())</span>
+<span class="source-line-no">123</span><span id="line-123">         &amp;&amp; !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {</span>
+<span class="source-line-no">124</span><span id="line-124"></span>
+<span class="source-line-no">125</span><span id="line-125">        //Offline players have their balances saved to their wallet so check it.</span>
+<span class="source-line-no">126</span><span id="line-126">        final Optional&lt;HoldingsEntry&gt; holdings = account.getWallet().getHoldings(region,</span>
+<span class="source-line-no">127</span><span id="line-127">                                                                                 currency.getUid(),</span>
+<span class="source-line-no">128</span><span id="line-128">                                                                                 identifier()</span>
+<span class="source-line-no">129</span><span id="line-129">                                                                                );</span>
+<span class="source-line-no">130</span><span id="line-130">        PluginCore.log().debug("Getting holdings from DB", DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">131</span><span id="line-131"></span>
+<span class="source-line-no">132</span><span id="line-132">        if(holdings.isPresent()) {</span>
+<span class="source-line-no">133</span><span id="line-133">          return holdings.get();</span>
+<span class="source-line-no">134</span><span id="line-134">        }</span>
+<span class="source-line-no">135</span><span id="line-135">        return new HoldingsEntry(region,</span>
+<span class="source-line-no">136</span><span id="line-136">                                 currency.getUid(),</span>
+<span class="source-line-no">137</span><span id="line-137">                                 BigDecimal.ZERO,</span>
+<span class="source-line-no">138</span><span id="line-138">                                 identifier());</span>
+<span class="source-line-no">139</span><span id="line-139">      }</span>
+<span class="source-line-no">140</span><span id="line-140">      PluginCore.log().debug("Getting holdings from Ender Chest", DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">141</span><span id="line-141">      final CalculationData&lt;Object&gt; data = new CalculationData&lt;&gt;((ItemCurrency)currency,</span>
+<span class="source-line-no">142</span><span id="line-142">                                                                 ((PlayerAccount)account).getPlayer()</span>
+<span class="source-line-no">143</span><span id="line-143">                                                                         .get().inventory().getInventory(true),</span>
+<span class="source-line-no">144</span><span id="line-144">                                                                 ((PlayerAccount)account).getUUID());</span>
+<span class="source-line-no">145</span><span id="line-145"></span>
+<span class="source-line-no">146</span><span id="line-146">      return new HoldingsEntry(region, currency.getUid(),</span>
+<span class="source-line-no">147</span><span id="line-147">                               TNECore.instance().itemCalculations().calculateHoldings(data), identifier());</span>
+<span class="source-line-no">148</span><span id="line-148">    }</span>
+<span class="source-line-no">149</span><span id="line-149">    //Non-players can't have e-chest holdings so this is always zero.</span>
+<span class="source-line-no">150</span><span id="line-150">    return new HoldingsEntry(region,</span>
+<span class="source-line-no">151</span><span id="line-151">                             currency.getUid(),</span>
+<span class="source-line-no">152</span><span id="line-152">                             BigDecimal.ZERO,</span>
+<span class="source-line-no">153</span><span id="line-153">                             identifier());</span>
+<span class="source-line-no">154</span><span id="line-154">  }</span>
+<span class="source-line-no">155</span><span id="line-155">}</span>
 
 
 

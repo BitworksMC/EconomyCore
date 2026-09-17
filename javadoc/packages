@@ -93,6 +93,7 @@ net.tnemc.bukkit.listeners.mcmmo
 net.tnemc.bukkit.listeners.player
 net.tnemc.bukkit.listeners.server
 paper
+net.tnemc.item.platform.conversion
 net.tnemc.paper.listener
 net.tnemc.paper.listener.inventory
 net.tnemc.paper
