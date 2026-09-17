@@ -31,9 +31,6 @@ TNE is pushed as being "feature-packed," but it's not feature-packed in the norm
 a bunch of useless features
 into the core plugin, but rather using modules.
 
-<p align="center">
-    <img src="logo.png" width="500" />
-</p>    
 <p align="center">    
 <i><b>The economy plugin for server owners that want more out of their economy.</b></i>
 </p>
