@@ -25,6 +25,8 @@ import net.tnemc.item.paper.platform.impl.modern.PaperToolComponent;
 import net.tnemc.item.paper.platform.impl.modern.PaperJukeBoxComponent;
 import net.tnemc.item.paper.platform.impl.modern.PaperSwingAnimationComponent;
 import net.tnemc.item.paper.platform.impl.modern.PaperInstrumentComponent;
+import net.tnemc.item.paper.platform.impl.modern.PaperDamageTypeComponent;
+import net.tnemc.item.paper.platform.impl.modern.PaperProvidesTrimMaterialComponent;
 import org.bukkit.MusicInstrument;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -53,6 +55,8 @@ final class PaperPreservedComponents {
     platform.addMulti(new Jukebox());
     platform.addMulti(new Swing());
     platform.addMulti(new Instrument());
+    platform.addMulti(new DamageType());
+    platform.addMulti(new TrimMaterial());
   }
 
   @SuppressWarnings("unchecked")
@@ -190,6 +194,64 @@ final class PaperPreservedComponents {
         item.setData(type, value);
       }
       return true;
+    }
+  }
+
+  private static final class DamageType extends PaperDamageTypeComponent implements Preserved {
+
+    private final Saved<Object> saved = new Saved<>(optionalType("DAMAGE_TYPE"));
+
+    @Override
+    public Saved<?> saved() {
+
+      return saved;
+    }
+
+    @Override
+    public ItemStack apply(final PaperItemStack serialized, final ItemStack item) {
+
+      return restore(serialized, identifier(), item) ? item : super.apply(serialized, item);
+    }
+
+    @Override
+    public PaperItemStack serialize(final ItemStack item, final PaperItemStack serialized) {
+
+      return PaperPreservedComponents.serialize(item, serialized, new DamageType(), super::serialize);
+    }
+
+    @Override
+    public boolean similar(final SerialComponent<?, ?> component) {
+
+      return same(this, component);
+    }
+  }
+
+  private static final class TrimMaterial extends PaperProvidesTrimMaterialComponent implements Preserved {
+
+    private final Saved<Object> saved = new Saved<>(optionalType("PROVIDES_TRIM_MATERIAL"));
+
+    @Override
+    public Saved<?> saved() {
+
+      return saved;
+    }
+
+    @Override
+    public ItemStack apply(final PaperItemStack serialized, final ItemStack item) {
+
+      return restore(serialized, identifier(), item) ? item : super.apply(serialized, item);
+    }
+
+    @Override
+    public PaperItemStack serialize(final ItemStack item, final PaperItemStack serialized) {
+
+      return PaperPreservedComponents.serialize(item, serialized, new TrimMaterial(), super::serialize);
+    }
+
+    @Override
+    public boolean similar(final SerialComponent<?, ?> component) {
+
+      return same(this, component);
     }
   }
 

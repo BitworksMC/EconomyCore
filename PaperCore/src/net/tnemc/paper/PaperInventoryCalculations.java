@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.function.Function;
 
 public final class PaperInventoryCalculations extends PaperCalculationsProvider {
@@ -43,7 +44,30 @@ public final class PaperInventoryCalculations extends PaperCalculationsProvider 
   public Collection<PaperItemStack> giveItems(final Collection<PaperItemStack> items, final Inventory inventory,
                                              final boolean useShulker, final boolean useBundles) {
 
-    return edit(inventory, staged -> super.giveItems(items, staged, useShulker, useBundles));
+    return edit(inventory, staged -> giveNative(items, staged));
+  }
+
+  private Collection<PaperItemStack> giveNative(final Collection<PaperItemStack> items, final Inventory inventory) {
+
+    final Collection<PaperItemStack> remaining = new ArrayList<>();
+    for(final PaperItemStack item : items) {
+      if(item == null || item.amount() == 0) {
+        continue;
+      }
+      if(item.amount() < 0) {
+        throw new IllegalArgumentException("Cannot give a negative item amount");
+      }
+      final ItemStack nativeItem = Objects.requireNonNull(item.provider().locale(item, item.amount()),
+                                                         "Item provider returned no item").clone();
+      if(nativeItem.getType().isAir()) {
+        throw new IllegalArgumentException("Item provider returned an empty item");
+      }
+      nativeItem.setAmount(item.amount());
+      // Inventory.addItem returns the actual remaining stacks. Keep their complete native
+      // identity instead of sending them through TNIL's partial component serializers again.
+      inventory.addItem(nativeItem).values().forEach(left -> remaining.add(new PaperItemSnapshot(left)));
+    }
+    return remaining;
   }
 
   private int remove(final PaperItemStack currency, final Inventory inventory, final int amount,

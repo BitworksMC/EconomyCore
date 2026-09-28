@@ -1,26 +1,28 @@
 package net.tnemc.paper;
 
+import io.papermc.paper.datacomponent.DataComponentType;
 import net.tnemc.item.AbstractItemStack;
 import net.tnemc.item.JSONHelper;
 import net.tnemc.item.component.SerialComponent;
 import net.tnemc.item.paper.PaperItemStack;
 import net.tnemc.item.platform.ItemPlatform;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.util.Base64;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.EnumSet;
+import java.util.Locale;
+import java.util.Set;
 
 final class PaperPersistentItemComponent implements SerialComponent<PaperItemStack, ItemStack> {
 
-  private PersistentDataContainer data;
+  // A fixed carrier material lets native custom_data be compared independently of item type/amount.
+  // PDC is only the PublicBukkitValues child of custom_data; ItemsAdder uses a separate child.
+  private final ItemStack data = new ItemStack(Material.STONE);
 
   @Override
   public String identifier() {
@@ -43,28 +45,27 @@ final class PaperPersistentItemComponent implements SerialComponent<PaperItemSta
   @Override
   public PaperItemStack serialize(final ItemStack item, final PaperItemStack serialized) {
 
-    final ItemMeta meta = item.getItemMeta();
-    if(meta != null) {
-      final PaperPersistentItemComponent component = new PaperPersistentItemComponent();
-      component.data = meta.getPersistentDataContainer();
-      serialized.applyComponent(component);
-    }
+    final PaperPersistentItemComponent component = new PaperPersistentItemComponent();
+    component.data.copyDataFrom(item, PaperPersistentItemComponent::customData);
+    serialized.applyComponent(component);
     return serialized;
+  }
+
+  private static boolean customData(final DataComponentType type) {
+
+    return type.getKey().toString().equals("minecraft:custom_data");
   }
 
   @Override
   public ItemStack apply(final PaperItemStack serialized, final ItemStack item) {
 
+    serialized.<PaperPersistentItemComponent>component(identifier()).ifPresent(component ->
+            item.copyDataFrom(component.data, PaperPersistentItemComponent::customData));
     final ItemMeta meta = item.getItemMeta();
     if(meta == null) {
       return item;
     }
-    serialized.<PaperPersistentItemComponent>component(identifier()).ifPresent(component -> {
-      if(component.data != null) {
-        component.data.copyTo(meta.getPersistentDataContainer(), true);
-      }
-    });
-    meta.addItemFlags(serialized.flags().stream().map(ItemFlag::valueOf).toArray(ItemFlag[]::new));
+    meta.addItemFlags(flags(serialized).toArray(ItemFlag[]::new));
     item.setItemMeta(meta);
     return item;
   }
@@ -72,32 +73,39 @@ final class PaperPersistentItemComponent implements SerialComponent<PaperItemSta
   @Override
   public boolean check(final AbstractItemStack<ItemStack> original, final AbstractItemStack<ItemStack> compare) {
 
-    return new HashSet<>(original.flags()).equals(new HashSet<>(compare.flags()))
+    return flags(original).equals(flags(compare))
            && SerialComponent.super.check(original, compare);
+  }
+
+  private static Set<ItemFlag> flags(final AbstractItemStack<ItemStack> item) {
+
+    final Set<ItemFlag> flags = EnumSet.noneOf(ItemFlag.class);
+    for(final String flag : item.flags()) {
+      final String normalized = flag.trim().toUpperCase(Locale.ROOT);
+      final String name = normalized.startsWith("HIDE_") ? normalized : "HIDE_" + normalized;
+      flags.add(ItemFlag.valueOf(name.equals("HIDE_POTION_EFFECTS") ? "HIDE_ADDITIONAL_TOOLTIP" : name));
+    }
+    return flags;
   }
 
   @Override
   public boolean similar(final SerialComponent<?, ?> component) {
 
-    return component instanceof PaperPersistentItemComponent other && Objects.equals(data, other.data);
+    return component instanceof PaperPersistentItemComponent other && data.isSimilar(other.data);
   }
 
   @Override
   public boolean empty() {
 
-    return data == null || data.isEmpty();
+    return !data.hasItemMeta();
   }
 
   @Override
   public JSONObject toJSON() {
 
     final JSONObject json = new JSONObject();
-    try {
-      if(data != null) {
-        json.put("data", Base64.getEncoder().encodeToString(data.serializeToBytes()));
-      }
-    } catch(final IOException exception) {
-      throw new IllegalStateException("Cannot serialize persistent item data", exception);
+    if(!empty()) {
+      json.put("custom_data", Base64.getEncoder().encodeToString(data.serializeAsBytes()));
     }
     return json;
   }
@@ -105,10 +113,16 @@ final class PaperPersistentItemComponent implements SerialComponent<PaperItemSta
   @Override
   public void readJSON(final JSONHelper json, final ItemPlatform<PaperItemStack, ItemStack, ?> platform) {
 
-    data = Objects.requireNonNull(Bukkit.getItemFactory().getItemMeta(Material.STONE)).getPersistentDataContainer();
-    if(json.has("data")) {
+    data.setItemMeta(null);
+    if(json.has("custom_data")) {
+      data.copyDataFrom(ItemStack.deserializeBytes(Base64.getDecoder().decode(json.getString("custom_data"))),
+                        PaperPersistentItemComponent::customData);
+    } else if(json.has("data")) {
+      // Read the PDC-only representation written by 0.1.5.2.
+      final ItemMeta meta = data.getItemMeta();
       try {
-        data.readFromBytes(Base64.getDecoder().decode(json.getString("data")), true);
+        meta.getPersistentDataContainer().readFromBytes(Base64.getDecoder().decode(json.getString("data")), true);
+        data.setItemMeta(meta);
       } catch(final IOException exception) {
         throw new IllegalArgumentException("Cannot deserialize persistent item data", exception);
       }

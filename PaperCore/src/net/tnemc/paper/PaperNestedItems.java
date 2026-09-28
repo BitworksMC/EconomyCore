@@ -98,9 +98,7 @@ final class PaperNestedItems {
     for(int slot = 0; slot < contents.size(); slot++) {
       final ItemStack child = contents.get(slot);
       if(child != null && !child.getType().isAir()) {
-        final PaperItemStack serialized = new PaperItemStack().of(child);
-        PaperItemPlatform.instance().providerApplies(serialized, child);
-        children.put(slot, serialized);
+        children.put(slot, new PaperItemSnapshot(child));
       }
     }
     return children;
@@ -143,7 +141,7 @@ final class PaperNestedItems {
       final UseRemainder remainder = item.getData(DataComponentTypes.USE_REMAINDER);
       if(remainder != null) {
         final RemainderComponent component = new RemainderComponent();
-        component.item(new PaperItemStack().of(remainder.transformInto()));
+        component.item(new PaperItemSnapshot(remainder.transformInto()));
         serialized.applyComponent(component);
       }
       return serialized;
