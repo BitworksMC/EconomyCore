@@ -41,8 +41,14 @@ import net.tnemc.plugincore.paper.PaperPluginCore;
 import net.tnemc.plugincore.paper.impl.PaperServerProvider;
 import net.tnemc.bukkit.metrics.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.PluginIdentifiableCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 /**
@@ -149,7 +155,47 @@ public class PaperPlugin {
    */
   public void disable(final JavaPlugin plugin) {
 
+    unregisterCommands(plugin);
     this.pluginCore.onDisable();
+  }
+
+  /**
+   * Paper keeps a disabled plugin's Brigadier commands but closes its class loader. Tab completing
+   * one of them then fails to load TNE classes, and that error stops the server. This happens
+   * whenever TNE is disabled while the server runs, including when its startup fails.
+   */
+  private static void unregisterCommands(final JavaPlugin plugin) {
+
+    try {
+      final Map<String, Command> known = Bukkit.getCommandMap().getKnownCommands();
+      final List<String> labels = known.entrySet().stream()
+              .filter(entry->entry.getValue() instanceof final PluginIdentifiableCommand command
+                             && command.getPlugin() == plugin)
+              .map(Map.Entry::getKey)
+              .toList();
+      if(labels.isEmpty()) {
+        return;
+      }
+
+      //CommandNode#removeCommand is added by Paper and is not part of its API.
+      final Object root = dispatcherRoot();
+      final Method remove = root.getClass().getMethod("removeCommand", String.class);
+      for(final String label : labels) {
+        known.remove(label);
+        remove.invoke(root, label);
+      }
+      Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
+    } catch(final ReflectiveOperationException | RuntimeException e) {
+      plugin.getLogger().log(Level.WARNING, "Unable to unregister TNE commands; tab completing them may fail until restart.", e);
+    }
+  }
+
+  private static Object dispatcherRoot() throws ReflectiveOperationException {
+
+    final Object server = Bukkit.getServer().getClass().getMethod("getServer").invoke(Bukkit.getServer());
+    final Object commands = server.getClass().getMethod("getCommands").invoke(server);
+    final Object dispatcher = commands.getClass().getMethod("getDispatcher").invoke(commands);
+    return dispatcher.getClass().getMethod("getRoot").invoke(dispatcher);
   }
 
   public boolean isPapiHooked() {
