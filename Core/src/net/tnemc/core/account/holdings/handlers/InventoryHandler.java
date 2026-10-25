@@ -28,6 +28,7 @@ import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.CurrencyType;
 import net.tnemc.core.currency.calculations.CalculationData;
 import net.tnemc.core.currency.item.ItemCurrency;
+import net.tnemc.core.transaction.Transaction;
 import net.tnemc.core.utils.Identifier;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
@@ -85,6 +86,16 @@ public class InventoryHandler implements HoldingsHandler {
    *
    * @return True if the holdings have been set, otherwise false.
    */
+  /**
+   * Player inventories may only be read on the server thread. Elsewhere, e.g. while saving or for an
+   * async balance check, the balance last copied into the wallet is used. A transaction still reads
+   * the inventory it is about to change.
+   */
+  static boolean inventoryUnavailable() {
+
+    return !TNECore.instance().isMainThread() && !Thread.holdsLock(Transaction.BALANCE_LOCK);
+  }
+
   @Override
   public boolean setHoldings(final Account account, final String region, final Currency currency, final CurrencyType type, final BigDecimal amount) {
 
@@ -115,7 +126,7 @@ public class InventoryHandler implements HoldingsHandler {
 
     if((currency instanceof ItemCurrency)) {
 
-      if(!account.isPlayer() || !PluginCore.server().online(account.getIdentifier().toString()) ||
+      if(!account.isPlayer() || inventoryUnavailable() || !PluginCore.server().online(account.getIdentifier().toString()) ||
          TNECore.eco().account().getLoading().contains(account.getIdentifier())
          && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
 

@@ -83,6 +83,12 @@ public class TransactionCommand {
   //[page:#] [world:name/all] [player:name]
   public static void history(final CmdSource<?> sender, final int page, String region, final Account account) {
 
+    if(sender.player().isPresent() && !account.getIdentifier().equals(sender.identifier().orElse(null))
+       && !sender.player().get().hasPermission("tne.transaction.history.other")) {
+      sender.message(new MessageData("Messages.General.NoPerm"));
+      return;
+    }
+
     region = TNECore.eco().region().resolve(region);
 
     final SortedHistory sorted = account.getSorted(account.getIdentifier());

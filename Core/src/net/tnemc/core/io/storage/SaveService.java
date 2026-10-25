@@ -10,10 +10,14 @@ package net.tnemc.core.io.storage;
 
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
+import net.tnemc.core.account.PlayerAccount;
+import net.tnemc.core.handlers.player.PlayerLeaveHandler;
 import net.tnemc.core.transaction.Receipt;
 import net.tnemc.core.transaction.Transaction;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 import net.tnemc.plugincore.core.io.storage.Datable;
 import net.tnemc.plugincore.core.io.storage.StorageConnector;
 import net.tnemc.plugincore.core.io.storage.StorageManager;
@@ -22,11 +26,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Runs every TNE write of this server on one dedicated thread.
@@ -46,8 +51,9 @@ public final class SaveService {
   private static final long RELOAD_TIMEOUT_SECONDS = 20;
 
   private volatile Thread storageThread;
+  private final AtomicBoolean autosaving = new AtomicBoolean(false);
 
-  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(runnable->{
+  private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable->{
     final Thread thread = new Thread(runnable, "TNE-Storage");
     thread.setDaemon(true);
     storageThread = thread;
@@ -55,18 +61,34 @@ public final class SaveService {
   });
 
   /**
-   * Starts saving modified data periodically. Each run starts only after the previous one ended.
+   * Starts saving modified data periodically. A run is skipped while the previous one is still
+   * queued or running.
    *
-   * @param intervalSeconds Seconds between the end of one save and the start of the next.
+   * @param intervalSeconds Seconds between autosaves.
    */
   public void start(final long intervalSeconds) {
 
     if(intervalSeconds > 0) {
-      executor.scheduleWithFixedDelay(guard(()->{
+      final ChoreTime interval = new ChoreTime((int)intervalSeconds, TimeUnit.SECONDS);
+      //Starts on the server thread, the only one that may read item balances from inventories.
+      PluginCore.server().scheduler().createRepeatingTask(this::autosave, interval, interval, ChoreExecution.MAIN_THREAD);
+    }
+  }
+
+  private void autosave() {
+
+    if(!autosaving.compareAndSet(false, true)) {
+      return;
+    }
+    snapshotOnlinePlayers();
+    run(()->{
+      try {
         PluginCore.log().inform("Running AutoSaver.");
         saveDirty();
-      }), intervalSeconds, intervalSeconds, TimeUnit.SECONDS);
-    }
+      } finally {
+        autosaving.set(false);
+      }
+    });
   }
 
   /**
@@ -83,6 +105,7 @@ public final class SaveService {
    */
   public void saveAll() {
 
+    snapshotOnlinePlayers();
     run(this::saveDirty);
   }
 
@@ -125,6 +148,7 @@ public final class SaveService {
    */
   private boolean flush(final long timeoutSeconds) {
 
+    snapshotOnlinePlayers();
     if(Thread.currentThread() == storageThread) {
       saveDirty();
       return accountsSaved();
@@ -176,23 +200,29 @@ public final class SaveService {
 
   private void saveDirty() {
 
-    markOnlinePlayersDirty();
     datable(Account.class).ifPresent(datable->datable.storeAll(connector(), null));
     datable(Receipt.class).ifPresent(datable->datable.storeAll(connector(), null));
   }
 
   /**
-   * Item balances live in player inventories, so the wallet is not marked as modified when items
-   * are picked up or dropped. Online players are always saved so the stored value stays current.
+   * Item balances live in player inventories, so picking items up or dropping them changes no
+   * wallet. Copies them into the wallets of online players and marks those for saving. Does
+   * nothing off the server thread, where inventories cannot be read.
    */
-  private void markOnlinePlayersDirty() {
+  private void snapshotOnlinePlayers() {
 
-    if(TNECore.eco().currency().currencies().stream().noneMatch(currency->currency.type().supportsItems())) {
+    if(!TNECore.instance().isMainThread()
+       || TNECore.eco().currency().currencies().stream().noneMatch(currency->currency.type().supportsItems())) {
       return;
     }
 
     for(final String name : onlinePlayers()) {
-      TNECore.eco().account().findAccount(name).ifPresent(Account::markDirty);
+      TNECore.eco().account().findAccount(name).ifPresent(account->{
+        if(account instanceof final PlayerAccount player) {
+          player.getPlayer().ifPresent(provider->PlayerLeaveHandler.syncItemHoldings(provider, player));
+        }
+        account.markDirty();
+      });
     }
   }
 

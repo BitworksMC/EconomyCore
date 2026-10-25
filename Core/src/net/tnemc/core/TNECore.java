@@ -570,6 +570,16 @@ public abstract class TNECore extends PluginEngine {
 
   public abstract <INV> ItemCalculations<INV> itemCalculations();
 
+  /**
+   * Item balances live in player inventories, which may only be touched on the server thread.
+   *
+   * @return true if the current thread may access player inventories.
+   */
+  public boolean isMainThread() {
+
+    return true;
+  }
+
   public AbstractItemStack<?> denominationToStack(final ItemDenomination denomination) {
 
     return denominationToStack(denomination, 1);

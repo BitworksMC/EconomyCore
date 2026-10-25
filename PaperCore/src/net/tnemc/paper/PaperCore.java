@@ -147,6 +147,12 @@ public class PaperCore extends TNECore {
     return new BukkitItemCalculations();
   }
 
+  @Override
+  public boolean isMainThread() {
+
+    return Bukkit.isPrimaryThread();
+  }
+
   public JavaPlugin getPlugin() {
 
     return plugin;
