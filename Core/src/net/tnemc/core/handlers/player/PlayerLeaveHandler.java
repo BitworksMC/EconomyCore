@@ -24,7 +24,6 @@ import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.account.holdings.HoldingsEntry;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.plugincore.core.compatibility.PlayerProvider;
-import net.tnemc.plugincore.core.io.storage.StorageManager;
 import net.tnemc.plugincore.core.utils.HandlerResponse;
 
 import java.util.Date;
@@ -49,26 +48,37 @@ public class PlayerLeaveHandler {
 
     final HandlerResponse response = new HandlerResponse("", false);
 
+    TNECore.eco().account().getLoading().remove(provider.identifier());
+    TNECore.eco().account().getImporting().remove(provider.identifier());
+
     final Optional<Account> account = TNECore.eco().account().findAccount(provider.identifier());
     if(account.isPresent() && (account.get() instanceof PlayerAccount)) {
 
-      final String region = TNECore.eco().region().getMode().region(provider);
-      for(final Currency currency : TNECore.eco().currency().getCurrencies(region)) {
-
-        if(currency.type().supportsItems()) {
-
-          for(final HoldingsEntry entry : account.get().getHoldings(region, currency.getUid())) {
-
-            //account.get().setHoldings(entry, entry.getHandler());
-            account.get().getWallet().setHoldings(entry);
-          }
-        }
-      }
+      syncItemHoldings(provider, account.get());
 
       ((PlayerAccount)account.get()).setLastOnline(new Date().getTime());
       account.get().clearAwayReceipts();
-      StorageManager.instance().store(account.get(), account.get().getIdentifier().toString());
+      TNECore.instance().saver().save(account.get());
     }
     return response;
+  }
+
+  /**
+   * Copies the player's item balances from their inventories into the wallet, which is what gets
+   * saved and what other threads read. Server thread only.
+   */
+  public static void syncItemHoldings(final PlayerProvider provider, final Account account) {
+
+    final String region = TNECore.eco().region().getMode().region(provider);
+    for(final Currency currency : TNECore.eco().currency().getCurrencies(region)) {
+
+      if(currency.type().supportsItems()) {
+
+        for(final HoldingsEntry entry : account.getHoldings(region, currency.getUid())) {
+
+          account.getWallet().setHoldings(entry);
+        }
+      }
+    }
   }
 }

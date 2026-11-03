@@ -18,10 +18,15 @@ package net.tnemc.core.command;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import net.tnemc.core.EconomyManager;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
 import net.tnemc.core.account.PlayerAccount;
-import net.tnemc.core.config.MainConfig;
+import net.tnemc.core.account.holdings.HoldingsEntry;
+import net.tnemc.core.account.holdings.modify.HoldingsModifier;
+import net.tnemc.core.account.holdings.modify.HoldingsOperation;
+import net.tnemc.core.config.MessageConfig;
+import net.tnemc.core.currency.format.CurrencyFormatter;
 import net.tnemc.core.manager.TransactionManager;
 import net.tnemc.core.transaction.Receipt;
 import net.tnemc.core.transaction.TransactionParticipant;
@@ -30,7 +35,10 @@ import net.tnemc.core.transaction.history.SortedHistory;
 import net.tnemc.plugincore.core.compatibility.CmdSource;
 import net.tnemc.plugincore.core.io.message.MessageData;
 
-import java.util.Map;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,43 +54,32 @@ public class TransactionCommand {
   public static void away(final CmdSource<?> sender, final int page) {
 
     final Optional<Account> account = BaseCommand.account(sender, "away");
-
-    if(sender.player().isPresent() && MainConfig.yaml().getBoolean("Core.Commands.GUIAlternatives", true)) {
-      sender.player().get().inventory().openMenu(sender.player().get(), "transaction_away");
-      return;
-    }
-
-    if(account.isEmpty()) {
+    final Optional<AwayHistory> away = account.filter(PlayerAccount.class::isInstance)
+            .flatMap(found->found.away(((PlayerAccount)found).getUUID()));
+    if(away.isEmpty() || away.get().getReceipts().isEmpty()) {
       sender.message(new MessageData("Messages.Transaction.AwayNone"));
       return;
     }
 
-    final Optional<AwayHistory> away = account.get().away(((PlayerAccount)account.get()).getUUID());
-    if(away.isEmpty()) {
-      sender.message(new MessageData("Messages.Transaction.AwayNone"));
-      return;
-    }
-
-    final MessageData heading = new MessageData("Messages.Transaction.Away");
-    heading.addReplacement("$page", String.valueOf(page));
+    final int selectedPage = Math.min(Math.max(page, 1), away.get().maxPages());
+    final MessageData heading = new MessageData("Messages.Transaction.AwayHeader");
+    heading.addReplacement("$page", String.valueOf(selectedPage));
     heading.addReplacement("$page_top", String.valueOf(away.get().maxPages()));
     sender.message(heading);
 
-    for(final Map.Entry<Long, UUID> entry : away.get().getPage(page).entrySet()) {
-
-      final Optional<Receipt> receipt = account.get().findReceipt(entry.getValue());
-      if(receipt.isPresent()) {
-
-        final MessageData awayEntry = new MessageData("Messages.Transaction.AwayEntry");
-        awayEntry.addReplacement("$id", entry.getValue().toString());
-        awayEntry.addReplacement("$type", receipt.get().getType());
-        sender.message(awayEntry);
-      }
+    for(final UUID id : away.get().getPage(selectedPage)) {
+      account.get().findReceipt(id).ifPresent(receipt->sender.message(line(account.get(), receipt)));
     }
   }
 
   //[page:#] [world:name/all] [player:name]
   public static void history(final CmdSource<?> sender, final int page, String region, final Account account) {
+
+    if(sender.player().isPresent() && !account.getIdentifier().equals(sender.identifier().orElse(null))
+       && !sender.player().get().hasPermission("tne.transaction.history.other")) {
+      sender.message(new MessageData("Messages.General.NoPerm"));
+      return;
+    }
 
     region = TNECore.eco().region().resolve(region);
 
@@ -94,30 +91,80 @@ public class TransactionCommand {
     }
 
     final int selectedPage = Math.min(Math.max(page, 1), sorted.maxPages());
-    final MessageData heading = new MessageData("Messages.Transaction.History");
+    final MessageData heading = new MessageData("Messages.Transaction.HistoryHeader");
     heading.addReplacement("$page", String.valueOf(selectedPage));
     heading.addReplacement("$page_top", String.valueOf(sorted.maxPages()));
     sender.message(heading);
 
-    for(final Map.Entry<Long, UUID> entry : sorted.getPage(selectedPage).entrySet()) {
-      sendHistoryEntry(sender, account, entry);
+    for(final UUID id : sorted.getPage(selectedPage)) {
+      sendHistoryEntry(sender, account, id);
     }
   }
 
   private static void sendHistoryEntry(final CmdSource<?> sender, final Account account,
-                                       final Map.Entry<Long, UUID> entry) {
+                                       final UUID id) {
 
-    final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
-    if(receipt.isEmpty()) {
-      return;
+    account.findReceipt(id).ifPresent(receipt->sender.message(line(account, receipt)));
+  }
+
+  /**
+   * One transaction as the given account saw it: when, what, how much it gained or lost and with
+   * whom. The ID is in the hover text and the click opens its details.
+   */
+  private static MessageData line(final Account account, final Receipt receipt) {
+
+    final boolean received = receipt.getTo() != null && receipt.getTo().getId().equals(account.getIdentifier());
+    final MessageData line = new MessageData("Messages.Transaction.Line");
+    line.addReplacement("$id", receipt.getId().toString());
+    line.addReplacement("$date", date(receipt.getTime()));
+    line.addReplacement("$type", receipt.getType());
+    line.addReplacement("$amount", amount(account, received? receipt.getModifierTo() : receipt.getModifierFrom()));
+    line.addReplacement("$other", otherName(receipt, received));
+    return line;
+  }
+
+  private static String date(final long time) {
+
+    try {
+      return DateTimeFormatter.ofPattern(MessageConfig.yaml().getString("Messages.Transaction.DateFormat", "yyyy-MM-dd HH:mm"))
+              .format(Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()));
+    } catch(final IllegalArgumentException invalidPattern) {
+      return DateTimeFormatter.ISO_LOCAL_DATE.format(Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()));
     }
+  }
 
-    final MessageData awayEntry = new MessageData("Messages.Transaction.HistoryEntry");
-    awayEntry.addReplacement("$id", entry.getValue().toString());
-    awayEntry.addReplacement("$type", receipt.get().getType());
-    awayEntry.addReplacement("$initiator", participantName(receipt.get().getFrom()));
-    awayEntry.addReplacement("$recipient", participantName(receipt.get().getTo()));
-    sender.message(awayEntry);
+  /**
+   * The signed change, e.g. "+$10.00" or "-$5.00". Receipts saved before modifiers were stored
+   * have none.
+   */
+  private static String amount(final Account account, final HoldingsModifier modifier) {
+
+    if(modifier == null) {
+      return "-";
+    }
+    final BigDecimal change = modifier.getOperation() == HoldingsOperation.SUBTRACT? modifier.getModifier().negate()
+                                                                                : modifier.getModifier();
+    final String sign = change.signum() < 0? "-" : "+";
+    if(modifier.isPercent()) {
+      return sign + change.abs().toPlainString() + "%";
+    }
+    return sign + CurrencyFormatter.format(account, new HoldingsEntry(modifier.getRegion(), modifier.getCurrency(),
+                                                                      change.abs(), EconomyManager.NORMAL));
+  }
+
+  /**
+   * The account on the other side, or for gives, takes and plugin transactions without one,
+   * whoever caused it.
+   */
+  private static String otherName(final Receipt receipt, final boolean received) {
+
+    final TransactionParticipant other = received? receipt.getFrom() : receipt.getTo();
+    if(other != null || receipt.getSource() == null) {
+      return participantName(other);
+    }
+    return TNECore.eco().account().findAccount(receipt.getSource().name())
+            .map(Account::getName)
+            .orElse(receipt.getSource().name());
   }
 
   private static String participantName(final TransactionParticipant participant) {

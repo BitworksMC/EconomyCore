@@ -25,7 +25,7 @@ under `.testserver`, bound to `server-ip=127.0.0.1`, with different ports, an ac
 EULA, local TNE configuration, and exactly one TNE plugin JAR each. Start each server
 once to download its libraries. The first server supplies the compile classpath;
 use Paper 1.21.10 or newer. Use a JDK supported by every selected server (Java 26
-when testing Paper 26.2).
+when testing Paper 26.2; Java 25+ for Paper 26.3).
 
 From the repository root, in PowerShell:
 

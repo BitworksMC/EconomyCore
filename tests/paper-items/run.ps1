@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory)][string[]]$ServerDirectory,
     [Parameter(Mandatory)][string]$JavaHome,
-    [string]$PluginJar = 'PaperCore/target/TNE-Paper-0.1.5.3.jar'
+    [string]$PluginJar = 'PaperCore/target/TNE-Paper-0.1.5.4.jar'
 )
 
 $ErrorActionPreference = 'Stop'

@@ -17,31 +17,25 @@ package net.tnemc.core.channel;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.plugincore.PluginCore;
-import net.tnemc.plugincore.core.channel.ChannelBytesWrapper;
-import net.tnemc.plugincore.core.channel.ChannelMessageHandler;
-import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * MessageHandler
- *
- * @author creatorfromhell
- * @since 0.1.2.0
+ * Delivers a message to a player who is online on another server.
  */
-public class MessageHandler extends ChannelMessageHandler {
+public final class MessageHandler {
 
-  public MessageHandler() {
-
-    super("message");
+  private MessageHandler() {
   }
 
   public static void send(final UUID identifier, final Component component) {
@@ -50,40 +44,22 @@ public class MessageHandler extends ChannelMessageHandler {
       return;
     }
 
-    final ByteArrayDataOutput out = ByteStreams.newDataOutput();
-    out.writeUTF(PluginCore.instance().getServerID().toString());
-    ChannelSecurity.writeToken(out);
-    out.writeUTF(identifier.toString());
-    out.writeUTF(MiniMessage.miniMessage().serialize(component));
-    PluginCore.log().debug("Sending message: " + MiniMessage.miniMessage().serialize(component));
-
-    TNECore.instance().storage().sendProxyMessage("tne:message", out.toByteArray());
+    final String message = MiniMessage.miniMessage().serialize(component);
+    RedisSync.publish(RedisSync.MESSAGE, out->{
+      out.writeUTF(identifier.toString());
+      out.writeUTF(message);
+    });
   }
 
-  @Override
-  public void handle(final ChannelBytesWrapper wrapper) {
+  static void handle(final DataInput in) throws IOException {
 
-    try {
-      if(!ChannelSecurity.validate(wrapper, "message")) {
-        return;
+    final UUID identifier = UUID.fromString(in.readUTF());
+    final String message = in.readUTF();
+    PluginCore.server().scheduler().createDelayedTask(()->{
+      final Optional<PlayerAccount> player = TNECore.eco().account().findPlayerAccount(identifier);
+      if(player.isPresent() && player.get().getPlayer().isPresent()) {
+        player.get().getPlayer().get().message(message);
       }
-
-      final String uuid = wrapper.readUTF();
-      final String message = wrapper.readUTF();
-      PluginCore.log().debug("Received message: " + message);
-
-      if(uuid != null && message != null) {
-
-        final UUID identifier = UUID.fromString(uuid);
-
-        final Optional<PlayerAccount> player = TNECore.eco().account().findPlayerAccount(identifier);
-        if(player.isPresent() && player.get().getPlayer().isPresent()) {
-          player.get().getPlayer().get().message(message);
-        }
-      }
-
-    } catch(Exception e) {
-      PluginCore.log().error("Issue with message plugin message", e, DebugLevel.STANDARD);
-    }
+    }, new ChoreTime(0), ChoreExecution.MAIN_THREAD);
   }
 }

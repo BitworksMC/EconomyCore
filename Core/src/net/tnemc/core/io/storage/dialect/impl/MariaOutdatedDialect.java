@@ -150,22 +150,21 @@ public class MariaOutdatedDialect implements TNEDialect {
                        "receipt_source_type, archive, voided) " +
                        "VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
 
-    this.loadReceiptHolding = "SELECT participant AS participant, ending, server, region, " +
-                              "currency AS currency, holdings_type, holdings FROM " +
-                              prefix + "receipts_holdings WHERE uid = ? AND participant = ? AND ending = ?";
+    this.loadReceiptHolding = "SELECT uid AS uid, participant AS participant, ending, server, region, " +
+                              "currency AS currency, holdings_type, holdings FROM " + prefix + "receipts_holdings";
 
     this.saveReceiptHolding = "INSERT INTO " + prefix + "receipts_holdings (uid, participant, ending, " +
                               "server, region, currency, holdings_type, holdings) " +
                               "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE uid=uid";
 
-    this.loadParticipants = "SELECT participant AS participant, participant_type, tax FROM " +
-                            prefix + "receipts_participants WHERE uid = ?";
+    this.loadParticipants = "SELECT uid AS uid, participant AS participant, participant_type, tax FROM " +
+                            prefix + "receipts_participants";
 
     this.saveParticipant = "INSERT INTO " + prefix + "receipts_participants (uid, participant, participant_type, tax) " +
                            "VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE uid=uid";
 
-    this.loadModifiers = "SELECT participant AS participant, participant_type, operation, region, " +
-                         "currency AS currency, modifier FROM " + prefix + "receipts_modifiers WHERE uid = ? AND participant = ? AND participant_type = ?";
+    this.loadModifiers = "SELECT uid AS uid, participant AS participant, participant_type, operation, region, " +
+                         "currency AS currency, modifier FROM " + prefix + "receipts_modifiers";
 
     this.saveModifier = "INSERT INTO " + prefix + "receipts_modifiers (uid, participant, participant_type, operation, region, currency, modifier) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE uid = uid";
@@ -252,7 +251,7 @@ public class MariaOutdatedDialect implements TNEDialect {
   public String receiptsHoldingsTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_holdings (\n" +
-           "    uid VARCHAR(36) NOT NULL UNIQUE,\n" +
+           "    uid VARCHAR(36) NOT NULL,\n" +
            "    participant VARCHAR(36) NOT NULL,\n" +
            "    ending TINYINT(1) NOT NULL,\n" +
            "    server VARCHAR(40) NOT NULL,\n" +
@@ -260,6 +259,7 @@ public class MariaOutdatedDialect implements TNEDialect {
            "    currency VARCHAR(36) NOT NULL,\n" +
            "    holdings_type VARCHAR(30) NOT NULL,\n" +
            "    holdings DECIMAL(49, 4) NOT NULL,\n" +
+           "    UNIQUE KEY receipt_holding (uid, participant, ending, region, currency, holdings_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE\n" +
            "    );";
   }
@@ -268,10 +268,11 @@ public class MariaOutdatedDialect implements TNEDialect {
   public String receiptsParticipantsTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_participants (\n" +
-           "    uid VARCHAR(36) NOT NULL PRIMARY KEY,\n" +
+           "    uid VARCHAR(36) NOT NULL,\n" +
            "    participant VARCHAR(36) NOT NULL,\n" +
            "    participant_type VARCHAR(10) NOT NULL,\n" +
            "    tax DECIMAL(49, 4) NOT NULL,\n" +
+           "    PRIMARY KEY(uid, participant_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE\n" +
            "    );";
   }
@@ -280,13 +281,14 @@ public class MariaOutdatedDialect implements TNEDialect {
   public String receiptsModifiersTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_modifiers (\n" +
-           "    uid VARCHAR(36) NOT NULL PRIMARY KEY,\n" +
+           "    uid VARCHAR(36) NOT NULL,\n" +
            "    participant VARCHAR(36) NOT NULL,\n" +
            "    participant_type VARCHAR(10) NOT NULL,\n" +
            "    operation VARCHAR(10) NOT NULL,\n" +
            "    region VARCHAR(40) NOT NULL,\n" +
            "    currency VARCHAR(36) NOT NULL,\n" +
            "    modifier DECIMAL(49, 4) NOT NULL," +
+           "    PRIMARY KEY(uid, participant_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE" +
            "    );";
   }

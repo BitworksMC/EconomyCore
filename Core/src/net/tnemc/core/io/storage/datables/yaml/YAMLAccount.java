@@ -85,26 +85,46 @@ public class YAMLAccount implements Datable<Account> {
   @Override
   public void store(final StorageConnector<?> connector, @NotNull final Account account, @Nullable final String identifier) {
 
+    try {
+      storeAccount(connector, account, identifier);
+    } catch(final RuntimeException e) {
+      //The dirty flag is cleared when a save starts; restore it so the next save retries.
+      account.markDirty();
+      throw e;
+    }
+  }
+
+  private void storeAccount(final StorageConnector<?> connector, @NotNull final Account account, @Nullable final String identifier) {
+
     PluginCore.log().debug("Saving Account with ID: " + identifier + " Name: " + account.getName(), DebugLevel.STANDARD);
     final String file = "accounts/" + identifier + ".yml";
+
+    //Cleared before reading, so a change made while this save runs keeps the account dirty.
+    account.clearDirty();
     waitForFile(file);
     TNECore.yaml().add(file);
-    final File accFile = new File(PluginCore.directory(), file);
-    if(!ensureAccountFile(accFile, account) ) {
-      return;
-    }
+    try {
+      final File accFile = new File(PluginCore.directory(), file);
+      if(!ensureAccountFile(accFile, account) ) {
+        account.markDirty();
+        return;
+      }
 
-    final YamlDocument yaml = loadDocument(accFile, account);
-    if(yaml == null) {
-      return;
+      final YamlDocument yaml = loadDocument(accFile, account);
+      if(yaml == null) {
+        account.markDirty();
+        return;
+      }
+      writeAccount(yaml, account);
+      if(!saveDocument(yaml, account)) {
+        account.markDirty();
+        return;
+      }
+    } finally {
+      //A failed save must release the file, or every later save of this account waits forever.
+      TNECore.yaml().remove(file);
     }
-    writeAccount(yaml, account);
-    if(!saveDocument(yaml, account)) {
-      return;
-    }
-    TNECore.yaml().remove(file);
     TNECore.instance().storage().storeAll(account.getIdentifier().toString());
-    account.clearDirty();
     PluginCore.callbacks().call(new AccountSaveCallback(account));
   }
 
@@ -194,8 +214,21 @@ public class YAMLAccount implements Datable<Account> {
 
     for(final Account account : TNECore.eco().account().getAccounts().values()) {
       if(account.isDirty()) {
-        store(connector, account, account.getIdentifier().toString());
+        storeIsolated(connector, account);
       }
+    }
+  }
+
+  /**
+   * One account failing to save must not stop the rest of the save pass.
+   */
+  private void storeIsolated(final StorageConnector<?> connector, final Account account) {
+
+    try {
+      store(connector, account, account.getIdentifier().toString());
+    } catch(final RuntimeException e) {
+      PluginCore.log().error("Failed to save account " + account.getIdentifier() + "; retrying on the next save.",
+                             e, DebugLevel.OFF);
     }
   }
 

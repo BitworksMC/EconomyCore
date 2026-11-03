@@ -18,92 +18,112 @@ package net.tnemc.core.channel;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
 import net.tnemc.core.account.holdings.HoldingsEntry;
-import net.tnemc.core.api.response.AccountAPIResponse;
+import net.tnemc.core.transaction.Transaction;
 import net.tnemc.core.utils.Identifier;
 import net.tnemc.plugincore.PluginCore;
-import net.tnemc.plugincore.core.channel.ChannelBytesWrapper;
-import net.tnemc.plugincore.core.channel.ChannelMessageHandler;
-import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
+import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 
+import java.io.DataInput;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * BalanceHandler
+ * Syncs balance changes between servers.
  *
- * @author creatorfromhell
- * @since 0.1.2.0
+ * <p>Each message carries the change (delta), not the resulting balance. Every server adds it to
+ * its own current balance under the balance lock, so changes made on several servers at once all
+ * count instead of overwriting each other. Each change has an ID and is applied at most once.</p>
  */
-public class BalanceHandler extends ChannelMessageHandler {
+public final class BalanceHandler {
 
-  public BalanceHandler() {
+  private static final int REMEMBERED_CHANGES = 10_000;
+  private static final ThreadLocal<Boolean> APPLYING_REMOTE = ThreadLocal.withInitial(()->false);
+  private static final Map<UUID, Boolean> APPLIED = Collections.synchronizedMap(new LinkedHashMap<>() {
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<UUID, Boolean> eldest) {
 
-    super("balance");
+      return size() > REMEMBERED_CHANGES;
+    }
+  });
+
+  private BalanceHandler() {
   }
 
-  public static void send(final String identifier, final String name, final String region, final UUID currency, final Identifier handler, final BigDecimal amount) {
+  /**
+   * @return true while this thread applies a change received from another server; such a change
+   * must not be sent back out.
+   */
+  public static boolean applyingRemote() {
 
-    if(!TNECore.syncEnabled()) {
+    return APPLYING_REMOTE.get();
+  }
+
+  public static void send(final String identifier, final String name, final String region, final UUID currency,
+                          final Identifier handler, final BigDecimal delta) {
+
+    if(!TNECore.syncEnabled() || delta.signum() == 0) {
       return;
     }
 
-    final ByteArrayDataOutput out = ByteStreams.newDataOutput();
-    out.writeUTF(PluginCore.instance().getServerID().toString());
-    ChannelSecurity.writeToken(out);
-    out.writeUTF(identifier);
-    out.writeUTF(name);
-    out.writeUTF(region);
-    out.writeUTF(currency.toString());
-    out.writeUTF(handler.asID());
-    out.writeUTF(amount.toPlainString());
-
-    TNECore.instance().storage().sendProxyMessage("tne:balance", out.toByteArray());
+    final String change = UUID.randomUUID().toString();
+    RedisSync.publish(RedisSync.BALANCE, out->{
+      out.writeUTF(change);
+      out.writeUTF(identifier);
+      out.writeUTF(name);
+      out.writeUTF(region);
+      out.writeUTF(currency.toString());
+      out.writeUTF(handler.asID());
+      out.writeUTF(delta.toPlainString());
+    });
   }
 
-  @Override
-  public void handle(final ChannelBytesWrapper wrapper) {
+  static void handle(final DataInput in) throws IOException {
 
-    try {
-      if(!ChannelSecurity.validate(wrapper, "balance")) {
+    final UUID change = UUID.fromString(in.readUTF());
+    final String accountID = in.readUTF();
+    final String accountName = in.readUTF();
+    final String region = in.readUTF();
+    final UUID currency = UUID.fromString(in.readUTF());
+    final Identifier handler = Identifier.fromID(in.readUTF());
+    final BigDecimal delta = new BigDecimal(in.readUTF());
+
+    if(APPLIED.put(change, Boolean.TRUE) != null) {
+      return;
+    }
+
+    //Balances, and item balances in inventories, are only changed on the server thread.
+    PluginCore.server().scheduler().createDelayedTask(()->apply(accountID, accountName, region, currency, handler, delta),
+                                                      new ChoreTime(0), ChoreExecution.MAIN_THREAD);
+  }
+
+  private static void apply(final String accountID, final String accountName, final String region, final UUID currency,
+                            final Identifier handler, final BigDecimal delta) {
+
+    synchronized(Transaction.BALANCE_LOCK) {
+      Optional<Account> account = TNECore.eco().account().findAccount(accountID);
+      if(account.isEmpty()) {
+        account = TNECore.eco().account().createAccount(accountID, accountName).getAccount();
+      }
+      if(account.isEmpty()) {
         return;
       }
 
-      final String accountID = wrapper.readUTF();
-      final String accountName = wrapper.readUTF();
-      final String region = wrapper.readUTF();
-      final Optional<UUID> currency = wrapper.readUUID();
-      final String handler = wrapper.readUTF();
-      final Optional<BigDecimal> amountOPT = wrapper.readBigDecimal();
-
-      if(amountOPT.isPresent() && currency.isPresent()) {
-
-        Optional<Account> account = TNECore.eco().account().findAccount(accountID);
-        if(account.isEmpty()) {
-          final AccountAPIResponse response = TNECore.eco().account().createAccount(accountID, accountName);
-          if(response.getResponse().success()) {
-            account = response.getAccount();
-          }
-        }
-
-        if(account.isPresent()) {
-          PluginCore.instance().getChannelMessageManager().addAccount(accountID);
-
-          final Identifier type = Identifier.fromID(handler);
-
-          final HoldingsEntry entry = new HoldingsEntry(region, currency.get(),
-                                                        amountOPT.get(), type);
-          account.get().setHoldings(entry, type);
-        }
+      final BigDecimal current = account.get().getHoldingsTotal(region, currency, handler);
+      APPLYING_REMOTE.set(true);
+      try {
+        account.get().setHoldings(new HoldingsEntry(region, currency, current.add(delta), handler), handler);
+      } finally {
+        APPLYING_REMOTE.set(false);
       }
-
-    } catch(Exception e) {
-      PluginCore.log().error("Issue with balance plugin message handler.", e, DebugLevel.STANDARD);
     }
   }
 }

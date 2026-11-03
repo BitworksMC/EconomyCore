@@ -26,9 +26,6 @@ import net.tnemc.core.channel.BalanceHandler;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.transaction.receipt.ReceiptBox;
 import net.tnemc.core.utils.Identifier;
-import net.tnemc.plugincore.PluginCore;
-import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
-import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 import net.tnemc.plugincore.core.io.maps.MapKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -234,6 +231,11 @@ public class Account extends ReceiptBox {
 
     final String region = TNECore.eco().region().resolve(entry.getRegion());
 
+    //Changes from other servers and balances being restored on join are not sent out.
+    final boolean send = currencyObject.isPresent() && TNECore.syncEnabled() && currencyObject.get().isSync()
+                         && !BalanceHandler.applyingRemote() && !TNECore.eco().account().getLoading().contains(identifier);
+    final BigDecimal before = send? getHoldingsTotal(region, entry.getCurrency(), entry.getHandler()) : BigDecimal.ZERO;
+
     boolean result = false;
 
     if(currencyObject.isPresent()) {
@@ -244,18 +246,9 @@ public class Account extends ReceiptBox {
                                                        entry.getAmount());
     }
 
-    if(result && TNECore.syncEnabled() && currencyObject.get().isSync()) {
-
-      //Send out our update to our proxies.
-      if(!PluginCore.instance().getChannelMessageManager().isAffected(identifier.toString()) && !TNECore.eco().account().getLoading().contains(identifier)) {
-        PluginCore.server().scheduler().createDelayedTask(()->{
-          BalanceHandler.send(identifier.toString(), name, region, currencyObject.get().getUid(), entry.getHandler(), entry.getAmount());
-        }, new ChoreTime(1), ChoreExecution.SECONDARY);
-      } else {
-
-        //TODO: Fix plugin core to change this to uuid
-        PluginCore.instance().getChannelMessageManager().removeAccount(identifier.toString());
-      }
+    if(result && send) {
+      BalanceHandler.send(identifier.toString(), name, region, entry.getCurrency(), entry.getHandler(),
+                          getHoldingsTotal(region, entry.getCurrency(), entry.getHandler()).subtract(before));
     }
 
     return result;

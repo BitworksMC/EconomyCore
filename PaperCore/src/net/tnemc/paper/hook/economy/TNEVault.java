@@ -32,6 +32,7 @@ import net.tnemc.core.transaction.TransactionResult;
 import net.tnemc.core.utils.exceptions.InvalidTransactionException;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -638,7 +639,13 @@ public class TNEVault implements Economy {
   public boolean createPlayerAccount(final String name, final String world) {
 
     PluginCore.log().debug("Vault Method: Create Player Account!", DebugLevel.STANDARD);
-    return TNECore.eco().account().createAccount(name, name).getResponse().success();
+    //A name is not an identifier: creating from it would replace an existing account with an empty one.
+    if(TNECore.eco().account().findAccount(name).isPresent()) {
+      return false;
+    }
+    //Cached only: resolving an unknown name otherwise scans every player data file on this thread.
+    final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
+    return player != null && createPlayerAccount(player, world);
   }
 
   /**

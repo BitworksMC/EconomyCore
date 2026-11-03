@@ -36,7 +36,6 @@ import net.tnemc.plugincore.core.io.message.MessageHandler;
 
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -116,8 +115,8 @@ public class TransactionMenu extends Menu {
       if(adjustedPage > sorted.maxPages()) {
         break;
       }
-      for(final Map.Entry<Long, UUID> entry : sorted.getPage(adjustedPage).entrySet()) {
-        final Optional<Receipt> receipt = account.findReceipt(entry.getValue());
+      for(final UUID id : sorted.getPage(adjustedPage)) {
+        final Optional<Receipt> receipt = account.findReceipt(id);
         if(receipt.isPresent()) {
           //callback.getPage().addIcon(buildTransactionIcon(slot, receipt.get()));
         }

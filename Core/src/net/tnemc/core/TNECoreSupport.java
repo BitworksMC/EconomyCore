@@ -19,7 +19,6 @@ package net.tnemc.core;
  */
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.tnemc.core.channel.BalanceHandler;
 import net.tnemc.core.config.DataConfig;
 import net.tnemc.core.currency.item.ItemDenomination;
 import net.tnemc.item.AbstractItemStack;
@@ -40,10 +39,6 @@ final class TNECoreSupport {
 
   static StorageRegistration prepareStorage(final boolean syncEnabled, final String syncType) {
 
-    if(syncEnabled) {
-      PluginCore.instance().getChannelMessageManager().register(new BalanceHandler());
-      PluginCore.instance().getChannelMessageManager().register(new net.tnemc.core.channel.MessageHandler());
-    }
     return new StorageRegistration(storageSettings(syncType), redisPool(syncEnabled, syncType));
   }
 

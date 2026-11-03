@@ -89,20 +89,23 @@ public class YAMLReceipt implements Datable<Receipt> {
 
     final String fileSrc = "transactions/" + receipt.getId() + ".yml";
     TNECore.yaml().add(fileSrc);
-    final File file = new File(PluginCore.directory(), fileSrc);
-    if(!ensureFile(file, receipt)) {
-      return;
-    }
+    try {
+      final File file = new File(PluginCore.directory(), fileSrc);
+      if(!ensureFile(file, receipt)) {
+        return;
+      }
 
-    final YamlDocument yaml = loadDocument(file, receipt);
-    if(yaml == null) {
-      return;
+      final YamlDocument yaml = loadDocument(file, receipt);
+      if(yaml == null) {
+        return;
+      }
+      writeReceipt(yaml, receipt);
+      if(!saveDocument(yaml, receipt)) {
+        return;
+      }
+    } finally {
+      TNECore.yaml().remove(fileSrc);
     }
-    writeReceipt(yaml, receipt);
-    if(!saveDocument(yaml, receipt)) {
-      return;
-    }
-    TNECore.yaml().remove(fileSrc);
     receipt.clearDirty();
   }
 

@@ -120,7 +120,7 @@ TNE has some minimum requirements that should be followed.
 
 - MySQL 8.0+ (if using MySQL for storage)
 - MariaDB 10.7.0+
-- Java 17+ for Bukkit builds and Java 21+ for Paper/Folia builds (Paper 26.2 itself requires Java 25+)
+- Java 17+ for Bukkit builds and Java 21+ for Paper/Folia builds (Paper 26.2 and 26.3 require Java 25+)
 - Redis plus a shared `Data.Sync.Security.Token` on every backend server if you want cross-server
   syncing; opt in with `Data.Sync.Enabled: true`
 
