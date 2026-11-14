@@ -40,12 +40,13 @@ public final class SaveProbe extends JavaPlugin {
   @Override
   public void onEnable() {
 
-    getServer().getScheduler().runTaskLater(this, this::run, 40L);
+    ProbeScheduler.run(this, this::run);
   }
 
   private void run() {
 
     final File marker = new File(getDataFolder(), "restart-check");
+    final int phase = marker.exists()? 2 : 1;
     try {
       if(marker.exists()) {
         check("restart", FINAL, balance());
@@ -53,14 +54,13 @@ public final class SaveProbe extends JavaPlugin {
         marker.delete();
       } else {
         firstRun(marker);
+        return;
       }
     } catch(final Exception e) {
       failures.add("exception: " + e);
       getLogger().severe("Probe failed: " + e);
     }
-    getLogger().info("SAVE_PROBE_RESULT phase=" + (marker.exists()? "1" : "2") + " failures=" + failures.size()
-                     + " " + failures);
-    getServer().shutdown();
+    finish(phase);
   }
 
   private void firstRun(final File marker) throws Exception {
@@ -81,13 +81,33 @@ public final class SaveProbe extends JavaPlugin {
     pool.awaitTermination(2, TimeUnit.MINUTES);
     check("concurrent", CONCURRENT, balance());
 
-    AdminCommand.onReloadDB(null);
-    check("reloaddb", CONCURRENT, balance());
+    //Concurrent plugin calls and an admin reload are separate events. Give each its own tick;
+    //the timed reload still includes flushing all 8,000 unsaved receipts and reloading them.
+    ProbeScheduler.next(this, ()->completeFirstRun(marker));
+  }
 
-    give(5);
-    pay(2);
-    getDataFolder().mkdirs();
-    marker.createNewFile();
+  private void completeFirstRun(final File marker) {
+
+    try {
+      final long reloadStarted = System.nanoTime();
+      AdminCommand.onReloadDB(null);
+      getLogger().info("SAVE_PROBE_RELOAD_MILLIS " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - reloadStarted));
+      check("reloaddb", CONCURRENT, balance());
+      give(5);
+      pay(2);
+      getDataFolder().mkdirs();
+      marker.createNewFile();
+    } catch(final Exception e) {
+      failures.add("exception: " + e);
+      getLogger().severe("Probe failed: " + e);
+    }
+    finish(1);
+  }
+
+  private void finish(final int phase) {
+
+    getLogger().info("SAVE_PROBE_RESULT phase=" + phase + " failures=" + failures.size() + " " + failures);
+    getServer().shutdown();
   }
 
   private void give(final int amount) {

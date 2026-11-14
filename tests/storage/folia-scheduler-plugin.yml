@@ -1,0 +1,6 @@
+name: FoliaSchedulerProbe
+version: '1'
+main: FoliaSchedulerProbe
+api-version: '1.20'
+folia-supported: true
+depend: [TheNewEconomy]

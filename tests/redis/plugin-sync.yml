@@ -1,0 +1,10 @@
+name: PluginSyncProbe
+version: '1.0'
+main: PluginSyncProbe
+api-version: '1.21'
+folia-supported: true
+depend: [TheNewEconomy]
+commands:
+  syncprobe:
+    description: Isolated Redis integration probe
+    permission: syncprobe.console

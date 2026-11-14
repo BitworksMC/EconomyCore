@@ -184,7 +184,7 @@ public class PaperPlugin {
         known.remove(label);
         remove.invoke(root, label);
       }
-      Bukkit.getOnlinePlayers().forEach(Player::updateCommands);
+      Bukkit.getOnlinePlayers().stream().filter(Bukkit::isOwnedByCurrentRegion).forEach(Player::updateCommands);
     } catch(final ReflectiveOperationException | RuntimeException e) {
       plugin.getLogger().log(Level.WARNING, "Unable to unregister TNE commands; tab completing them may fail until restart.", e);
     }

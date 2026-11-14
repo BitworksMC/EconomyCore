@@ -18,7 +18,6 @@ package net.tnemc.folia.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import net.tnemc.core.TNECore;
 import net.tnemc.menu.folia.FoliaPlayer;
 import net.tnemc.paper.PaperCore;
@@ -195,7 +194,12 @@ public class FoliaPlayerProvider extends FoliaPlayer implements PlayerProvider {
   @Override
   public List<String> getEffectivePermissions() {
 
-    return List.of();
+    if(player.getPlayer() == null) {
+      return List.of();
+    }
+    return player.getPlayer().getEffectivePermissions().stream()
+            .filter(org.bukkit.permissions.PermissionAttachmentInfo::getValue)
+            .map(org.bukkit.permissions.PermissionAttachmentInfo::getPermission).toList();
   }
 
   /**
@@ -234,9 +238,7 @@ public class FoliaPlayerProvider extends FoliaPlayer implements PlayerProvider {
       return;
     }
 
-    try(final BukkitAudiences provider = BukkitAudiences.create(PaperCore.instance().getPlugin())) {
-      MessageHandler.translate(messageData, player.getUniqueId(), provider.sender(player.getPlayer()));
-    }
+    MessageHandler.translate(messageData, player.getUniqueId(), player.getPlayer());
   }
 
   public OfflinePlayer getPlayer() {

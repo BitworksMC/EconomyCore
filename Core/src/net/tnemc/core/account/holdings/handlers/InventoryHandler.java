@@ -28,7 +28,6 @@ import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.CurrencyType;
 import net.tnemc.core.currency.calculations.CalculationData;
 import net.tnemc.core.currency.item.ItemCurrency;
-import net.tnemc.core.transaction.Transaction;
 import net.tnemc.core.utils.Identifier;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
@@ -88,18 +87,20 @@ public class InventoryHandler implements HoldingsHandler {
    */
   /**
    * Player inventories may only be read on the server thread. Elsewhere, e.g. while saving or for an
-   * async balance check, the balance last copied into the wallet is used. A transaction still reads
-   * the inventory it is about to change.
+   * async balance check, the balance last copied into the wallet is used.
    */
-  static boolean inventoryUnavailable() {
+  static boolean inventoryUnavailable(final Account account) {
 
-    return !TNECore.instance().isMainThread() && !Thread.holdsLock(Transaction.BALANCE_LOCK);
+    return !TNECore.instance().canAccessInventory(account.getIdentifier());
   }
 
   @Override
   public boolean setHoldings(final Account account, final String region, final Currency currency, final CurrencyType type, final BigDecimal amount) {
 
     if(account.isPlayer() && PluginCore.server().online(account.getIdentifier().toString()) && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
+      if(inventoryUnavailable(account)) {
+        return false;
+      }
       final CalculationData<Object> data = new CalculationData<>((ItemCurrency)currency,
                                                                  ((PlayerAccount)account).getPlayer()
                                                                          .get().inventory().getInventory(false),
@@ -126,7 +127,7 @@ public class InventoryHandler implements HoldingsHandler {
 
     if((currency instanceof ItemCurrency)) {
 
-      if(!account.isPlayer() || inventoryUnavailable() || !PluginCore.server().online(account.getIdentifier().toString()) ||
+      if(!account.isPlayer() || inventoryUnavailable(account) || !PluginCore.server().online(account.getIdentifier().toString()) ||
          TNECore.eco().account().getLoading().contains(account.getIdentifier())
          && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
 

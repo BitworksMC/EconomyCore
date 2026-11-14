@@ -87,6 +87,9 @@ public class EnderChestHandler implements HoldingsHandler {
   public boolean setHoldings(final Account account, final String region, final Currency currency, final CurrencyType type, final BigDecimal amount) {
 
     if(account.isPlayer() && PluginCore.server().online(account.getIdentifier().toString()) && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
+      if(InventoryHandler.inventoryUnavailable(account)) {
+        return false;
+      }
       final CalculationData<Object> data = new CalculationData<>((ItemCurrency)currency,
                                                                  ((PlayerAccount)account).getPlayer()
                                                                          .get().inventory().getInventory(true),
@@ -118,7 +121,7 @@ public class EnderChestHandler implements HoldingsHandler {
   public HoldingsEntry getHoldings(final Account account, final String region, final Currency currency, final CurrencyType type) {
 
     if((currency instanceof ItemCurrency) && account.isPlayer()) {
-      if(InventoryHandler.inventoryUnavailable() || !PluginCore.server().online(account.getIdentifier().toString()) ||
+      if(InventoryHandler.inventoryUnavailable(account) || !PluginCore.server().online(account.getIdentifier().toString()) ||
          TNECore.eco().account().getLoading().contains(account.getIdentifier())
          && !TNECore.eco().account().getImporting().contains(account.getIdentifier())) {
 

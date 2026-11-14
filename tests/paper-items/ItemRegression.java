@@ -31,7 +31,7 @@ public final class ItemRegression extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    Bukkit.getScheduler().runTask(this, () -> {
+    ProbeScheduler.run(this, () -> {
       check("raw-custom-data", () -> roundtrip(coin()));
       check("raw-custom-data-with-pdc", () -> {
         final ItemStack item = coin();
@@ -154,7 +154,7 @@ public final class ItemRegression extends JavaPlugin {
         }
       });
       getLogger().info("ITEM_REGRESSION_RESULT checks=" + checks + " failures=" + failures);
-      Bukkit.getScheduler().runTaskLater(this, Bukkit::shutdown, 1L);
+      ProbeScheduler.later(this, Bukkit::shutdown, 1L);
     });
   }
 

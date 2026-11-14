@@ -20,11 +20,9 @@ import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
 import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 import net.tnemc.plugincore.core.io.storage.Datable;
 import net.tnemc.plugincore.core.io.storage.StorageConnector;
-import net.tnemc.plugincore.core.io.storage.StorageManager;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,14 +78,16 @@ public final class SaveService {
     if(!autosaving.compareAndSet(false, true)) {
       return;
     }
-    snapshotOnlinePlayers();
-    run(()->{
-      try {
-        PluginCore.log().inform("Running AutoSaver.");
-        saveDirty();
-      } finally {
-        autosaving.set(false);
-      }
+    snapshotOnlinePlayers().whenComplete((ignored, failure)->{
+      reportSnapshotFailure(failure);
+      run(()->{
+        try {
+          PluginCore.log().inform("Running AutoSaver.");
+          saveDirty();
+        } finally {
+          autosaving.set(false);
+        }
+      });
     });
   }
 
@@ -96,8 +96,21 @@ public final class SaveService {
    */
   public void save(final Account account) {
 
-    run(()->datable(Account.class).ifPresent(datable->datable.store(connector(), account,
-                                                                        account.getIdentifier().toString())));
+    run(()->{
+      //A queued logout/creation save must not resurrect a deleted or replaced account.
+      if(TNECore.eco().account().findAccount(account.getIdentifier()).orElse(null) == account) {
+        datable(Account.class).ifPresent(datable->datable.store(connector(), account,
+                                                               account.getIdentifier().toString()));
+      }
+    });
+  }
+
+  /**
+   * Deletes an account after every earlier queued write and before later creation saves.
+   */
+  public void delete(final String identifier) {
+
+    run(()->datable(Account.class).ifPresent(datable->datable.delete(connector(), identifier)));
   }
 
   /**
@@ -105,8 +118,10 @@ public final class SaveService {
    */
   public void saveAll() {
 
-    snapshotOnlinePlayers();
-    run(this::saveDirty);
+    snapshotOnlinePlayers().whenComplete((ignored, failure)->{
+      reportSnapshotFailure(failure);
+      run(this::saveDirty);
+    });
   }
 
   /**
@@ -131,6 +146,10 @@ public final class SaveService {
    */
   public boolean reload(final Runnable reload) {
 
+    //Entity scheduler tasks may themselves be waiting for the balance lock.
+    if(!awaitSnapshot(RELOAD_TIMEOUT_SECONDS)) {
+      return false;
+    }
     synchronized(Transaction.BALANCE_LOCK) {
       if(!flush(RELOAD_TIMEOUT_SECONDS)) {
         PluginCore.log().error("Reload cancelled: unsaved balance changes could not be saved.", DebugLevel.OFF);
@@ -148,7 +167,6 @@ public final class SaveService {
    */
   private boolean flush(final long timeoutSeconds) {
 
-    snapshotOnlinePlayers();
     if(Thread.currentThread() == storageThread) {
       saveDirty();
       return accountsSaved();
@@ -181,11 +199,13 @@ public final class SaveService {
   }
 
   /**
-   * Saves everything, stops the storage thread and releases plugin core's storage worker.
+   * Saves everything and stops the storage thread without scheduling work after plugin disable.
    */
   public void shutdown() {
 
-    if(!flush(FLUSH_TIMEOUT_SECONDS)) {
+    final boolean snapshot = awaitSnapshot(FLUSH_TIMEOUT_SECONDS);
+    final boolean saved = flush(FLUSH_TIMEOUT_SECONDS);
+    if(!snapshot || !saved) {
       PluginCore.log().error("TNE could not save every account before shutdown; unsaved balance changes are lost.",
                              DebugLevel.OFF);
     }
@@ -195,7 +215,6 @@ public final class SaveService {
     } catch(final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    stopPluginCoreWorker();
   }
 
   private void saveDirty() {
@@ -206,32 +225,47 @@ public final class SaveService {
 
   /**
    * Item balances live in player inventories, so picking items up or dropping them changes no
-   * wallet. Copies them into the wallets of online players and marks those for saving. Does
-   * nothing off the server thread, where inventories cannot be read.
+   * wallet. Copies them into the wallets of online players on each player's owning thread, then
+   * allows storage work to start.
    */
-  private void snapshotOnlinePlayers() {
+  private CompletableFuture<Void> snapshotOnlinePlayers() {
 
-    if(!TNECore.instance().isMainThread()
-       || TNECore.eco().currency().currencies().stream().noneMatch(currency->currency.type().supportsItems())) {
-      return;
+    if(TNECore.eco().currency().currencies().stream().noneMatch(currency->currency.type().supportsItems())) {
+      return CompletableFuture.completedFuture(null);
     }
 
-    for(final String name : onlinePlayers()) {
-      TNECore.eco().account().findAccount(name).ifPresent(account->{
-        if(account instanceof final PlayerAccount player) {
-          player.getPlayer().ifPresent(provider->PlayerLeaveHandler.syncItemHoldings(provider, player));
-        }
-        account.markDirty();
-      });
+    try {
+      return TNECore.instance().snapshotOnlinePlayers(identifier->
+        TNECore.eco().account().findAccount(identifier).ifPresent(account->{
+          if(account instanceof final PlayerAccount player) {
+            player.getPlayer().ifPresent(provider->PlayerLeaveHandler.syncItemHoldings(provider, player));
+          }
+          account.markDirty();
+        }));
+    } catch(final RuntimeException e) {
+      return CompletableFuture.failedFuture(e);
     }
   }
 
-  private Collection<String> onlinePlayers() {
+  private boolean awaitSnapshot(final long timeoutSeconds) {
 
     try {
-      return PluginCore.server().onlinePlayersList();
-    } catch(final RuntimeException e) {
-      return Collections.emptyList();
+      snapshotOnlinePlayers().get(timeoutSeconds, TimeUnit.SECONDS);
+      return true;
+    } catch(final InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return false;
+    } catch(final ExecutionException | TimeoutException | RuntimeException e) {
+      reportSnapshotFailure(e);
+      return false;
+    }
+  }
+
+  private void reportSnapshotFailure(final Throwable failure) {
+
+    if(failure != null) {
+      PluginCore.log().error("Failed to copy online item balances before saving.",
+                             failure instanceof final Exception exception? exception : new Exception(failure), DebugLevel.OFF);
     }
   }
 
@@ -258,60 +292,4 @@ public final class SaveService {
     return TNECore.instance().storage().getConnector();
   }
 
-  /**
-   * Plugin core's storage worker blocks on its queue and ignores executor shutdown, which stalled
-   * every server stop for 10 seconds. A final queued task stops it once earlier queued work ran.
-   */
-  private static void stopPluginCoreWorker() {
-
-    final StorageManager storage = StorageManager.instance();
-    if(storage == null) {
-      return;
-    }
-    storage.getEngine().datables().put(WorkerStop.class, new WorkerStopDatable());
-    storage.store(new WorkerStop(Thread.currentThread()), "");
-  }
-
-  private record WorkerStop(Thread caller) { }
-
-  private static final class WorkerStopDatable implements Datable<WorkerStop> {
-
-    @Override
-    public Class<? extends WorkerStop> clazz() {
-
-      return WorkerStop.class;
-    }
-
-    @Override
-    public void purge(final StorageConnector<?> connector) {
-    }
-
-    @Override
-    public void store(final StorageConnector<?> connector, final WorkerStop stop, final String identifier) {
-
-      if(Thread.currentThread() != stop.caller()) {
-        Thread.currentThread().interrupt();
-      }
-    }
-
-    @Override
-    public void storeAll(final StorageConnector<?> connector, final String identifier) {
-    }
-
-    @Override
-    public void delete(final StorageConnector<?> connector, final String identifier) {
-    }
-
-    @Override
-    public Optional<WorkerStop> load(final StorageConnector<?> connector, final String identifier) {
-
-      return Optional.empty();
-    }
-
-    @Override
-    public Collection<WorkerStop> loadAll(final StorageConnector<?> connector, final String identifier) {
-
-      return Collections.emptyList();
-    }
-  }
 }

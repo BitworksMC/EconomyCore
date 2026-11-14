@@ -24,8 +24,6 @@ import net.tnemc.core.account.holdings.HoldingsEntry;
 import net.tnemc.core.transaction.Transaction;
 import net.tnemc.core.utils.Identifier;
 import net.tnemc.plugincore.PluginCore;
-import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
-import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -35,6 +33,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Syncs balance changes between servers.
@@ -96,34 +97,62 @@ public final class BalanceHandler {
     final Identifier handler = Identifier.fromID(in.readUTF());
     final BigDecimal delta = new BigDecimal(in.readUTF());
 
-    if(APPLIED.put(change, Boolean.TRUE) != null) {
+    if(APPLIED.containsKey(change)) {
       return;
     }
 
-    //Balances, and item balances in inventories, are only changed on the server thread.
-    PluginCore.server().scheduler().createDelayedTask(()->apply(accountID, accountName, region, currency, handler, delta),
-                                                      new ChoreTime(0), ChoreExecution.MAIN_THREAD);
+    try {
+      if(TNECore.eco().currency().find(currency)
+              .map(value->value.type().name().equals("virtual") && !value.type().supportsItems()).orElse(false)) {
+        //Virtual balances have no player-thread state; serialise them directly without a tick delay.
+        apply(change, accountID, accountName, region, currency, handler, delta);
+        return;
+      }
+      //The reader advances its stream cursor only after the owning player thread applied the delta.
+      TNECore.instance().runPlayerTask(UUID.fromString(accountID),
+              ()->apply(change, accountID, accountName, region, currency, handler, delta)).get(20, TimeUnit.SECONDS);
+    } catch(final InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      throw new SyncApplyException(interrupted);
+    } catch(final ExecutionException | TimeoutException | RuntimeException failure) {
+      throw new SyncApplyException(failure);
+    }
   }
 
-  private static void apply(final String accountID, final String accountName, final String region, final UUID currency,
+  private static void apply(final UUID change, final String accountID, final String accountName, final String region, final UUID currency,
                             final Identifier handler, final BigDecimal delta) {
 
     synchronized(Transaction.BALANCE_LOCK) {
+      if(APPLIED.containsKey(change)) {
+        return;
+      }
       Optional<Account> account = TNECore.eco().account().findAccount(accountID);
       if(account.isEmpty()) {
         account = TNECore.eco().account().createAccount(accountID, accountName).getAccount();
       }
       if(account.isEmpty()) {
-        return;
+        throw new IllegalStateException("Unable to create account for synced balance " + accountID);
       }
 
       final BigDecimal current = account.get().getHoldingsTotal(region, currency, handler);
       APPLYING_REMOTE.set(true);
       try {
-        account.get().setHoldings(new HoldingsEntry(region, currency, current.add(delta), handler), handler);
+        if(!account.get().setHoldings(new HoldingsEntry(region, currency, current.add(delta), handler), handler)) {
+          throw new IllegalStateException("Unable to apply synced balance to " + accountID);
+        }
+        APPLIED.put(change, Boolean.TRUE);
       } finally {
         APPLYING_REMOTE.set(false);
       }
+    }
+  }
+
+  /** Transient dispatch/application failures must reconnect and retry, rather than skip the entry. */
+  static final class SyncApplyException extends RuntimeException {
+
+    private SyncApplyException(final Exception cause) {
+
+      super("Unable to apply Redis balance update", cause);
     }
   }
 }

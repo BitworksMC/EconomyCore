@@ -35,6 +35,7 @@ import net.tnemc.core.api.callback.account.AccountDeleteCallback;
 import net.tnemc.core.api.callback.account.AccountTypesCallback;
 import net.tnemc.core.api.response.AccountAPIResponse;
 import net.tnemc.core.config.MainConfig;
+import net.tnemc.core.transaction.Transaction;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.id.UUIDPair;
@@ -133,6 +134,13 @@ public class AccountManager {
    * @return An AccountAPIResponse object with the result of the account creation process.
    */
   public AccountAPIResponse createAccount(final String identifier, final String name, final boolean nonPlayer, final boolean skipDB) {
+
+    synchronized(Transaction.BALANCE_LOCK) {
+      return createAccountLocked(identifier, name, nonPlayer, skipDB);
+    }
+  }
+
+  private AccountAPIResponse createAccountLocked(final String identifier, final String name, final boolean nonPlayer, final boolean skipDB) {
 
     PluginCore.log().debug("Create Account Called! ID: " + identifier + " Name: " + name);
     logColorCodeStack(name);
@@ -308,6 +316,13 @@ public class AccountManager {
    */
   public EconomyResponse deleteAccount(@NotNull final String identifier) {
 
+    synchronized(Transaction.BALANCE_LOCK) {
+      return deleteAccountLocked(identifier);
+    }
+  }
+
+  private EconomyResponse deleteAccountLocked(final String identifier) {
+
     if(!accounts.containsKey(identifier)) {
       PluginCore.log().debug("Account Doesn't Exist: " + identifier);
       return AccountResponse.DOESNT_EXIST;
@@ -323,7 +338,7 @@ public class AccountManager {
       uuidProvider.pairs().remove(id);
       accounts.remove(identifier);
       PluginCore.log().debug("Deleting account: " + identifier);
-      TNECore.instance().storage().delete(Account.class, identifier);
+      TNECore.instance().saver().delete(identifier);
     } catch(final Exception ignore) {
 
       PluginCore.log().debug("Failed to delete account: " + identifier);

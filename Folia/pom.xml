@@ -110,7 +110,10 @@
                     </dependencyReducedPomLocation>
                     <artifactSet>
                         <includes>
-                            <include>net.tnemc:*</include>
+                            <!-- Paper already contains the filtered, compatible shaded runtime.
+                                 Do not merge older TNIL/Lamp copies back in from TNPC or TNML. -->
+                            <include>net.tnemc:Paper</include>
+                            <include>net.tnemc:TNML-Folia</include>
                             <include>org.bstats:*</include>
                             <include>org.json.simple:*</include>
                             <include>com.zaxxer:*</include>
@@ -137,21 +140,9 @@
                     <filters>
                         <filter>
                             <artifact>net.tnemc:TNML-Folia</artifact>
-                            <excludes>
-                                <exclude>net/tnemc/item/platform/conversion/PlatformConverter.class</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>net.tnemc:EconomyCore</artifact>
-                            <excludes>
-                                <exclude>net/tnemc/item/platform/conversion/PlatformConverter.class</exclude>
-                            </excludes>
-                        </filter>
-                        <filter>
-                            <artifact>net.tnemc:TNPC-Core</artifact>
-                            <excludes>
-                                <exclude>net/tnemc/item/platform/conversion/PlatformConverter.class</exclude>
-                            </excludes>
+                            <includes>
+                                <include>net/tnemc/menu/folia/**</include>
+                            </includes>
                         </filter>
                     </filters>
                     <relocations>

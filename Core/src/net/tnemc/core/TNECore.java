@@ -90,7 +90,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * The core class of TNE which should be used within each implementation's class.
@@ -242,10 +244,9 @@ public abstract class TNECore extends PluginEngine {
       this.syncEnabledAtStartup = false;
     }
 
-    if(pool != null && !redisConnectionAvailable(pool)) {
-      pool.close();
-      pool = null;
-      this.syncEnabledAtStartup = false;
+    if(pool != null) {
+      //A temporary outage must not disable reconnects or strand the durable outbox until restart.
+      redisConnectionAvailable(pool);
     }
 
     //TNE runs Redis itself; plugin core's subscriber cannot reconnect and only listens to one channel.
@@ -276,7 +277,7 @@ public abstract class TNECore extends PluginEngine {
       return true;
     } catch(final Exception e) {
       PluginCore.log().error("Unable to connect to Redis (" + e.getMessage()
-                             + "). Cross-server sync will be disabled for this startup.",
+                             + "). Cross-server sync will retry in the background; outgoing changes are retained.",
                              DebugLevel.OFF);
       return false;
     }
@@ -578,6 +579,29 @@ public abstract class TNECore extends PluginEngine {
   public boolean isMainThread() {
 
     return true;
+  }
+
+  /**
+   * Whether this thread owns the online player's inventory. A balance lock does not grant ownership.
+   */
+  public boolean canAccessInventory(final UUID player) {
+
+    return isMainThread();
+  }
+
+  /**
+   * Runs a snapshot on the owning thread of every online player, completing after all snapshots.
+   * Platforms with region threads override this to dispatch to each player's entity scheduler.
+   */
+  public CompletableFuture<Void> snapshotOnlinePlayers(final Consumer<UUID> snapshot) {
+
+    return OnlinePlayerSnapshots.snapshot(this, snapshot);
+  }
+
+  /** Runs player-related work on its owning thread, or the server thread when offline. */
+  public CompletableFuture<Void> runPlayerTask(final UUID identifier, final Runnable task) {
+
+    return OnlinePlayerSnapshots.run(this, task);
   }
 
   public AbstractItemStack<?> denominationToStack(final ItemDenomination denomination) {

@@ -55,6 +55,25 @@ Use TNE on the platform you want!
   Spigot server to your
   Sponge Server!
 
+### Folia 26.3
+
+Use the `TNE-Folia` artifact on Folia. It includes the same Paper 26.3 item compatibility
+runtime, with global and per-player region scheduling for saving inventory balances.
+Virtual currencies support concurrent and cross-region transactions.
+
+Physical item currency operations on an online player must run on the thread that owns that
+player's region. Synchronous transactions involving online players in different regions are
+rejected before either balance changes. The same applies to asynchronous Vault item mutations;
+holding TNE's balance lock does not grant access to a player inventory.
+
+Plugins can dispatch a single player's item operation with
+`TNECore.instance().runPlayerTask(playerId, itemAction)`, where `itemAction` is a `Runnable`
+that processes the transaction and handles its checked exceptions. The helper returns a
+`CompletableFuture<Void>`; handle the result asynchronously and do not block a region thread
+waiting for another region. This helper does not turn a multi-region physical item transfer
+into an atomic operation. Autosaves collect each inventory on its owning entity thread before
+the storage worker saves the wallets.
+
 ## Proxy Bridge Status
 
 Velocity and Bungee bridge plugins are no longer part of the supported build.

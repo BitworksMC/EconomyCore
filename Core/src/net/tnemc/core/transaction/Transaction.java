@@ -330,8 +330,12 @@ public class Transaction {
 
     final TransactionResult result;
     synchronized(BALANCE_LOCK) {
-      refreshBalances();
-      result = processor.process(this);
+      if(inventoryUnavailable(getFromAccount(), modifierFrom) || inventoryUnavailable(getToAccount(), modifierTo)) {
+        result = new TransactionResult(false, "Item currency transactions must run on the owning player thread.");
+      } else {
+        refreshBalances();
+        result = processor.process(this);
+      }
     }
     if(resultConsumer != null) {
       resultConsumer.accept(result);
@@ -340,6 +344,18 @@ public class Transaction {
     PluginCore.callbacks().call(postTransaction);
     logReceipt(result);
     return result;
+  }
+
+  private boolean inventoryUnavailable(final Optional<Account> account, final HoldingsModifier modifier) {
+
+    if(account.isEmpty() || modifier == null || !account.get().isPlayer()
+       || !PluginCore.server().online(account.get().getIdentifier().toString())
+       || TNECore.instance().canAccessInventory(account.get().getIdentifier())
+       || modifier.getType().equals(EconomyManager.VIRTUAL) || modifier.getType().equals(EconomyManager.DATABASE)) {
+      return false;
+    }
+    return TNECore.eco().currency().find(modifier.getCurrency())
+            .map(currency->currency.type().supportsItems()).orElse(false);
   }
 
   /**
