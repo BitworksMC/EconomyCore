@@ -97,7 +97,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="PlayerAccount.html" title="class in net.tnemc.core.account">PlayerAccount</a></code>, <code><a href="SharedAccount.html" title="class in net.tnemc.core.account">SharedAccount</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-49">Account</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-46">Account</a></span>
 <span class="extends-implements">extends <a href="../transaction/receipt/ReceiptBox.html" title="class in net.tnemc.core.transaction.receipt">ReceiptBox</a></span></div>
 <div class="block">An object that is used to represent an Account within the economy plugin.</div>
 <dl class="notes">
@@ -266,7 +266,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(java.util.UUID,java.lang.String)">
 <h3>Account</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-61">Account</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-58">Account</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 </section>
 </li>
@@ -281,7 +281,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="type()">
 <h3>type</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-82">type</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-79">type</a></span>()</div>
 <div class="block">Used to get the type of account that this is. This is for data-purposes only.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -292,7 +292,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isPlayer()">
 <h3>isPlayer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-92">isPlayer</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-89">isPlayer</a></span>()</div>
 <div class="block">Used to determine if this <a href="Account.html" title="class in net.tnemc.core.account"><code>account</code></a> represents a Player.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -303,7 +303,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="supportsInventoryBalances()">
 <h3>supportsInventoryBalances</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-104">supportsInventoryBalances</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-101">supportsInventoryBalances</a></span>()</div>
 <div class="block">Used to determine if this <a href="Account.html" title="class in net.tnemc.core.account"><code>account</code></a> supports balances based on inventories. This
  is usually item-based currencies, or experience-based currencies. This should only return true
  if the account is a <a href="PlayerAccount.html" title="class in net.tnemc.core.account"><code>player</code></a>.</div>
@@ -316,7 +316,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getHoldingsTotal(java.lang.String,java.util.UUID)">
 <h3>getHoldingsTotal</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-117">getHoldingsTotal</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-114">getHoldingsTotal</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
  @NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;currency)</span></div>
@@ -333,7 +333,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getHoldingsTotal(java.lang.String,java.util.UUID,net.tnemc.core.utils.Identifier)">
 <h3>getHoldingsTotal</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-137">getHoldingsTotal</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-134">getHoldingsTotal</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
  @NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;currency,
@@ -353,7 +353,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getHoldings(java.lang.String,java.util.UUID)">
 <h3>getHoldings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-159">getHoldings</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-156">getHoldings</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
  @NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;currency)</span></div>
@@ -372,7 +372,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getHoldings(java.lang.String,java.util.UUID,net.tnemc.core.utils.Identifier)">
 <h3>getHoldings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-176">getHoldings</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-173">getHoldings</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
  @NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;currency,
@@ -394,7 +394,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getAllHoldings(java.lang.String,net.tnemc.core.utils.Identifier)">
 <h3>getAllHoldings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-199">getAllHoldings</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-196">getAllHoldings</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
  @NotNull
  @NotNull <a href="../utils/Identifier.html" title="class in net.tnemc.core.utils">Identifier</a>&nbsp;type)</span></div>
@@ -413,7 +413,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setHoldings(net.tnemc.core.account.holdings.HoldingsEntry)">
 <h3>setHoldings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-220">setHoldings</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-217">setHoldings</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&nbsp;entry)</span></div>
 <div class="block">Sets the holdings for the specified entry in this wallet.</div>
 <dl class="notes">
@@ -425,7 +425,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setHoldings(net.tnemc.core.account.holdings.HoldingsEntry,net.tnemc.core.utils.Identifier)">
 <h3>setHoldings</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-231">setHoldings</a></span><wbr><span class="parameters">(@NotNull
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-228">setHoldings</a></span><wbr><span class="parameters">(@NotNull
  @NotNull <a href="holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&nbsp;entry,
  @NotNull
  @NotNull <a href="../utils/Identifier.html" title="class in net.tnemc.core.utils">Identifier</a>&nbsp;type)</span></div>
@@ -440,85 +440,85 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getIdentifier()">
 <h3>getIdentifier</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-264">getIdentifier</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-257">getIdentifier</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="getName()">
 <h3>getName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-270">getName</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-263">getName</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="setName(java.lang.String)">
 <h3>setName</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-275">setName</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-268">setName</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getCreationDate()">
 <h3>getCreationDate</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-281">getCreationDate</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">long</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-274">getCreationDate</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="setCreationDate(long)">
 <h3>setCreationDate</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-286">setCreationDate</a></span><wbr><span class="parameters">(long&nbsp;creationDate)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-279">setCreationDate</a></span><wbr><span class="parameters">(long&nbsp;creationDate)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getPin()">
 <h3>getPin</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-292">getPin</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-285">getPin</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="setPin(java.lang.String)">
 <h3>setPin</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-297">setPin</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pin)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-290">setPin</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pin)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getStatus()">
 <h3>getStatus</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AccountStatus.html" title="interface in net.tnemc.core.account">AccountStatus</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-303">getStatus</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="AccountStatus.html" title="interface in net.tnemc.core.account">AccountStatus</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-296">getStatus</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="setStatus(net.tnemc.core.account.AccountStatus)">
 <h3>setStatus</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-308">setStatus</a></span><wbr><span class="parameters">(<a href="AccountStatus.html" title="interface in net.tnemc.core.account">AccountStatus</a>&nbsp;status)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-301">setStatus</a></span><wbr><span class="parameters">(<a href="AccountStatus.html" title="interface in net.tnemc.core.account">AccountStatus</a>&nbsp;status)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="getWallet()">
 <h3>getWallet</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="holdings/Wallet.html" title="class in net.tnemc.core.account.holdings">Wallet</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-314">getWallet</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="holdings/Wallet.html" title="class in net.tnemc.core.account.holdings">Wallet</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-307">getWallet</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="setWallet(net.tnemc.core.account.holdings.Wallet)">
 <h3>setWallet</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-319">setWallet</a></span><wbr><span class="parameters">(<a href="holdings/Wallet.html" title="class in net.tnemc.core.account.holdings">Wallet</a>&nbsp;wallet)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-312">setWallet</a></span><wbr><span class="parameters">(<a href="holdings/Wallet.html" title="class in net.tnemc.core.account.holdings">Wallet</a>&nbsp;wallet)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="isDirty()">
 <h3>isDirty</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-325">isDirty</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-318">isDirty</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="markDirty()">
 <h3>markDirty</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-330">markDirty</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-323">markDirty</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="clearDirty()">
 <h3>clearDirty</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-335">clearDirty</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/net/tnemc/core/account/Account.html#line-328">clearDirty</a></span>()</div>
 </section>
 </li>
 </ul>

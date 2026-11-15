@@ -97,7 +97,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="../bukkit/BukkitCore.html" title="class in net.tnemc.bukkit">BukkitCore</a></code>, <code><a href="../paper/PaperCore.html" title="class in net.tnemc.paper">PaperCore</a></code>, <code><a href="../sponge/SpongeCore.html" title="class in net.tnemc.sponge">SpongeCore</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-102">TNECore</a></span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-103">TNECore</a></span>
 <span class="extends-implements">extends net.tnemc.plugincore.core.PluginEngine</span></div>
 <div class="block">The core class of TNE which should be used within each implementation's class.</div>
 <dl class="notes">
@@ -163,35 +163,45 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#build()" class="member-name-link">build</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commandHelpWriter(revxrsal.commands.command.ExecutableCommand,revxrsal.commands.command.CommandActor)" class="member-name-link">commandHelpWriter</a><wbr>(revxrsal.commands.command.ExecutableCommand&nbsp;command,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#canAccessInventory(java.util.UUID)" class="member-name-link">canAccessInventory</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;player)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether this thread owns the online player's inventory.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commandHelpWriter(revxrsal.commands.command.ExecutableCommand,revxrsal.commands.command.CommandActor)" class="member-name-link">commandHelpWriter</a><wbr>(revxrsal.commands.command.ExecutableCommand&nbsp;command,
  revxrsal.commands.command.CommandActor&nbsp;actor)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="config/MainConfig.html" title="class in net.tnemc.core.config">MainConfig</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#config()" class="member-name-link">config</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="config/DataConfig.html" title="class in net.tnemc.core.config">DataConfig</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#data()" class="member-name-link">data</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="config/MainConfig.html" title="class in net.tnemc.core.config">MainConfig</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#config()" class="member-name-link">config</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>net.tnemc.item.AbstractItemStack<wbr>&lt;?&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#denominationToStack(net.tnemc.core.currency.item.ItemDenomination)" class="member-name-link">denominationToStack</a><wbr>(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="config/DataConfig.html" title="class in net.tnemc.core.config">DataConfig</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#data()" class="member-name-link">data</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>net.tnemc.item.AbstractItemStack<wbr>&lt;?&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#denominationToStack(net.tnemc.core.currency.item.ItemDenomination,int)" class="member-name-link">denominationToStack</a><wbr>(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination,
- int&nbsp;amount)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#denominationToStack(net.tnemc.core.currency.item.ItemDenomination)" class="member-name-link">denominationToStack</a><wbr>(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="EconomyManager.html" title="class in net.tnemc.core">EconomyManager</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#eco()" class="member-name-link">eco</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>net.tnemc.item.AbstractItemStack<wbr>&lt;?&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#denominationToStack(net.tnemc.core.currency.item.ItemDenomination,int)" class="member-name-link">denominationToStack</a><wbr>(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination,
+ int&nbsp;amount)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="EconomyManager.html" title="class in net.tnemc.core">EconomyManager</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#eco()" class="member-name-link">eco</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">The implementation's <a href="EconomyManager.html" title="class in net.tnemc.core"><code>EconomyManager</code></a>, which is used to manage everything economy related
  in TNE.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServerAccount()" class="member-name-link">getServerAccount</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="TNECore.html" title="class in net.tnemc.core">TNECore</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#instance()" class="member-name-link">instance</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getServerAccount()" class="member-name-link">getServerAccount</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="TNECore.html" title="class in net.tnemc.core">TNECore</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#instance()" class="member-name-link">instance</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isMainThread()" class="member-name-link">isMainThread</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Item balances live in player inventories, which may only be touched on the server thread.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>abstract &lt;INV&gt;&nbsp;<a href="currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a><wbr>&lt;INV&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#itemCalculations()" class="member-name-link">itemCalculations</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">&nbsp;</div>
@@ -234,20 +244,34 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerUpdateChecker()" class="member-name-link">registerUpdateChecker</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#syncEnabled()" class="member-name-link">syncEnabled</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runPlayerTask(java.util.UUID,java.lang.Runnable)" class="member-name-link">runPlayerTask</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;task)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Runs player-related work on its owning thread, or the server thread when offline.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="io/storage/SaveService.html" title="class in net.tnemc.core.io.storage">SaveService</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#saver()" class="member-name-link">saver</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#snapshotOnlinePlayers(java.util.function.Consumer)" class="member-name-link">snapshotOnlinePlayers</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;&nbsp;snapshot)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Runs a snapshot on the owning thread of every online player, completing after all snapshots.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#syncEnabled()" class="member-name-link">syncEnabled</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
 <div class="block">Whether Redis-backed cross-server synchronization is enabled.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#version()" class="member-name-link">version</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#versionCheckSite()" class="member-name-link">versionCheckSite</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#version()" class="member-name-link">version</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="io/yaml/YamlStorageManager.html" title="class in net.tnemc.core.io.yaml">YamlStorageManager</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#yaml()" class="member-name-link">yaml</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#versionCheckSite()" class="member-name-link">versionCheckSite</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static <a href="io/yaml/YamlStorageManager.html" title="class in net.tnemc.core.io.yaml">YamlStorageManager</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#yaml()" class="member-name-link">yaml</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -271,7 +295,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DEFAULT_WORLD">
 <h3>DEFAULT_WORLD</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-108">DEFAULT_WORLD</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-109">DEFAULT_WORLD</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -285,7 +309,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="coreURL">
 <h3>coreURL</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-109">coreURL</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-110">coreURL</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -299,7 +323,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="version">
 <h3>version</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-110">version</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-111">version</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -313,7 +337,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="build">
 <h3>build</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-111">build</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-112">build</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -335,7 +359,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;()">
 <h3>TNECore</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-126">TNECore</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-127">TNECore</a></span>()</div>
 </section>
 </li>
 </ul>
@@ -349,7 +373,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="eco()">
 <h3>eco</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="EconomyManager.html" title="class in net.tnemc.core">EconomyManager</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-137">eco</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="EconomyManager.html" title="class in net.tnemc.core">EconomyManager</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-138">eco</a></span>()</div>
 <div class="block">The implementation's <a href="EconomyManager.html" title="class in net.tnemc.core"><code>EconomyManager</code></a>, which is used to manage everything economy related
  in TNE.</div>
 <dl class="notes">
@@ -361,25 +385,25 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="yaml()">
 <h3>yaml</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="io/yaml/YamlStorageManager.html" title="class in net.tnemc.core.io.yaml">YamlStorageManager</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-142">yaml</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="io/yaml/YamlStorageManager.html" title="class in net.tnemc.core.io.yaml">YamlStorageManager</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-143">yaml</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="instance()">
 <h3>instance</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="TNECore.html" title="class in net.tnemc.core">TNECore</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-147">instance</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="TNECore.html" title="class in net.tnemc.core">TNECore</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-148">instance</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="api()">
 <h3>api</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="api/TNEAPI.html" title="class in net.tnemc.core.api">TNEAPI</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-152">api</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="api/TNEAPI.html" title="class in net.tnemc.core.api">TNEAPI</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-153">api</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="syncEnabled()">
 <h3>syncEnabled</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-162">syncEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-163">syncEnabled</a></span>()</div>
 <div class="block">Whether Redis-backed cross-server synchronization is enabled.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -390,7 +414,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="versionCheckSite()">
 <h3>versionCheckSite</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-167">versionCheckSite</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-168">versionCheckSite</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>versionCheckSite</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -400,7 +424,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="version()">
 <h3>version</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-173">version</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-174">version</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>version</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -410,7 +434,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="build()">
 <h3>build</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-179">build</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-180">build</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>build</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -420,7 +444,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerConfigs()">
 <h3>registerConfigs</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-185">registerConfigs</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-186">registerConfigs</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerConfigs</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -430,7 +454,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="postLoad()">
 <h3>postLoad</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-208">postLoad</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-209">postLoad</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>postLoad</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -440,7 +464,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerPluginChannels()">
 <h3>registerPluginChannels</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-221">registerPluginChannels</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-222">registerPluginChannels</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerPluginChannels</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -450,7 +474,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerStorage()">
 <h3>registerStorage</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-229">registerStorage</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-230">registerStorage</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerStorage</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -462,7 +486,7 @@ loadScripts(document, 'script');</script>
 <h3>registerParameters</h3>
 <div class="member-signature"><span class="annotations">@NotNull
 </span><span class="modifiers">public</span>&nbsp;<span class="type-parameters-long">&lt;A extends revxrsal.commands.command.CommandActor&gt;</span>
-<span class="return-type">@NotNull revxrsal.commands.LampBuilderVisitor&lt;A&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-347">registerParameters</a></span>()</div>
+<span class="return-type">@NotNull revxrsal.commands.LampBuilderVisitor&lt;A&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-351">registerParameters</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerParameters</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -472,7 +496,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerCommands()">
 <h3>registerCommands</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-360">registerCommands</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-364">registerCommands</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerCommands</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -482,7 +506,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerCallbacks(net.tnemc.plugincore.core.api.CallbackManager)">
 <h3>registerCallbacks</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-367">registerCallbacks</a></span><wbr><span class="parameters">(net.tnemc.plugincore.core.api.CallbackManager&nbsp;callbackManager)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-371">registerCallbacks</a></span><wbr><span class="parameters">(net.tnemc.plugincore.core.api.CallbackManager&nbsp;callbackManager)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>registerCallbacks</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -492,7 +516,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="commandHelpWriter(revxrsal.commands.command.ExecutableCommand,revxrsal.commands.command.CommandActor)">
 <h3>commandHelpWriter</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-382">commandHelpWriter</a></span><wbr><span class="parameters">(revxrsal.commands.command.ExecutableCommand&nbsp;command,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-386">commandHelpWriter</a></span><wbr><span class="parameters">(revxrsal.commands.command.ExecutableCommand&nbsp;command,
  revxrsal.commands.command.CommandActor&nbsp;actor)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -503,7 +527,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerUpdateChecker()">
 <h3>registerUpdateChecker</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-393">registerUpdateChecker</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-397">registerUpdateChecker</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>registerUpdateChecker</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -513,7 +537,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="postConfigs()">
 <h3>postConfigs</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-414">postConfigs</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-418">postConfigs</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>postConfigs</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -523,7 +547,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="postStorage()">
 <h3>postStorage</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-460">postStorage</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-464">postStorage</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>postStorage</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -533,7 +557,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="postEnable()">
 <h3>postEnable</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-465">postEnable</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-469">postEnable</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>postEnable</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -543,7 +567,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="postDisable()">
 <h3>postDisable</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-533">postDisable</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-532">postDisable</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code>postDisable</code>&nbsp;in class&nbsp;<code>net.tnemc.plugincore.core.PluginEngine</code></dd>
@@ -551,45 +575,89 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="saver()">
+<h3>saver</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="io/storage/SaveService.html" title="class in net.tnemc.core.io.storage">SaveService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-547">saver</a></span>()</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>The service that performs all TNE storage writes.</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="config()">
 <h3>config</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/MainConfig.html" title="class in net.tnemc.core.config">MainConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-551">config</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/MainConfig.html" title="class in net.tnemc.core.config">MainConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-552">config</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="data()">
 <h3>data</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/DataConfig.html" title="class in net.tnemc.core.config">DataConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-556">data</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/DataConfig.html" title="class in net.tnemc.core.config">DataConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-557">data</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="message()">
 <h3>message</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/MessageConfig.html" title="class in net.tnemc.core.config">MessageConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-561">message</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="config/MessageConfig.html" title="class in net.tnemc.core.config">MessageConfig</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-562">message</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="getServerAccount()">
 <h3>getServerAccount</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-566">getServerAccount</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-567">getServerAccount</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="itemCalculations()">
 <h3>itemCalculations</h3>
-<div class="member-signature"><span class="modifiers">public abstract</span>&nbsp;<span class="type-parameters">&lt;INV&gt;</span>&nbsp;<span class="return-type"><a href="currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a>&lt;INV&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-571">itemCalculations</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public abstract</span>&nbsp;<span class="type-parameters">&lt;INV&gt;</span>&nbsp;<span class="return-type"><a href="currency/calculations/ItemCalculations.html" title="class in net.tnemc.core.currency.calculations">ItemCalculations</a>&lt;INV&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-572">itemCalculations</a></span>()</div>
+</section>
+</li>
+<li>
+<section class="detail" id="isMainThread()">
+<h3>isMainThread</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-579">isMainThread</a></span>()</div>
+<div class="block">Item balances live in player inventories, which may only be touched on the server thread.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>true if the current thread may access player inventories.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="canAccessInventory(java.util.UUID)">
+<h3>canAccessInventory</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-587">canAccessInventory</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;player)</span></div>
+<div class="block">Whether this thread owns the online player's inventory. A balance lock does not grant ownership.</div>
+</section>
+</li>
+<li>
+<section class="detail" id="snapshotOnlinePlayers(java.util.function.Consumer)">
+<h3>snapshotOnlinePlayers</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-596">snapshotOnlinePlayers</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;&nbsp;snapshot)</span></div>
+<div class="block">Runs a snapshot on the owning thread of every online player, completing after all snapshots.
+ Platforms with region threads override this to dispatch to each player's entity scheduler.</div>
+</section>
+</li>
+<li>
+<section class="detail" id="runPlayerTask(java.util.UUID,java.lang.Runnable)">
+<h3>runPlayerTask</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-602">runPlayerTask</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;task)</span></div>
+<div class="block">Runs player-related work on its owning thread, or the server thread when offline.</div>
 </section>
 </li>
 <li>
 <section class="detail" id="denominationToStack(net.tnemc.core.currency.item.ItemDenomination)">
 <h3>denominationToStack</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.item.AbstractItemStack&lt;?&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-573">denominationToStack</a></span><wbr><span class="parameters">(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.item.AbstractItemStack&lt;?&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-607">denominationToStack</a></span><wbr><span class="parameters">(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="denominationToStack(net.tnemc.core.currency.item.ItemDenomination,int)">
 <h3>denominationToStack</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.item.AbstractItemStack&lt;?&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-578">denominationToStack</a></span><wbr><span class="parameters">(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.item.AbstractItemStack&lt;?&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/core/TNECore.html#line-612">denominationToStack</a></span><wbr><span class="parameters">(<a href="currency/item/ItemDenomination.html" title="class in net.tnemc.core.currency.item">ItemDenomination</a>&nbsp;denomination,
  int&nbsp;amount)</span></div>
 </section>
 </li>

@@ -77,25 +77,13 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Loads a Receipt object from a ResultSet.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="../../../../account/holdings/HoldingsEntry.html" title="class in net.tnemc.core.account.holdings">HoldingsEntry</a>&gt;</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">SQLReceipt.</span><code><a href="../../datables/sql/standard/SQLReceipt.html#loadHoldings(java.util.UUID,java.util.UUID,boolean,net.tnemc.plugincore.core.io.storage.connect.SQLConnector,net.tnemc.core.io.storage.dialect.TNEDialect)" class="member-name-link">loadHoldings</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;receiptID,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;participant,
- boolean&nbsp;ending,
- net.tnemc.plugincore.core.io.storage.connect.SQLConnector&nbsp;sql,
- <a href="../TNEDialect.html" title="interface in net.tnemc.core.io.storage.dialect">TNEDialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="../../../../account/holdings/modify/HoldingsModifier.html" title="class in net.tnemc.core.account.holdings.modify">HoldingsModifier</a>&gt;</code></div>
-<div class="col-second even-row-color"><span class="type-name-label">SQLReceipt.</span><code><a href="../../datables/sql/standard/SQLReceipt.html#loadModifier(java.util.UUID,java.util.UUID,java.lang.String,net.tnemc.plugincore.core.io.storage.connect.SQLConnector,net.tnemc.core.io.storage.dialect.TNEDialect)" class="member-name-link">loadModifier</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;receiptID,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;participant,
- <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;type,
- net.tnemc.plugincore.core.io.storage.connect.SQLConnector&nbsp;sql,
- <a href="../TNEDialect.html" title="interface in net.tnemc.core.io.storage.dialect">TNEDialect</a>&nbsp;dialect)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>void</code></div>
-<div class="col-second odd-row-color"><span class="type-name-label">SQLReceipt.</span><code><a href="../../datables/sql/standard/SQLReceipt.html#loadParticipants(net.tnemc.core.transaction.Receipt,net.tnemc.plugincore.core.io.storage.connect.SQLConnector,net.tnemc.core.io.storage.dialect.TNEDialect)" class="member-name-link">loadParticipants</a><wbr>(<a href="../../../../transaction/Receipt.html" title="class in net.tnemc.core.transaction">Receipt</a>&nbsp;receipt,
- net.tnemc.plugincore.core.io.storage.connect.SQLConnector&nbsp;sql,
- <a href="../TNEDialect.html" title="interface in net.tnemc.core.io.storage.dialect">TNEDialect</a>&nbsp;dialect)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">SQLHoldings.</span><code><a href="../../datables/sql/standard/SQLHoldings.html#storeHoldings(net.tnemc.plugincore.core.io.storage.connect.SQLConnector,net.tnemc.core.io.storage.dialect.TNEDialect,net.tnemc.core.account.Account)" class="member-name-link">storeHoldings</a><wbr>(net.tnemc.plugincore.core.io.storage.connect.SQLConnector&nbsp;sql,
+ <a href="../TNEDialect.html" title="interface in net.tnemc.core.io.storage.dialect">TNEDialect</a>&nbsp;tne,
+ <a href="../../../../account/Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Stores every holdings entry of an account in one database transaction.</div>
+</div>
 </div>
 </section>
 </li>

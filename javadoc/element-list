@@ -62,6 +62,7 @@ net.tnemc.core.io.maps
 net.tnemc.core.io.maps.comparators.receipt
 net.tnemc.core.io.message
 net.tnemc.core.io.serialization.impl
+net.tnemc.core.io.storage
 net.tnemc.core.io.storage.datables.sql.standard
 net.tnemc.core.io.storage.datables.yaml
 net.tnemc.core.io.storage.dialect
@@ -94,6 +95,7 @@ net.tnemc.core.utils.exceptions
 net.tnemc.folia
 net.tnemc.folia.impl
 net.tnemc.folia.impl.scheduler
+net.tnemc.item.paper.platform.impl.modern
 net.tnemc.item.platform.conversion
 net.tnemc.paper
 net.tnemc.paper.command

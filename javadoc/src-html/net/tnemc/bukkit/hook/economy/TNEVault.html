@@ -651,51 +651,55 @@
 <span class="source-line-no">638</span><span id="line-638">  public boolean createPlayerAccount(final String name, final String world) {</span>
 <span class="source-line-no">639</span><span id="line-639"></span>
 <span class="source-line-no">640</span><span id="line-640">    PluginCore.log().debug("Vault Method: Create Player Account!", DebugLevel.STANDARD);</span>
-<span class="source-line-no">641</span><span id="line-641">    return TNECore.eco().account().createAccount(name, name).getResponse().success();</span>
-<span class="source-line-no">642</span><span id="line-642">  }</span>
-<span class="source-line-no">643</span><span id="line-643"></span>
-<span class="source-line-no">644</span><span id="line-644">  /**</span>
-<span class="source-line-no">645</span><span id="line-645">   * Attempts to create a player account for the given player on the specified world IMPLEMENTATION</span>
-<span class="source-line-no">646</span><span id="line-646">   * SPECIFIC - if an economy plugin does not support this then false will always be returned.</span>
-<span class="source-line-no">647</span><span id="line-647">   *</span>
-<span class="source-line-no">648</span><span id="line-648">   * @param player OfflinePlayer</span>
-<span class="source-line-no">649</span><span id="line-649">   * @param world  String name of the world</span>
-<span class="source-line-no">650</span><span id="line-650">   *</span>
-<span class="source-line-no">651</span><span id="line-651">   * @return if the account creation was successful</span>
-<span class="source-line-no">652</span><span id="line-652">   */</span>
-<span class="source-line-no">653</span><span id="line-653">  public boolean createPlayerAccount(final OfflinePlayer player, final String world) {</span>
-<span class="source-line-no">654</span><span id="line-654"></span>
-<span class="source-line-no">655</span><span id="line-655">    PluginCore.log().debug("Vault Method: Create Player Account!", DebugLevel.STANDARD);</span>
-<span class="source-line-no">656</span><span id="line-656">    if(player.getName() == null) {</span>
-<span class="source-line-no">657</span><span id="line-657"></span>
-<span class="source-line-no">658</span><span id="line-658">      PluginCore.log().error("Error from plugin accessing vault createPlayerAccount! Name provided is null!(probably EssentialsX)");</span>
-<span class="source-line-no">659</span><span id="line-659">      return false;</span>
-<span class="source-line-no">660</span><span id="line-660">    }</span>
-<span class="source-line-no">661</span><span id="line-661">    PluginCore.log().debug("Vault Method: Name: " + player.getName() + " ID: " + player.getUniqueId(), DebugLevel.STANDARD);</span>
-<span class="source-line-no">662</span><span id="line-662"></span>
-<span class="source-line-no">663</span><span id="line-663">    if(player.getName().contains("§")) {</span>
-<span class="source-line-no">664</span><span id="line-664">      PluginCore.log().debug("==== Vault create call with color code! ====", DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">665</span><span id="line-665"></span>
-<span class="source-line-no">666</span><span id="line-666">      final StackTraceElement[] elements = Thread.currentThread().getStackTrace();</span>
-<span class="source-line-no">667</span><span id="line-667">      for(int i = 1; i &lt; elements.length; i++) {</span>
-<span class="source-line-no">668</span><span id="line-668">        final StackTraceElement s = elements[i];</span>
-<span class="source-line-no">669</span><span id="line-669">        PluginCore.log().debug("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":" + s.getLineNumber() + ")", DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">670</span><span id="line-670">      }</span>
-<span class="source-line-no">671</span><span id="line-671">      PluginCore.log().debug("==== End Stack Print ====", DebugLevel.DEVELOPER);</span>
-<span class="source-line-no">672</span><span id="line-672">      return false;</span>
-<span class="source-line-no">673</span><span id="line-673">    }</span>
-<span class="source-line-no">674</span><span id="line-674"></span>
-<span class="source-line-no">675</span><span id="line-675">    return TNECore.eco().account().createAccount(player.getUniqueId().toString(), player.getName()).getResponse().success();</span>
-<span class="source-line-no">676</span><span id="line-676">  }</span>
-<span class="source-line-no">677</span><span id="line-677"></span>
-<span class="source-line-no">678</span><span id="line-678">  private EconomyResponse.ResponseType fromResult(@Nullable final TransactionResult result) {</span>
-<span class="source-line-no">679</span><span id="line-679"></span>
-<span class="source-line-no">680</span><span id="line-680">    if(result != null &amp;&amp; result.isSuccessful()) {</span>
-<span class="source-line-no">681</span><span id="line-681">      return EconomyResponse.ResponseType.SUCCESS;</span>
-<span class="source-line-no">682</span><span id="line-682">    }</span>
-<span class="source-line-no">683</span><span id="line-683">    return EconomyResponse.ResponseType.FAILURE;</span>
-<span class="source-line-no">684</span><span id="line-684">  }</span>
-<span class="source-line-no">685</span><span id="line-685">}</span>
+<span class="source-line-no">641</span><span id="line-641">    //A name is not an identifier: creating from it would replace an existing account with an empty one.</span>
+<span class="source-line-no">642</span><span id="line-642">    if(TNECore.eco().account().findAccount(name).isPresent()) {</span>
+<span class="source-line-no">643</span><span id="line-643">      return false;</span>
+<span class="source-line-no">644</span><span id="line-644">    }</span>
+<span class="source-line-no">645</span><span id="line-645">    return TNECore.eco().account().createAccount(name, name).getResponse().success();</span>
+<span class="source-line-no">646</span><span id="line-646">  }</span>
+<span class="source-line-no">647</span><span id="line-647"></span>
+<span class="source-line-no">648</span><span id="line-648">  /**</span>
+<span class="source-line-no">649</span><span id="line-649">   * Attempts to create a player account for the given player on the specified world IMPLEMENTATION</span>
+<span class="source-line-no">650</span><span id="line-650">   * SPECIFIC - if an economy plugin does not support this then false will always be returned.</span>
+<span class="source-line-no">651</span><span id="line-651">   *</span>
+<span class="source-line-no">652</span><span id="line-652">   * @param player OfflinePlayer</span>
+<span class="source-line-no">653</span><span id="line-653">   * @param world  String name of the world</span>
+<span class="source-line-no">654</span><span id="line-654">   *</span>
+<span class="source-line-no">655</span><span id="line-655">   * @return if the account creation was successful</span>
+<span class="source-line-no">656</span><span id="line-656">   */</span>
+<span class="source-line-no">657</span><span id="line-657">  public boolean createPlayerAccount(final OfflinePlayer player, final String world) {</span>
+<span class="source-line-no">658</span><span id="line-658"></span>
+<span class="source-line-no">659</span><span id="line-659">    PluginCore.log().debug("Vault Method: Create Player Account!", DebugLevel.STANDARD);</span>
+<span class="source-line-no">660</span><span id="line-660">    if(player.getName() == null) {</span>
+<span class="source-line-no">661</span><span id="line-661"></span>
+<span class="source-line-no">662</span><span id="line-662">      PluginCore.log().error("Error from plugin accessing vault createPlayerAccount! Name provided is null!(probably EssentialsX)");</span>
+<span class="source-line-no">663</span><span id="line-663">      return false;</span>
+<span class="source-line-no">664</span><span id="line-664">    }</span>
+<span class="source-line-no">665</span><span id="line-665">    PluginCore.log().debug("Vault Method: Name: " + player.getName() + " ID: " + player.getUniqueId(), DebugLevel.STANDARD);</span>
+<span class="source-line-no">666</span><span id="line-666"></span>
+<span class="source-line-no">667</span><span id="line-667">    if(player.getName().contains("§")) {</span>
+<span class="source-line-no">668</span><span id="line-668">      PluginCore.log().debug("==== Vault create call with color code! ====", DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">669</span><span id="line-669"></span>
+<span class="source-line-no">670</span><span id="line-670">      final StackTraceElement[] elements = Thread.currentThread().getStackTrace();</span>
+<span class="source-line-no">671</span><span id="line-671">      for(int i = 1; i &lt; elements.length; i++) {</span>
+<span class="source-line-no">672</span><span id="line-672">        final StackTraceElement s = elements[i];</span>
+<span class="source-line-no">673</span><span id="line-673">        PluginCore.log().debug("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":" + s.getLineNumber() + ")", DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">674</span><span id="line-674">      }</span>
+<span class="source-line-no">675</span><span id="line-675">      PluginCore.log().debug("==== End Stack Print ====", DebugLevel.DEVELOPER);</span>
+<span class="source-line-no">676</span><span id="line-676">      return false;</span>
+<span class="source-line-no">677</span><span id="line-677">    }</span>
+<span class="source-line-no">678</span><span id="line-678"></span>
+<span class="source-line-no">679</span><span id="line-679">    return TNECore.eco().account().createAccount(player.getUniqueId().toString(), player.getName()).getResponse().success();</span>
+<span class="source-line-no">680</span><span id="line-680">  }</span>
+<span class="source-line-no">681</span><span id="line-681"></span>
+<span class="source-line-no">682</span><span id="line-682">  private EconomyResponse.ResponseType fromResult(@Nullable final TransactionResult result) {</span>
+<span class="source-line-no">683</span><span id="line-683"></span>
+<span class="source-line-no">684</span><span id="line-684">    if(result != null &amp;&amp; result.isSuccessful()) {</span>
+<span class="source-line-no">685</span><span id="line-685">      return EconomyResponse.ResponseType.SUCCESS;</span>
+<span class="source-line-no">686</span><span id="line-686">    }</span>
+<span class="source-line-no">687</span><span id="line-687">    return EconomyResponse.ResponseType.FAILURE;</span>
+<span class="source-line-no">688</span><span id="line-688">  }</span>
+<span class="source-line-no">689</span><span id="line-689">}</span>
 
 
 

@@ -95,7 +95,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#net.tnemc.core.currency.type">net.tnemc.core.currency.type</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><a href="#net.tnemc.core.io.serialization.impl">net.tnemc.core.io.serialization.impl</a></div>
+<div class="col-first even-row-color"><a href="#net.tnemc.core.handlers.player">net.tnemc.core.handlers.player</a></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><a href="#net.tnemc.core.io.serialization.impl">net.tnemc.core.io.serialization.impl</a></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><a href="#net.tnemc.core.io.storage">net.tnemc.core.io.storage</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><a href="#net.tnemc.core.io.storage.datables.sql.standard">net.tnemc.core.io.storage.datables.sql.standard</a></div>
 <div class="col-last odd-row-color">&nbsp;</div>
@@ -492,9 +496,7 @@ loadScripts(document, 'script');</script>
  <a href="../../currency/Currency.html" title="class in net.tnemc.core.currency">Currency</a>&nbsp;currency,
  <a href="../../currency/CurrencyType.html" title="interface in net.tnemc.core.currency">CurrencyType</a>&nbsp;type,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html" title="class or interface in java.math" class="external-link">BigDecimal</a>&nbsp;amount)</code></div>
-<div class="col-last even-row-color">
-<div class="block">Used to set the holdings for a specific account.</div>
-</div>
+<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>boolean</code></div>
 <div class="col-second odd-row-color"><span class="type-name-label">VirtualHandler.</span><code><a href="../holdings/handlers/VirtualHandler.html#setHoldings(net.tnemc.core.account.Account,java.lang.String,net.tnemc.core.currency.Currency,net.tnemc.core.currency.CurrencyType,java.math.BigDecimal)" class="member-name-link">setHoldings</a><wbr>(<a href="../Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account,
  <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;region,
@@ -935,6 +937,24 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="net.tnemc.core.handlers.player">
+<h2>Uses of <a href="../Account.html" title="class in net.tnemc.core.account">Account</a> in <a href="../../handlers/player/package-summary.html">net.tnemc.core.handlers.player</a></h2>
+<div class="caption"><span>Methods in <a href="../../handlers/player/package-summary.html">net.tnemc.core.handlers.player</a> with parameters of type <a href="../Account.html" title="class in net.tnemc.core.account">Account</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static void</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">PlayerLeaveHandler.</span><code><a href="../../handlers/player/PlayerLeaveHandler.html#syncItemHoldings(net.tnemc.plugincore.core.compatibility.PlayerProvider,net.tnemc.core.account.Account)" class="member-name-link">syncItemHoldings</a><wbr>(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider,
+ <a href="../Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Copies the player's item balances from their inventories into the wallet, which is what gets
+ saved and what other threads read.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="net.tnemc.core.io.serialization.impl">
 <h2>Uses of <a href="../Account.html" title="class in net.tnemc.core.account">Account</a> in <a href="../../io/serialization/impl/package-summary.html">net.tnemc.core.io.serialization.impl</a></h2>
 <div class="caption"><span>Methods in <a href="../../io/serialization/impl/package-summary.html">net.tnemc.core.io.serialization.impl</a> that return <a href="../Account.html" title="class in net.tnemc.core.account">Account</a></span></div>
@@ -957,6 +977,22 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><span class="type-name-label">SerialAccount.</span><code><a href="../../io/serialization/impl/SerialAccount.html#toJSON(net.tnemc.core.account.Account)" class="member-name-link">toJSON</a><wbr>(<a href="../Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Used to serialize this object to a JSON-valid string.</div>
+</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="net.tnemc.core.io.storage">
+<h2>Uses of <a href="../Account.html" title="class in net.tnemc.core.account">Account</a> in <a href="../../io/storage/package-summary.html">net.tnemc.core.io.storage</a></h2>
+<div class="caption"><span>Methods in <a href="../../io/storage/package-summary.html">net.tnemc.core.io.storage</a> with parameters of type <a href="../Account.html" title="class in net.tnemc.core.account">Account</a></span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Method</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>void</code></div>
+<div class="col-second even-row-color"><span class="type-name-label">SaveService.</span><code><a href="../../io/storage/SaveService.html#save(net.tnemc.core.account.Account)" class="member-name-link">save</a><wbr>(<a href="../Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
+<div class="col-last even-row-color">
+<div class="block">Queues a save of one account, regardless of whether it is marked as modified.</div>
 </div>
 </div>
 </section>
@@ -998,6 +1034,13 @@ loadScripts(document, 'script');</script>
  @Nullable <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;identifier)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Used to store this object.</div>
+</div>
+<div class="col-first odd-row-color"><code>static boolean</code></div>
+<div class="col-second odd-row-color"><span class="type-name-label">SQLHoldings.</span><code><a href="../../io/storage/datables/sql/standard/SQLHoldings.html#storeHoldings(net.tnemc.plugincore.core.io.storage.connect.SQLConnector,net.tnemc.core.io.storage.dialect.TNEDialect,net.tnemc.core.account.Account)" class="member-name-link">storeHoldings</a><wbr>(net.tnemc.plugincore.core.io.storage.connect.SQLConnector&nbsp;sql,
+ <a href="../../io/storage/dialect/TNEDialect.html" title="interface in net.tnemc.core.io.storage.dialect">TNEDialect</a>&nbsp;tne,
+ <a href="../Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
+<div class="col-last odd-row-color">
+<div class="block">Stores every holdings entry of an account in one database transaction.</div>
 </div>
 </div>
 </section>

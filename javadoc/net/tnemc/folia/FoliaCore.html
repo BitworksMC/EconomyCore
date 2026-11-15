@@ -97,7 +97,7 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-30">FoliaCore</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-38">FoliaCore</a></span>
 <span class="extends-implements">extends <a href="../paper/PaperCore.html" title="class in net.tnemc.paper">PaperCore</a></span></div>
 <div class="block">FoliaCore</div>
 <dl class="notes">
@@ -142,18 +142,34 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerMenuHandler()" class="member-name-link">registerMenuHandler</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#canAccessInventory(java.util.UUID)" class="member-name-link">canAccessInventory</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether this thread owns the online player's inventory.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#registerMenuHandler()" class="member-name-link">registerMenuHandler</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runPlayerTask(java.util.UUID,java.lang.Runnable)" class="member-name-link">runPlayerTask</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;action)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Runs player-related work on its owning thread, or the server thread when offline.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#snapshotOnlinePlayers(java.util.function.Consumer)" class="member-name-link">snapshotOnlinePlayers</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;&nbsp;snapshot)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Runs a snapshot on the owning thread of every online player, completing after all snapshots.</div>
+</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.tnemc.paper.PaperCore">Methods inherited from class&nbsp;net.tnemc.paper.<a href="../paper/PaperCore.html" title="class in net.tnemc.paper">PaperCore</a></h3>
-<code><a href="../paper/PaperCore.html#commandHelpWriter(revxrsal.commands.command.ExecutableCommand,revxrsal.commands.command.CommandActor)">commandHelpWriter</a>, <a href="../paper/PaperCore.html#getPlugin()">getPlugin</a>, <a href="../paper/PaperCore.html#instance()">instance</a>, <a href="../paper/PaperCore.html#itemCalculations()">itemCalculations</a>, <a href="../paper/PaperCore.html#registerCallbacks(net.tnemc.plugincore.core.api.CallbackManager)">registerCallbacks</a>, <a href="../paper/PaperCore.html#registerCommandHandler()">registerCommandHandler</a>, <a href="../paper/PaperCore.html#registerCommands()">registerCommands</a>, <a href="../paper/PaperCore.html#registerConfigs()">registerConfigs</a></code></div>
+<code><a href="../paper/PaperCore.html#commandHelpWriter(revxrsal.commands.command.ExecutableCommand,revxrsal.commands.command.CommandActor)">commandHelpWriter</a>, <a href="../paper/PaperCore.html#getPlugin()">getPlugin</a>, <a href="../paper/PaperCore.html#instance()">instance</a>, <a href="../paper/PaperCore.html#isMainThread()">isMainThread</a>, <a href="../paper/PaperCore.html#itemCalculations()">itemCalculations</a>, <a href="../paper/PaperCore.html#registerCallbacks(net.tnemc.plugincore.core.api.CallbackManager)">registerCallbacks</a>, <a href="../paper/PaperCore.html#registerCommandHandler()">registerCommandHandler</a>, <a href="../paper/PaperCore.html#registerCommands()">registerCommands</a>, <a href="../paper/PaperCore.html#registerConfigs()">registerConfigs</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.tnemc.core.TNECore">Methods inherited from class&nbsp;net.tnemc.core.<a href="../core/TNECore.html" title="class in net.tnemc.core">TNECore</a></h3>
-<code><a href="../core/TNECore.html#api()">api</a>, <a href="../core/TNECore.html#build()">build</a>, <a href="../core/TNECore.html#config()">config</a>, <a href="../core/TNECore.html#data()">data</a>, <a href="../core/TNECore.html#denominationToStack(net.tnemc.core.currency.item.ItemDenomination)">denominationToStack</a>, <a href="../core/TNECore.html#denominationToStack(net.tnemc.core.currency.item.ItemDenomination,int)">denominationToStack</a>, <a href="../core/TNECore.html#eco()">eco</a>, <a href="../core/TNECore.html#getServerAccount()">getServerAccount</a>, <a href="../core/TNECore.html#message()">message</a>, <a href="../core/TNECore.html#postConfigs()">postConfigs</a>, <a href="../core/TNECore.html#postDisable()">postDisable</a>, <a href="../core/TNECore.html#postEnable()">postEnable</a>, <a href="../core/TNECore.html#postLoad()">postLoad</a>, <a href="../core/TNECore.html#postStorage()">postStorage</a>, <a href="../core/TNECore.html#registerParameters()">registerParameters</a>, <a href="../core/TNECore.html#registerPluginChannels()">registerPluginChannels</a>, <a href="../core/TNECore.html#registerStorage()">registerStorage</a>, <a href="../core/TNECore.html#registerUpdateChecker()">registerUpdateChecker</a>, <a href="../core/TNECore.html#syncEnabled()">syncEnabled</a>, <a href="../core/TNECore.html#version()">version</a>, <a href="../core/TNECore.html#versionCheckSite()">versionCheckSite</a>, <a href="../core/TNECore.html#yaml()">yaml</a></code></div>
+<code><a href="../core/TNECore.html#api()">api</a>, <a href="../core/TNECore.html#build()">build</a>, <a href="../core/TNECore.html#config()">config</a>, <a href="../core/TNECore.html#data()">data</a>, <a href="../core/TNECore.html#denominationToStack(net.tnemc.core.currency.item.ItemDenomination)">denominationToStack</a>, <a href="../core/TNECore.html#denominationToStack(net.tnemc.core.currency.item.ItemDenomination,int)">denominationToStack</a>, <a href="../core/TNECore.html#eco()">eco</a>, <a href="../core/TNECore.html#getServerAccount()">getServerAccount</a>, <a href="../core/TNECore.html#message()">message</a>, <a href="../core/TNECore.html#postConfigs()">postConfigs</a>, <a href="../core/TNECore.html#postDisable()">postDisable</a>, <a href="../core/TNECore.html#postEnable()">postEnable</a>, <a href="../core/TNECore.html#postLoad()">postLoad</a>, <a href="../core/TNECore.html#postStorage()">postStorage</a>, <a href="../core/TNECore.html#registerParameters()">registerParameters</a>, <a href="../core/TNECore.html#registerPluginChannels()">registerPluginChannels</a>, <a href="../core/TNECore.html#registerStorage()">registerStorage</a>, <a href="../core/TNECore.html#registerUpdateChecker()">registerUpdateChecker</a>, <a href="../core/TNECore.html#saver()">saver</a>, <a href="../core/TNECore.html#syncEnabled()">syncEnabled</a>, <a href="../core/TNECore.html#version()">version</a>, <a href="../core/TNECore.html#versionCheckSite()">versionCheckSite</a>, <a href="../core/TNECore.html#yaml()">yaml</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.tnemc.plugincore.core.PluginEngine">Methods inherited from class&nbsp;net.tnemc.plugincore.core.PluginEngine</h3>
 <code>builder, builders, command, components, helper, initComponents, initRegistries, load, menu, postCommands, queries, storage, transactions, update</code></div>
@@ -174,7 +190,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(org.bukkit.plugin.java.JavaPlugin)">
 <h3>FoliaCore</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-32">FoliaCore</a></span><wbr><span class="parameters">(org.bukkit.plugin.java.JavaPlugin&nbsp;plugin)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-40">FoliaCore</a></span><wbr><span class="parameters">(org.bukkit.plugin.java.JavaPlugin&nbsp;plugin)</span></div>
 </section>
 </li>
 </ul>
@@ -188,10 +204,48 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="registerMenuHandler()">
 <h3>registerMenuHandler</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-37">registerMenuHandler</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-45">registerMenuHandler</a></span>()</div>
 <dl class="notes">
 <dt>Overrides:</dt>
 <dd><code><a href="../paper/PaperCore.html#registerMenuHandler()">registerMenuHandler</a></code>&nbsp;in class&nbsp;<code><a href="../paper/PaperCore.html" title="class in net.tnemc.paper">PaperCore</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="canAccessInventory(java.util.UUID)">
+<h3>canAccessInventory</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-51">canAccessInventory</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../core/TNECore.html#canAccessInventory(java.util.UUID)">TNECore</a></code></span></div>
+<div class="block">Whether this thread owns the online player's inventory. A balance lock does not grant ownership.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../core/TNECore.html#canAccessInventory(java.util.UUID)">canAccessInventory</a></code>&nbsp;in class&nbsp;<code><a href="../core/TNECore.html" title="class in net.tnemc.core">TNECore</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="snapshotOnlinePlayers(java.util.function.Consumer)">
+<h3>snapshotOnlinePlayers</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-59">snapshotOnlinePlayers</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&gt;&nbsp;snapshot)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../core/TNECore.html#snapshotOnlinePlayers(java.util.function.Consumer)">TNECore</a></code></span></div>
+<div class="block">Runs a snapshot on the owning thread of every online player, completing after all snapshots.
+ Platforms with region threads override this to dispatch to each player's entity scheduler.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../core/TNECore.html#snapshotOnlinePlayers(java.util.function.Consumer)">snapshotOnlinePlayers</a></code>&nbsp;in class&nbsp;<code><a href="../core/TNECore.html" title="class in net.tnemc.core">TNECore</a></code></dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="runPlayerTask(java.util.UUID,java.lang.Runnable)">
+<h3>runPlayerTask</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link">CompletableFuture</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Void.html" title="class or interface in java.lang" class="external-link">Void</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/net/tnemc/folia/FoliaCore.html#line-95">runPlayerTask</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link">UUID</a>&nbsp;identifier,
+ <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html" title="class or interface in java.lang" class="external-link">Runnable</a>&nbsp;action)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="../core/TNECore.html#runPlayerTask(java.util.UUID,java.lang.Runnable)">TNECore</a></code></span></div>
+<div class="block">Runs player-related work on its owning thread, or the server thread when offline.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="../core/TNECore.html#runPlayerTask(java.util.UUID,java.lang.Runnable)">runPlayerTask</a></code>&nbsp;in class&nbsp;<code><a href="../core/TNECore.html" title="class in net.tnemc.core">TNECore</a></code></dd>
 </dl>
 </section>
 </li>

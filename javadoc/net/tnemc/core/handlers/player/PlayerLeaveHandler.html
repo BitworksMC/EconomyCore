@@ -91,7 +91,7 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-39">PlayerLeaveHandler</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-38">PlayerLeaveHandler</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">PlayerLeaveHandler</div>
 <dl class="notes">
@@ -121,7 +121,7 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab1" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab1', 3)" class="table-tab">Static Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
@@ -131,6 +131,13 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#handle(net.tnemc.plugincore.core.compatibility.PlayerProvider)" class="member-name-link">handle</a><wbr>(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Used to handle a PlayerLeaveEvent using the specified <code>PlayerProvider</code> class.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#syncItemHoldings(net.tnemc.plugincore.core.compatibility.PlayerProvider,net.tnemc.core.account.Account)" class="member-name-link">syncItemHoldings</a><wbr>(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider,
+ <a href="../../account/Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Copies the player's item balances from their inventories into the wallet, which is what gets
+ saved and what other threads read.</div>
 </div>
 </div>
 </div>
@@ -152,7 +159,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;()">
 <h3>PlayerLeaveHandler</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-39">PlayerLeaveHandler</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-38">PlayerLeaveHandler</a></span>()</div>
 </section>
 </li>
 </ul>
@@ -166,7 +173,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="handle(net.tnemc.plugincore.core.compatibility.PlayerProvider)">
 <h3>handle</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.plugincore.core.utils.HandlerResponse</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-48">handle</a></span><wbr><span class="parameters">(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">net.tnemc.plugincore.core.utils.HandlerResponse</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-47">handle</a></span><wbr><span class="parameters">(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider)</span></div>
 <div class="block">Used to handle a PlayerLeaveEvent using the specified <code>PlayerProvider</code> class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -174,6 +181,15 @@ loadScripts(document, 'script');</script>
 <dt>Returns:</dt>
 <dd>True if the event should be cancelled, otherwise false.</dd>
 </dl>
+</section>
+</li>
+<li>
+<section class="detail" id="syncItemHoldings(net.tnemc.plugincore.core.compatibility.PlayerProvider,net.tnemc.core.account.Account)">
+<h3>syncItemHoldings</h3>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../../src-html/net/tnemc/core/handlers/player/PlayerLeaveHandler.html#line-70">syncItemHoldings</a></span><wbr><span class="parameters">(net.tnemc.plugincore.core.compatibility.PlayerProvider&nbsp;provider,
+ <a href="../../account/Account.html" title="class in net.tnemc.core.account">Account</a>&nbsp;account)</span></div>
+<div class="block">Copies the player's item balances from their inventories into the wallet, which is what gets
+ saved and what other threads read. Server thread only.</div>
 </section>
 </li>
 </ul>

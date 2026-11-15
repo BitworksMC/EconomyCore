@@ -163,11 +163,17 @@
 <span class="source-line-no">150</span><span id="line-150">    return new BukkitItemCalculations();</span>
 <span class="source-line-no">151</span><span id="line-151">  }</span>
 <span class="source-line-no">152</span><span id="line-152"></span>
-<span class="source-line-no">153</span><span id="line-153">  public JavaPlugin getPlugin() {</span>
-<span class="source-line-no">154</span><span id="line-154"></span>
-<span class="source-line-no">155</span><span id="line-155">    return plugin;</span>
-<span class="source-line-no">156</span><span id="line-156">  }</span>
-<span class="source-line-no">157</span><span id="line-157">}</span>
+<span class="source-line-no">153</span><span id="line-153">  @Override</span>
+<span class="source-line-no">154</span><span id="line-154">  public boolean isMainThread() {</span>
+<span class="source-line-no">155</span><span id="line-155"></span>
+<span class="source-line-no">156</span><span id="line-156">    return Bukkit.isPrimaryThread();</span>
+<span class="source-line-no">157</span><span id="line-157">  }</span>
+<span class="source-line-no">158</span><span id="line-158"></span>
+<span class="source-line-no">159</span><span id="line-159">  public JavaPlugin getPlugin() {</span>
+<span class="source-line-no">160</span><span id="line-160"></span>
+<span class="source-line-no">161</span><span id="line-161">    return plugin;</span>
+<span class="source-line-no">162</span><span id="line-162">  }</span>
+<span class="source-line-no">163</span><span id="line-163">}</span>
 
 
 
