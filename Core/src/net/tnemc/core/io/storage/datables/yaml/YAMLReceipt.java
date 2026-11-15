@@ -37,9 +37,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -89,41 +91,27 @@ public class YAMLReceipt implements Datable<Receipt> {
 
     final String fileSrc = "transactions/" + receipt.getId() + ".yml";
     TNECore.yaml().add(fileSrc);
-    final File file = new File(PluginCore.directory(), fileSrc);
-    if(!ensureFile(file, receipt)) {
-      return;
-    }
-
-    final YamlDocument yaml = loadDocument(file, receipt);
-    if(yaml == null) {
-      return;
-    }
-    writeReceipt(yaml, receipt);
-    if(!saveDocument(yaml, receipt)) {
-      return;
-    }
-    TNECore.yaml().remove(fileSrc);
-    receipt.clearDirty();
-  }
-
-  private boolean ensureFile(final File file, final Receipt receipt) {
-
-    if(file.exists()) {
-      return true;
-    }
     try {
-      if(file.createNewFile()) {
-        return true;
+      final File file = new File(PluginCore.directory(), fileSrc);
+      final YamlDocument yaml = loadDocument(file, receipt);
+      if(yaml == null) {
+        return;
       }
-    } catch(final IOException ignore) { }
-    PluginCore.log().error("Issue creating transaction file. Transaction: " + receipt.getId());
-    return false;
+      writeReceipt(yaml, receipt);
+      if(!saveDocument(file, yaml, receipt)) {
+        return;
+      }
+    } finally {
+      TNECore.yaml().remove(fileSrc);
+    }
+    receipt.clearDirty();
   }
 
   private YamlDocument loadDocument(final File file, final Receipt receipt) {
 
     try {
-      return YamlDocument.create(file);
+      final byte[] bytes = file.exists()? ReceiptBytes.read(file) : new byte[0];
+      return YamlDocument.create(new ByteArrayInputStream(bytes));
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue loading transaction file. Transaction: " + receipt.getId());
       return null;
@@ -169,10 +157,13 @@ public class YAMLReceipt implements Datable<Receipt> {
              + entry.getHandler().asID(), entry.getAmount().toPlainString());
   }
 
-  private boolean saveDocument(final YamlDocument yaml, final Receipt receipt) {
+  private boolean saveDocument(final File file, final YamlDocument yaml, final Receipt receipt) {
 
     try {
-      yaml.save();
+      final byte[] bytes = yaml.dump().getBytes(StandardCharsets.UTF_8);
+      //Serialize once; cache exactly the UTF-8 bytes successfully written to disk.
+      Files.write(file.toPath(), bytes);
+      ReceiptBytes.saved(file, bytes);
       return true;
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue saving transaction file. Transaction: " + receipt.getId());
@@ -232,7 +223,7 @@ public class YAMLReceipt implements Datable<Receipt> {
 
     try {
 
-      try(final FileInputStream fis = new FileInputStream(file)) {
+      try(final ByteArrayInputStream fis = new ByteArrayInputStream(ReceiptBytes.read(file))) {
 
         final YamlDocument yaml = YamlDocument.create(fis);
 
@@ -353,13 +344,11 @@ public class YAMLReceipt implements Datable<Receipt> {
 
     final Collection<Receipt> receipts = new ArrayList<>();
 
-    for(final File file : IOUtil.getYAMLs(new File(PluginCore.directory(), "transactions"))) {
-
-      final Optional<Receipt> loaded = load(file, file.getName().replace(".yml", ""));
-      if(loaded.isPresent()) {
-        receipts.add(loaded.get());
-        TransactionManager.receipts().log(loaded.get());
-      }
+    final File[] files = IOUtil.getYAMLs(new File(PluginCore.directory(), "transactions"));
+    for(final Receipt receipt : ReceiptFiles.load(files, file->load(file, file.getName().replace(".yml", "")))) {
+      receipts.add(receipt);
+      //Only parsing is parallel. Publish into the live manager on the caller thread, in file order.
+      TransactionManager.receipts().log(receipt);
     }
     return receipts;
   }

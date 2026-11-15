@@ -3,3 +3,4 @@ version: '1'
 main: ItemRegression
 api-version: '1.20'
 depend: [TheNewEconomy]
+folia-supported: true

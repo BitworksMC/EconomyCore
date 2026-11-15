@@ -93,6 +93,14 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
     }
 
     TNECore.yaml().add(file);
+    try {
+      storeEntry(file, object, identifier);
+    } finally {
+      TNECore.yaml().remove(file);
+    }
+  }
+
+  private void storeEntry(final String file, final HoldingsEntry object, final String identifier) {
 
     final File accFile = new File(PluginCore.directory(), file);
     if(!accFile.exists()) {
@@ -130,7 +138,6 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue saving account holdings to file. Account: " + identifier, DebugLevel.OFF);
     }
-    TNECore.yaml().remove(file);
   }
 
   /**
@@ -150,18 +157,20 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
     final String file = "accounts/" + identifier + ".yml";
     waitForFile(file);
     TNECore.yaml().add(file);
-
-    final File accFile = new File(PluginCore.directory(), file);
-    if(!ensureFile(accFile, identifier)) {
-      return;
+    try {
+      final File accFile = new File(PluginCore.directory(), file);
+      final YamlDocument yaml = ensureFile(accFile, identifier)? loadDocument(accFile, identifier) : null;
+      if(yaml == null) {
+        account.get().markDirty();
+        return;
+      }
+      writeHoldings(yaml, account.get());
+      if(!saveDocument(yaml, identifier)) {
+        account.get().markDirty();
+      }
+    } finally {
+      TNECore.yaml().remove(file);
     }
-    final YamlDocument yaml = loadDocument(accFile, identifier);
-    if(yaml == null) {
-      return;
-    }
-    writeHoldings(yaml, account.get());
-    saveDocument(yaml, identifier);
-    TNECore.yaml().remove(file);
   }
 
   private void waitForFile(final String file) {
@@ -210,12 +219,14 @@ public class YAMLHoldings implements Datable<HoldingsEntry> {
     }
   }
 
-  private void saveDocument(final YamlDocument yaml, final String identifier) {
+  private boolean saveDocument(final YamlDocument yaml, final String identifier) {
 
     try {
       yaml.save();
+      return true;
     } catch(final IOException ignore) {
       PluginCore.log().error("Issue saving account holdings to file. Account: " + identifier, DebugLevel.OFF);
+      return false;
     }
   }
 

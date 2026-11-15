@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
  */
 public class AccountResolver implements ParameterType<CommandActor, Account> {
 
+  private static final int MAX_OFFLINE_SUGGESTIONS = 50;
+
   @Override
   public Account parse(@NotNull final MutableStringStream input, @NotNull final ExecutionContext<CommandActor> context) {
 
@@ -96,13 +98,17 @@ public class AccountResolver implements ParameterType<CommandActor, Account> {
 
       final Set<String> suggestions = new LinkedHashSet<>(onlineNames);
 
-      //Matching offline account names (not online & not excluded)
-      TNECore.eco().account().getAccounts().values().stream()
-              .map(Account::getName)
-              .filter(name->name.toLowerCase().startsWith(partial))
-              .filter(name->!onlineNames.contains(name))
-              .filter(name->!TNECore.eco().account().excluded(name))
-              .forEach(suggestions::add);
+      //Matching offline account names (not online & not excluded), once something was typed: this
+      //runs on every key press, and every account name would be sent to the player at once.
+      if(!partial.isEmpty()) {
+        TNECore.eco().account().getAccounts().values().stream()
+                .map(Account::getName)
+                .filter(name->name.toLowerCase().startsWith(partial))
+                .filter(name->!onlineNames.contains(name))
+                .filter(name->!TNECore.eco().account().excluded(name))
+                .limit(MAX_OFFLINE_SUGGESTIONS)
+                .forEach(suggestions::add);
+      }
 
       //if("self_account".startsWith(partial) || "@s".startsWith(partial) || "@me".startsWith(partial)) {
       if("self_account".startsWith(partial)) {

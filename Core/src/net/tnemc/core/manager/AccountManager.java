@@ -35,6 +35,7 @@ import net.tnemc.core.api.callback.account.AccountDeleteCallback;
 import net.tnemc.core.api.callback.account.AccountTypesCallback;
 import net.tnemc.core.api.response.AccountAPIResponse;
 import net.tnemc.core.config.MainConfig;
+import net.tnemc.core.transaction.Transaction;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 import net.tnemc.plugincore.core.id.UUIDPair;
@@ -49,7 +50,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -71,12 +74,12 @@ public class AccountManager {
    * list for if player accounts are loading in this will mean that players in this list
    * will have balances loaded from the database for item-based currencies.
    */
-  protected final List<UUID> loading = new ArrayList<>();
+  protected final Set<UUID> loading = ConcurrentHashMap.newKeySet();
   /*
    * List for players that are loading in, but need to have their item currency imported from the inventory
    * not the DB since they are new, or the currency doesn't exist.
    */
-  protected final List<UUID> importing = new ArrayList<>();
+  protected final Set<UUID> importing = ConcurrentHashMap.newKeySet();
   private final EnhancedHashMap<String, Account> accounts = new EnhancedHashMap<>();
   private final EnhancedHashMap<String, AccountStatus> statuses = new EnhancedHashMap<>();
   private final LinkedHashMap<Class<? extends SharedAccount>, Function<String, Boolean>> types = new LinkedHashMap<>();
@@ -132,6 +135,13 @@ public class AccountManager {
    */
   public AccountAPIResponse createAccount(final String identifier, final String name, final boolean nonPlayer, final boolean skipDB) {
 
+    synchronized(Transaction.BALANCE_LOCK) {
+      return createAccountLocked(identifier, name, nonPlayer, skipDB);
+    }
+  }
+
+  private AccountAPIResponse createAccountLocked(final String identifier, final String name, final boolean nonPlayer, final boolean skipDB) {
+
     PluginCore.log().debug("Create Account Called! ID: " + identifier + " Name: " + name);
     logColorCodeStack(name);
 
@@ -153,7 +163,7 @@ public class AccountManager {
     PluginCore.log().debug("Adding account to Accounts Map. ID: " + identifier + " Name: " + name);
     accounts.put(account.getIdentifier().toString(), account);
     if(!skipDB) {
-      TNECore.instance().storage().store(account, account.getIdentifier().toString());
+      TNECore.instance().saver().save(account);
     }
     storeIdentifier(account);
     PluginCore.log().debug("Created Account: " + account.getIdentifier() + " Name: " + account.getName());
@@ -306,6 +316,13 @@ public class AccountManager {
    */
   public EconomyResponse deleteAccount(@NotNull final String identifier) {
 
+    synchronized(Transaction.BALANCE_LOCK) {
+      return deleteAccountLocked(identifier);
+    }
+  }
+
+  private EconomyResponse deleteAccountLocked(final String identifier) {
+
     if(!accounts.containsKey(identifier)) {
       PluginCore.log().debug("Account Doesn't Exist: " + identifier);
       return AccountResponse.DOESNT_EXIST;
@@ -321,7 +338,7 @@ public class AccountManager {
       uuidProvider.pairs().remove(id);
       accounts.remove(identifier);
       PluginCore.log().debug("Deleting account: " + identifier);
-      TNECore.instance().storage().delete(Account.class, identifier);
+      TNECore.instance().saver().delete(identifier);
     } catch(final Exception ignore) {
 
       PluginCore.log().debug("Failed to delete account: " + identifier);
@@ -482,12 +499,12 @@ public class AccountManager {
     return uuidProvider;
   }
 
-  public List<UUID> getLoading() {
+  public Set<UUID> getLoading() {
 
     return loading;
   }
 
-  public List<UUID> getImporting() {
+  public Set<UUID> getImporting() {
 
     return importing;
   }

@@ -68,6 +68,9 @@ public class PlayerJoinHandler {
       return response;
     }
 
+    //Before the joining account is restored: a reload afterwards would first save its stale balance.
+    reloadSharedDataIfNeeded();
+
     validatePlayerName(provider);
     final Optional<Account> account = TNECore.eco().account().findAccount(provider.identifier());
     PluginCore.log().debug("Join Account Check: " + account.isPresent());
@@ -122,15 +125,18 @@ public class PlayerJoinHandler {
 
     updatePlayerName(provider, account);
     final UUID identifier = provider.identifier();
-    if(firstJoin || account.getCreationDate() == ((PlayerAccount)account).getLastOnline()) {
-      initializeBalances(provider, account, identifier, firstJoin);
-    } else {
-      loadBalances(provider, account, identifier);
+    try {
+      if(firstJoin || account.getCreationDate() == ((PlayerAccount)account).getLastOnline()) {
+        initializeBalances(provider, account, identifier, firstJoin);
+      } else {
+        loadBalances(provider, account, identifier);
+      }
+    } finally {
+      //Left in place, the player's item balance would never be read from the inventory again.
+      TNECore.eco().account().getLoading().remove(identifier);
     }
-    TNECore.eco().account().getLoading().remove(identifier);
     scheduleAwayNotification(provider, account);
     notifyUpdate(provider);
-    reloadSharedDataIfNeeded();
   }
 
   private void updatePlayerName(final PlayerProvider provider, final Account account) {
@@ -196,8 +202,11 @@ public class PlayerJoinHandler {
                               final Currency currency) {
 
     TNECore.eco().account().getImporting().add(identifier);
-    restoreHoldings(account, region, currency);
-    TNECore.eco().account().getImporting().remove(identifier);
+    try {
+      restoreHoldings(account, region, currency);
+    } finally {
+      TNECore.eco().account().getImporting().remove(identifier);
+    }
   }
 
   private void restoreHoldings(final Account account, final String region, final Currency currency) {
@@ -243,11 +252,13 @@ public class PlayerJoinHandler {
       return;
     }
 
-    TNECore.eco().account().getAccounts().clear();
-    TransactionManager.receipts().getReceipts().clear();
-    TNECore.instance().storage().loadAll(Account.class, "");
-    TNECore.instance().storage().loadAll(Receipt.class, "");
-    TNECore.eco().setReloadTime(new Date().getTime());
+    TNECore.instance().saver().reload(()->{
+      TNECore.eco().account().getAccounts().clear();
+      TransactionManager.receipts().getReceipts().clear();
+      TNECore.instance().storage().loadAll(Account.class, "");
+      TNECore.instance().storage().loadAll(Receipt.class, "");
+      TNECore.eco().setReloadTime(new Date().getTime());
+    });
   }
 
   private record JoinAccount(Optional<Account> account, boolean firstJoin) { }

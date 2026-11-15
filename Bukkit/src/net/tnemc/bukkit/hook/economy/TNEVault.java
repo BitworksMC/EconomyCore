@@ -638,6 +638,10 @@ public class TNEVault implements Economy {
   public boolean createPlayerAccount(final String name, final String world) {
 
     PluginCore.log().debug("Vault Method: Create Player Account!", DebugLevel.STANDARD);
+    //A name is not an identifier: creating from it would replace an existing account with an empty one.
+    if(TNECore.eco().account().findAccount(name).isPresent()) {
+      return false;
+    }
     return TNECore.eco().account().createAccount(name, name).getResponse().success();
   }
 

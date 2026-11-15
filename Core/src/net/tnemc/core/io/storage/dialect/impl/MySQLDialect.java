@@ -126,22 +126,21 @@ public class MySQLDialect implements TNEDialect {
                        "receipt_source_type, archive, voided) " +
                        "VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE archive = ?, voided = ?";
 
-    this.loadReceiptHolding = "SELECT BIN_TO_UUID(participant) AS participant, ending, server, region, " +
-                              "BIN_TO_UUID(currency) AS currency, holdings_type, holdings FROM " +
-                              prefix + "receipts_holdings WHERE uid = UUID_TO_BIN(?) AND participant = UUID_TO_BIN(?) AND ending = ?";
+    this.loadReceiptHolding = "SELECT BIN_TO_UUID(uid) AS uid, BIN_TO_UUID(participant) AS participant, ending, server, region, " +
+                              "BIN_TO_UUID(currency) AS currency, holdings_type, holdings FROM " + prefix + "receipts_holdings";
 
     this.saveReceiptHolding = "INSERT INTO " + prefix + "receipts_holdings (uid, participant, ending, " +
                               "server, region, currency, holdings_type, holdings) " +
                               "VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, UUID_TO_BIN(?), ?, ?) ON DUPLICATE KEY UPDATE uid=uid";
 
-    this.loadParticipants = "SELECT BIN_TO_UUID(participant) AS participant, participant_type, tax FROM " +
-                            prefix + "receipts_participants WHERE uid = UUID_TO_BIN(?)";
+    this.loadParticipants = "SELECT BIN_TO_UUID(uid) AS uid, BIN_TO_UUID(participant) AS participant, participant_type, tax FROM " +
+                            prefix + "receipts_participants";
 
     this.saveParticipant = "INSERT INTO " + prefix + "receipts_participants (uid, participant, participant_type, tax) " +
                            "VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?) ON DUPLICATE KEY UPDATE uid=uid";
 
-    this.loadModifiers = "SELECT BIN_TO_UUID(participant) AS participant, participant_type, operation, region, " +
-                         "BIN_TO_UUID(currency) AS currency, modifier FROM " + prefix + "receipts_modifiers WHERE uid = UUID_TO_BIN(?) AND participant = UUID_TO_BIN(?) AND participant_type = ?";
+    this.loadModifiers = "SELECT BIN_TO_UUID(uid) AS uid, BIN_TO_UUID(participant) AS participant, participant_type, operation, region, " +
+                         "BIN_TO_UUID(currency) AS currency, modifier FROM " + prefix + "receipts_modifiers";
 
     this.saveModifier = "INSERT INTO " + prefix + "receipts_modifiers (uid, participant, participant_type, operation, region, currency, modifier) " +
                         "VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?), ?, ?, ?, UUID_TO_BIN(?), ?) ON DUPLICATE KEY UPDATE uid = uid";
@@ -228,7 +227,7 @@ public class MySQLDialect implements TNEDialect {
   public String receiptsHoldingsTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_holdings (\n" +
-           "    uid BINARY(16) NOT NULL UNIQUE,\n" +
+           "    uid BINARY(16) NOT NULL,\n" +
            "    participant BINARY(16) NOT NULL,\n" +
            "    ending TINYINT(1) NOT NULL,\n" +
            "    server VARCHAR(40) NOT NULL,\n" +
@@ -236,6 +235,7 @@ public class MySQLDialect implements TNEDialect {
            "    currency BINARY(16) NOT NULL,\n" +
            "    holdings_type VARCHAR(30) NOT NULL,\n" +
            "    holdings DECIMAL(49, 4) NOT NULL,\n" +
+           "    UNIQUE KEY receipt_holding (uid, participant, ending, region, currency, holdings_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE\n" +
            "    );";
   }
@@ -244,10 +244,11 @@ public class MySQLDialect implements TNEDialect {
   public String receiptsParticipantsTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_participants (\n" +
-           "    uid BINARY(16) NOT NULL PRIMARY KEY,\n" +
+           "    uid BINARY(16) NOT NULL,\n" +
            "    participant BINARY(16) NOT NULL,\n" +
            "    participant_type VARCHAR(10) NOT NULL,\n" +
            "    tax DECIMAL(49, 4) NOT NULL,\n" +
+           "    PRIMARY KEY(uid, participant_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE\n" +
            "    );";
   }
@@ -257,13 +258,14 @@ public class MySQLDialect implements TNEDialect {
   public String receiptsModifiersTable() {
 
     return "CREATE TABLE IF NOT EXISTS " + prefix + "receipts_modifiers (\n" +
-           "    uid BINARY(16) NOT NULL PRIMARY KEY,\n" +
+           "    uid BINARY(16) NOT NULL,\n" +
            "    participant BINARY(16) NOT NULL,\n" +
            "    participant_type VARCHAR(10) NOT NULL,\n" +
            "    operation VARCHAR(10) NOT NULL,\n" +
            "    region VARCHAR(40) NOT NULL,\n" +
            "    currency BINARY(16) NOT NULL,\n" +
            "    modifier DECIMAL(49, 4) NOT NULL," +
+           "    PRIMARY KEY(uid, participant_type),\n" +
            "    FOREIGN KEY(uid) REFERENCES " + prefix + "receipts(uid) ON DELETE CASCADE" +
            "    );";
   }

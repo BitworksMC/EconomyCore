@@ -35,6 +35,8 @@ import net.tnemc.plugincore.core.io.storage.connect.SQLConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -106,21 +108,54 @@ public class SQLHoldings implements Datable<HoldingsEntry> {
   @Override
   public void storeAll(final StorageConnector<?> connector, @Nullable final String identifier) {
 
-    if(connector instanceof final SQLConnector sql && identifier != null) {
+    if(connector instanceof final SQLConnector sql && sql.dialect() instanceof final TNEDialect tne && identifier != null) {
+      TNECore.eco().account().findAccount(identifier).ifPresent(account->storeHoldings(sql, tne, account));
+    }
+  }
 
-      final Optional<Account> account = TNECore.eco().account().findAccount(identifier);
-      if(account.isPresent()) {
+  /**
+   * Stores every holdings entry of an account in one database transaction.
+   *
+   * @return true if all entries were committed, false if nothing was saved.
+   */
+  public static boolean storeHoldings(final SQLConnector sql, final TNEDialect tne, final Account account) {
 
+    final String identifier = account.getIdentifier().toString();
+    final String server = MainConfig.yaml().getString("Core.Server.Name");
 
-        for(final Map.Entry<String, RegionHoldings> region : account.get().getWallet().getHoldings().entrySet()) {
+    try(final Connection connection = sql.connection();
+        final PreparedStatement statement = connection.prepareStatement(tne.saveHoldings())) {
+
+      connection.setAutoCommit(false);
+      try {
+        for(final Map.Entry<String, RegionHoldings> region : account.getWallet().getHoldings().entrySet()) {
           for(final Map.Entry<UUID, CurrencyHoldings> currency : region.getValue().getHoldings().entrySet()) {
-            for(final HoldingsEntry entry : account.get().getHoldings(region.getKey(), currency.getKey())) {
-              store(connector, entry, identifier);
+            for(final HoldingsEntry entry : account.getHoldings(region.getKey(), currency.getKey())) {
+              statement.setObject(1, identifier);
+              statement.setObject(2, server);
+              statement.setObject(3, entry.getRegion());
+              statement.setObject(4, entry.getCurrency().toString());
+              statement.setObject(5, entry.getHandler().asID());
+              statement.setObject(6, entry.getAmount());
+              statement.setObject(7, entry.getAmount());
+              statement.addBatch();
             }
           }
         }
+        statement.executeBatch();
+        connection.commit();
+        return true;
+      } catch(final SQLException | RuntimeException e) {
+        //Runtime failures too, e.g. reading the inventory of a player who just logged out.
+        connection.rollback();
+        throw e;
+      } finally {
+        connection.setAutoCommit(true);
       }
-
+    } catch(final SQLException | RuntimeException e) {
+      PluginCore.log().error("Failed to save holdings for account " + identifier + "; retrying on the next save.",
+                             e, DebugLevel.OFF);
+      return false;
     }
   }
 

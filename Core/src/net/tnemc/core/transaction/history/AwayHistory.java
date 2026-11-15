@@ -18,9 +18,8 @@ package net.tnemc.core.transaction.history;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -31,7 +30,8 @@ import java.util.UUID;
  */
 public class AwayHistory {
 
-  protected final NavigableMap<Long, UUID> receipts = new TreeMap<>();
+  //Oldest first. Not keyed by time: receipts stored with second precision share timestamps.
+  protected final List<UUID> receipts = new ArrayList<>();
 
   private final UUID account;
 
@@ -40,7 +40,7 @@ public class AwayHistory {
     this.account = account;
   }
 
-  public NavigableMap<Long, UUID> getReceipts() {
+  public List<UUID> getReceipts() {
 
     return receipts;
   }
@@ -50,23 +50,13 @@ public class AwayHistory {
     return account;
   }
 
-  public NavigableMap<Long, UUID> getPage(int page) {
+  public List<UUID> getPage(int page) {
 
     if(page < 1) page = 1;
     if(page > maxPages()) page = 1;
 
-    final NavigableMap<Long, UUID> values = new TreeMap<>();
     final int start = (page - 1) * 5;
-
-    int i = 0;
-    for(final Map.Entry<Long, UUID> entry : receipts.entrySet()) {
-      if(i++ < start) continue;
-
-      values.put(entry.getKey(), entry.getValue());
-
-      if(values.size() >= 5) break;
-    }
-    return values;
+    return List.copyOf(receipts.subList(Math.min(start, receipts.size()), Math.min(start + 5, receipts.size())));
   }
 
   public int maxPages() {

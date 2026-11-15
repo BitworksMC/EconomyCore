@@ -93,9 +93,23 @@ public class SQLAccount implements Datable<Account> {
   @Override
   public void store(final StorageConnector<?> connector, @NotNull final Account account, @Nullable final String identifier) {
 
+    try {
+      storeAccount(connector, account, identifier);
+    } catch(final RuntimeException e) {
+      //The dirty flag is cleared when a save starts; restore it so the next save retries.
+      account.markDirty();
+      throw e;
+    }
+  }
+
+  private void storeAccount(final StorageConnector<?> connector, @NotNull final Account account, @Nullable final String identifier) {
+
     if(connector instanceof final SQLConnector sql && sql.dialect() instanceof final TNEDialect tne) {
 
       PluginCore.log().debug("Saving Account with ID: " + identifier + " Name: " + account.getName(), DebugLevel.STANDARD);
+
+      //Cleared before reading, so a change made while this save runs keeps the account dirty.
+      account.clearDirty();
 
       resolveUsernameConflict(sql, tne, account);
 
@@ -119,6 +133,7 @@ public class SQLAccount implements Datable<Account> {
         PluginCore.log().warning("Skipping dependent account table saves for " + account.getIdentifier() +
                               " (" + account.getName() + "): account row was not persisted. " +
                               "This usually means a unique username conflict with a different uid.");
+        account.markDirty();
         return;
       }
 
@@ -136,41 +151,48 @@ public class SQLAccount implements Datable<Account> {
       }
 
       if(account instanceof final SharedAccount shared) {
-
-        //Non-player accounts.(non_players_accounts table)
-        final String owner = (shared.getOwner() == null)? account.getIdentifier().toString() :
-                             shared.getOwner().toString();
-        sql.executeUpdate(tne.saveNonPlayer(),
-                          new Object[]{
-                                  account.getIdentifier().toString(),
-                                  owner,
-                                  owner
-                          });
-
-        //Account members(account_members table)
-        for(final Member member : shared.getMembers().values()) {
-          for(final Map.Entry<String, Boolean> entry : member.getPermissions().entrySet()) {
-            sql.executeUpdate(tne.saveMembers(),
-                              new Object[]{
-                                      member.getId().toString(),
-                                      account.getIdentifier().toString(),
-                                      entry.getKey(),
-                                      entry.getValue(),
-                                      entry.getValue()
-                              }
-                             );
-          }
-        }
+        storeShared(sql, tne, shared);
       }
 
-      TNECore.instance().storage().storeAll(account.getIdentifier().toString());
-      account.clearDirty();
+      if(!SQLHoldings.storeHoldings(sql, tne, account)) {
+        account.markDirty();
+        return;
+      }
 
       final AccountSaveCallback callback = new AccountSaveCallback(account);
       PluginCore.callbacks().call(callback);
     }
   }
 
+
+  private void storeShared(@NotNull final SQLConnector sql, @NotNull final TNEDialect tne,
+                           @NotNull final SharedAccount shared) {
+
+    //Non-player accounts.(non_players_accounts table)
+    final String owner = (shared.getOwner() == null)? shared.getIdentifier().toString() :
+                         shared.getOwner().toString();
+    sql.executeUpdate(tne.saveNonPlayer(),
+                      new Object[]{
+                              shared.getIdentifier().toString(),
+                              owner,
+                              owner
+                      });
+
+    //Account members(account_members table)
+    for(final Member member : shared.getMembers().values()) {
+      for(final Map.Entry<String, Boolean> entry : member.getPermissions().entrySet()) {
+        sql.executeUpdate(tne.saveMembers(),
+                          new Object[]{
+                                  member.getId().toString(),
+                                  shared.getIdentifier().toString(),
+                                  entry.getKey(),
+                                  entry.getValue(),
+                                  entry.getValue()
+                          }
+                         );
+      }
+    }
+  }
 
   private void resolveUsernameConflict(@NotNull final SQLConnector sql,
                                        @NotNull final TNEDialect dialect,
@@ -266,9 +288,22 @@ public class SQLAccount implements Datable<Account> {
     if(connector instanceof SQLConnector) {
       for(final Account account : TNECore.eco().account().getAccounts().values()) {
         if(account.isDirty()) {
-          store(connector, account, account.getIdentifier().toString());
+          storeIsolated(connector, account);
         }
       }
+    }
+  }
+
+  /**
+   * One account failing to save must not stop the rest of the save pass.
+   */
+  private void storeIsolated(final StorageConnector<?> connector, final Account account) {
+
+    try {
+      store(connector, account, account.getIdentifier().toString());
+    } catch(final RuntimeException e) {
+      PluginCore.log().error("Failed to save account " + account.getIdentifier() + "; retrying on the next save.",
+                             e, DebugLevel.OFF);
     }
   }
 

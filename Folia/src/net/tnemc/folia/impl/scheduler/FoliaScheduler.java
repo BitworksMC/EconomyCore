@@ -44,8 +44,19 @@ public class FoliaScheduler extends SchedulerProvider<FoliaChore> {
    */
   @Override
   public void createDelayedTask(final Runnable task, final ChoreTime delay, final ChoreExecution environment) {
-    //we divide the delay by 20 because Folia uses seconds, and the delay is sent in ticks.
-    Bukkit.getAsyncScheduler().runDelayed(PaperCore.instance().getPlugin(), (scheduledTask)->task.run(), delay.asSeconds(), TimeUnit.SECONDS);
+
+    if(environment == ChoreExecution.MAIN_THREAD) {
+      if(delay.asTicks() <= 0) {
+        Bukkit.getGlobalRegionScheduler().execute(PaperCore.instance().getPlugin(), task);
+      } else {
+        Bukkit.getGlobalRegionScheduler().runDelayed(PaperCore.instance().getPlugin(), scheduledTask->task.run(), delay.asTicks());
+      }
+    } else if(delay.asTicks() <= 0) {
+      Bukkit.getAsyncScheduler().runNow(PaperCore.instance().getPlugin(), scheduledTask->task.run());
+    } else {
+      Bukkit.getAsyncScheduler().runDelayed(PaperCore.instance().getPlugin(), scheduledTask->task.run(),
+                                            delay.asTicks() * 50L, TimeUnit.MILLISECONDS);
+    }
   }
 
   /**
@@ -61,9 +72,16 @@ public class FoliaScheduler extends SchedulerProvider<FoliaChore> {
   @Override
   public FoliaChore createRepeatingTask(final Runnable task, final ChoreTime delay, final ChoreTime period, final ChoreExecution environment) {
 
+    if(environment == ChoreExecution.MAIN_THREAD) {
+      return new FoliaChore(Bukkit.getGlobalRegionScheduler()
+                                    .runAtFixedRate(PaperCore.instance().getPlugin(), scheduledTask->task.run(),
+                                                    Math.max(1L, delay.asTicks()), Math.max(1L, period.asTicks())),
+                            environment);
+    }
     return new FoliaChore(Bukkit.getAsyncScheduler()
                                   .runAtFixedRate(PaperCore.instance().getPlugin(), (scheduledTask)->task.run(),
-                                                  delay.asSeconds(), period.asSeconds(), TimeUnit.SECONDS),
+                                                  Math.max(1L, delay.asTicks() * 50L), Math.max(1L, period.asTicks() * 50L),
+                                                  TimeUnit.MILLISECONDS),
                           environment);
   }
 }

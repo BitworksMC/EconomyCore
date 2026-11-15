@@ -24,11 +24,11 @@ import net.tnemc.core.config.MainConfig;
 import net.tnemc.core.manager.TransactionManager;
 import net.tnemc.core.transaction.Receipt;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.List;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -39,7 +39,8 @@ import java.util.UUID;
  */
 public class SortedHistory {
 
-  protected final NavigableMap<Long, UUID> receipts = new TreeMap<>();
+  //Newest first. Not keyed by time: receipts stored with second precision share timestamps.
+  protected final List<UUID> receipts = new ArrayList<>();
 
   private final UUID account;
   private long lastSort;
@@ -64,38 +65,23 @@ public class SortedHistory {
 
     if(acc.isPresent()) {
       receipts.clear();
-      int i = 0;
-      for(final Receipt receipt : TransactionManager.receipts().getReceiptsByParticipant(acc.get().getIdentifier())) {
-        if(i >= 200) {
-          break;
-        }
-
-        receipts.put(receipt.getTime(), receipt.getId());
-        i++;
-      }
+      TransactionManager.receipts().getReceiptsByParticipant(acc.get().getIdentifier()).stream()
+              .sorted(Comparator.comparingLong(Receipt::getTime).reversed())
+              .limit(200)
+              .forEach(receipt->receipts.add(receipt.getId()));
     }
     lastSort = new Date().getTime();
   }
 
-  public NavigableMap<Long, UUID> getPage(int page) {
+  public List<UUID> getPage(int page) {
 
     sort();
 
     if(page < 1) page = 1;
     if(page > maxPages()) page = 1;
 
-    final NavigableMap<Long, UUID> values = new TreeMap<>();
     final int start = (page - 1) * 5;
-
-    int i = 0;
-    for(final Map.Entry<Long, UUID> entry : receipts.entrySet()) {
-      if(i++ < start) continue;
-
-      values.put(entry.getKey(), entry.getValue());
-
-      if(values.size() >= 5) break;
-    }
-    return values;
+    return List.copyOf(receipts.subList(Math.min(start, receipts.size()), Math.min(start + 5, receipts.size())));
   }
 
   public int maxPages() {
@@ -108,7 +94,7 @@ public class SortedHistory {
     return max;
   }
 
-  public NavigableMap<Long, UUID> getReceipts() {
+  public List<UUID> getReceipts() {
 
     return receipts;
   }

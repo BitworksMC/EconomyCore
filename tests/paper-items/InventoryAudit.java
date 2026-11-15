@@ -30,8 +30,8 @@ public final class InventoryAudit extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    Bukkit.getScheduler().runTaskLater(this, Bukkit::shutdown, 200L);
-    Bukkit.getScheduler().runTask(this, () -> {
+    ProbeScheduler.later(this, Bukkit::shutdown, 200L);
+    ProbeScheduler.run(this, () -> {
       final var gold = new PaperItemStack().of("GOLD_INGOT", 1);
       final var calculations = new PaperInventoryCalculations();
       final Inventory inventory = Bukkit.createInventory(null, 9);
@@ -110,7 +110,7 @@ public final class InventoryAudit extends JavaPlugin {
             + " examples=" + failure.getValue().subList(0, Math.min(5, failure.getValue().size())));
       }
       getLogger().info("AUDIT_RESULT attempts=" + attempts + " failingGroups=" + failures.size());
-      Bukkit.getScheduler().runTaskLater(this, Bukkit::shutdown, 40L);
+      ProbeScheduler.later(this, Bukkit::shutdown, 40L);
     });
   }
 
@@ -138,6 +138,12 @@ public final class InventoryAudit extends JavaPlugin {
         roundtrip(item);
       });
     }
+    check("instrument:inline", () -> {
+      //Defined on the item itself, so it is not in the instrument registry and has no key.
+      final var item = org.bukkit.Bukkit.getItemFactory().createItemStack("minecraft:goat_horn[minecraft:instrument="
+              + "{sound_event:\"minecraft:item.goat_horn.sound.0\",use_duration:7.0,range:256.0,description:\"Inline horn\"}]");
+      roundtrip(item);
+    });
     check("named-enchanted-coin", () -> {
       final var item = new ItemStack(Material.GOLD_INGOT, 17);
       final var meta = item.getItemMeta();

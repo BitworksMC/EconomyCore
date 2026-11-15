@@ -52,6 +52,8 @@ import net.tnemc.core.currency.Currency;
 import net.tnemc.core.currency.calculations.ItemCalculations;
 import net.tnemc.core.currency.item.ItemDenomination;
 import net.tnemc.core.currency.parser.ParseMoney;
+import net.tnemc.core.channel.RedisSync;
+import net.tnemc.core.io.storage.SaveService;
 import net.tnemc.core.io.yaml.YamlStorageManager;
 import net.tnemc.core.manager.Updater;
 import net.tnemc.core.menu.MyBalMenu;
@@ -66,12 +68,10 @@ import net.tnemc.plugincore.core.PluginEngine;
 import net.tnemc.plugincore.core.api.CallbackEntry;
 import net.tnemc.plugincore.core.api.CallbackManager;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
-import net.tnemc.plugincore.core.compatibility.scheduler.Chore;
 import net.tnemc.plugincore.core.compatibility.scheduler.ChoreExecution;
 import net.tnemc.plugincore.core.compatibility.scheduler.ChoreTime;
 import net.tnemc.plugincore.core.io.message.MessageData;
 import net.tnemc.plugincore.core.io.message.MessageHandler;
-import net.tnemc.plugincore.core.io.storage.Datable;
 import net.tnemc.plugincore.core.io.storage.StorageManager;
 import net.tnemc.plugincore.core.io.storage.engine.StorageSettings;
 import org.jetbrains.annotations.NotNull;
@@ -89,9 +89,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * The core class of TNE which should be used within each implementation's class.
@@ -107,7 +108,7 @@ public abstract class TNECore extends PluginEngine {
 
   public static final String DEFAULT_WORLD = "world-113";
   public static final String coreURL = "https://tnemc.net/files/module-version.xml";
-  public static final String version = "0.1.5.3";
+  public static final String version = "0.1.5.4";
   public static final String build = "RELEASE";
   protected static TNECore instance;
 
@@ -120,7 +121,7 @@ public abstract class TNECore extends PluginEngine {
   private MainConfig config;
   private DataConfig data;
   private MessageConfig messageConfig;
-  private Chore<?> autoSaver = null;
+  private final SaveService saver = new SaveService();
   private boolean syncEnabledAtStartup = false;
 
   public TNECore() {
@@ -243,14 +244,17 @@ public abstract class TNECore extends PluginEngine {
       this.syncEnabledAtStartup = false;
     }
 
-    if(pool != null && !redisConnectionAvailable(pool)) {
-      pool.close();
-      pool = null;
-      this.syncEnabledAtStartup = false;
+    if(pool != null) {
+      //A temporary outage must not disable reconnects or strand the durable outbox until restart.
+      redisConnectionAvailable(pool);
     }
 
+    //TNE runs Redis itself; plugin core's subscriber cannot reconnect and only listens to one channel.
+    if(pool != null) {
+      RedisSync.start(pool);
+    }
     this.storage = new StorageManager(DataConfig.yaml().getString("Data.Database.Type"),
-                                      new TNEStorageProvider(), settings, pool);
+                                      new TNEStorageProvider(), settings, null);
   }
 
   private boolean redisAuthRuntimePresent() {
@@ -273,7 +277,7 @@ public abstract class TNECore extends PluginEngine {
       return true;
     } catch(final Exception e) {
       PluginCore.log().error("Unable to connect to Redis (" + e.getMessage()
-                             + "). Cross-server sync will be disabled for this startup.",
+                             + "). Cross-server sync will retry in the background; outgoing changes are retained.",
                              DebugLevel.OFF);
       return false;
     }
@@ -513,12 +517,7 @@ public abstract class TNECore extends PluginEngine {
     //Set up the auto saver if enabled.
     if(DataConfig.yaml().getBoolean("Data.AutoSaver.Enabled")) {
 
-      this.autoSaver = PluginCore.server().scheduler().createRepeatingTask(()->{
-                                                                              PluginCore.log().inform("Running AutoSaver.");
-                                                                              storage.storeAll();
-                                                                           }, new ChoreTime(0),
-                                                                           new ChoreTime(DataConfig.yaml().getInt("Data.AutoSaver.Interval"), TimeUnit.SECONDS),
-                                                                           ChoreExecution.SECONDARY);
+      saver.start(DataConfig.yaml().getInt("Data.AutoSaver.Interval"));
     }
 
     PluginCore.log().debug("Checking for forgotten balances....");
@@ -533,19 +532,21 @@ public abstract class TNECore extends PluginEngine {
   @Override
   public void postDisable() {
 
-    if(autoSaver != null) {
-      autoSaver.cancel();
-    }
+    RedisSync.stop();
 
     if(storage == null) {
       return;
     }
 
-    final Optional<Datable<?>> accountData = Optional.ofNullable(storage.getEngine().datables().get(Account.class));
-    accountData.ifPresent(datable->datable.storeAll(storage.getConnector(), null));
+    saver.shutdown();
+  }
 
-    final Optional<Datable<?>> receiptData = Optional.ofNullable(storage.getEngine().datables().get(Receipt.class));
-    receiptData.ifPresent(datable->datable.storeAll(storage.getConnector(), null));
+  /**
+   * @return The service that performs all TNE storage writes.
+   */
+  public SaveService saver() {
+
+    return saver;
   }
 
   public MainConfig config() {
@@ -569,6 +570,39 @@ public abstract class TNECore extends PluginEngine {
   }
 
   public abstract <INV> ItemCalculations<INV> itemCalculations();
+
+  /**
+   * Item balances live in player inventories, which may only be touched on the server thread.
+   *
+   * @return true if the current thread may access player inventories.
+   */
+  public boolean isMainThread() {
+
+    return true;
+  }
+
+  /**
+   * Whether this thread owns the online player's inventory. A balance lock does not grant ownership.
+   */
+  public boolean canAccessInventory(final UUID player) {
+
+    return isMainThread();
+  }
+
+  /**
+   * Runs a snapshot on the owning thread of every online player, completing after all snapshots.
+   * Platforms with region threads override this to dispatch to each player's entity scheduler.
+   */
+  public CompletableFuture<Void> snapshotOnlinePlayers(final Consumer<UUID> snapshot) {
+
+    return OnlinePlayerSnapshots.snapshot(this, snapshot);
+  }
+
+  /** Runs player-related work on its owning thread, or the server thread when offline. */
+  public CompletableFuture<Void> runPlayerTask(final UUID identifier, final Runnable task) {
+
+    return OnlinePlayerSnapshots.run(this, task);
+  }
 
   public AbstractItemStack<?> denominationToStack(final ItemDenomination denomination) {
 

@@ -36,6 +36,7 @@ import net.tnemc.plugincore.core.compatibility.scheduler.SchedulerProvider;
 import net.tnemc.plugincore.paper.hook.PAPIParser;
 import net.tnemc.plugincore.paper.impl.PaperPlayerProvider;
 import net.tnemc.plugincore.paper.impl.PaperProxyProvider;
+import net.tnemc.plugincore.paper.impl.PaperWorldProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -48,6 +49,7 @@ import org.bukkit.inventory.ShapelessRecipe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import revxrsal.commands.command.CommandActor;
+import revxrsal.commands.bukkit.actor.BukkitCommandActor;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -85,7 +87,7 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public Optional<WorldProvider> findWorld(final String world) {
 
-    return Optional.empty();
+    return Optional.ofNullable(Bukkit.getWorld(world)).map(PaperWorldProvider::new);
   }
 
 
@@ -131,7 +133,7 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public CmdSource<?> source(@NotNull final CommandActor actor) {
 
-    return null;
+    return new FoliaCMDSource((BukkitCommandActor)actor);
   }
 
   @Override
@@ -200,7 +202,7 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public boolean playedBefore(final UUID uuid) {
 
-    return false;
+    return Bukkit.getOfflinePlayer(uuid).hasPlayedBefore();
   }
 
   /**
@@ -213,7 +215,8 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public boolean playedBefore(final String name) {
 
-    return false;
+    final OfflinePlayer player = Bukkit.getOfflinePlayerIfCached(name);
+    return player != null && player.hasPlayedBefore();
   }
 
   /**
@@ -258,12 +261,7 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public Optional<String> fromID(final UUID id) {
 
-    for(final OfflinePlayer player : Bukkit.getServer().getOfflinePlayers()) {
-      if(player.getUniqueId().equals(id)) {
-        return Optional.ofNullable(player.getName());
-      }
-    }
-    return Optional.empty();
+    return Optional.ofNullable(Bukkit.getOfflinePlayer(id).getName());
   }
 
   @Override
@@ -312,7 +310,7 @@ public class FoliaServerProvider implements ServerConnector {
   @Override
   public @Nullable InputStream getResource(@NotNull final String s) {
 
-    return null;
+    return PaperCore.instance().getPlugin().getResource(s);
   }
 
   /**

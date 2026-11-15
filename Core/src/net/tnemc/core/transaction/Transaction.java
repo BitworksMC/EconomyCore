@@ -50,6 +50,9 @@ public class Transaction {
 
   private TransactionParticipant from;
   private TransactionParticipant to;
+  //ponytail: one global lock serialises balance changes; per-account locks if contention ever shows.
+  public static final Object BALANCE_LOCK = new Object();
+
   private HoldingsModifier modifierTo;
   private HoldingsModifier modifierFrom;
 
@@ -325,7 +328,15 @@ public class Transaction {
       throw new InvalidTransactionException(missing);
     }
 
-    final TransactionResult result = processor.process(this);
+    final TransactionResult result;
+    synchronized(BALANCE_LOCK) {
+      if(inventoryUnavailable(getFromAccount(), modifierFrom) || inventoryUnavailable(getToAccount(), modifierTo)) {
+        result = new TransactionResult(false, "Item currency transactions must run on the owning player thread.");
+      } else {
+        refreshBalances();
+        result = processor.process(this);
+      }
+    }
     if(resultConsumer != null) {
       resultConsumer.accept(result);
     }
@@ -333,6 +344,33 @@ public class Transaction {
     PluginCore.callbacks().call(postTransaction);
     logReceipt(result);
     return result;
+  }
+
+  private boolean inventoryUnavailable(final Optional<Account> account, final HoldingsModifier modifier) {
+
+    if(account.isEmpty() || modifier == null || !account.get().isPlayer()
+       || !PluginCore.server().online(account.get().getIdentifier().toString())
+       || TNECore.instance().canAccessInventory(account.get().getIdentifier())
+       || modifier.getType().equals(EconomyManager.VIRTUAL) || modifier.getType().equals(EconomyManager.DATABASE)) {
+      return false;
+    }
+    return TNECore.eco().currency().find(modifier.getCurrency())
+            .map(currency->currency.type().supportsItems()).orElse(false);
+  }
+
+  /**
+   * Recalculates ending balances from the current holdings. They were calculated when the
+   * participants were added, and another thread (e.g. an async Vault call) may have changed the
+   * balance since; writing the stale ending balance would undo that change.
+   */
+  private void refreshBalances() {
+
+    if(from != null && modifierFrom != null) {
+      getFromAccount().ifPresent(account->from(account, modifierFrom));
+    }
+    if(to != null && modifierTo != null) {
+      getToAccount().ifPresent(account->to(account, modifierTo));
+    }
   }
 
   private String missingRequirement() {

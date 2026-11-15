@@ -26,9 +26,8 @@ import net.tnemc.core.transaction.Receipt;
 import net.tnemc.core.transaction.history.AwayHistory;
 import net.tnemc.core.transaction.history.SortedHistory;
 
-import java.util.Date;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.TreeMap;
@@ -90,22 +89,16 @@ public class ReceiptBox {
   private AwayHistory createAwayHistory(final UUID account, final PlayerAccount playerAccount) {
 
     final AwayHistory history = new AwayHistory(account);
-    final long time = new Date().getTime();
+    final long since = playerAccount.getLastOnline();
 
-    for(final Map.Entry<Long, Receipt> entry : range(playerAccount.getLastOnline(), time).entrySet()) {
-      final Receipt receipt = entry.getValue();
-      if(involves(receipt, account)) {
-        history.getReceipts().put(receipt.getTime(), receipt.getId());
-      }
-    }
+    //Not via range(): it is keyed by time, which drops receipts sharing a timestamp.
+    TransactionManager.receipts().getReceiptsByParticipant(account).stream()
+            .filter(receipt->receipt.getTime() >= since)
+            .sorted(Comparator.comparingLong(Receipt::getTime))
+            .forEach(receipt->history.getReceipts().add(receipt.getId()));
     return history;
   }
 
-  private boolean involves(final Receipt receipt, final UUID account) {
-
-    return receipt.getFrom() != null && receipt.getFrom().getId().equals(account)
-           || receipt.getTo() != null && receipt.getTo().getId().equals(account);
-  }
 
   public SortedHistory getSorted(final UUID identifier) {
 

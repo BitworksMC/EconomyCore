@@ -1,0 +1,6 @@
+name: OnlineItemProbe
+version: '1'
+main: OnlineItemProbe
+api-version: '1.20'
+folia-supported: true
+depend: [TheNewEconomy]

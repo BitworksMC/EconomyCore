@@ -21,9 +21,9 @@ package net.tnemc.core.channel;
 import com.google.common.io.ByteArrayDataOutput;
 import net.tnemc.core.config.DataConfig;
 import net.tnemc.plugincore.PluginCore;
-import net.tnemc.plugincore.core.channel.ChannelBytesWrapper;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 
+import java.io.DataInput;
 import java.io.IOException;
 
 /**
@@ -45,7 +45,7 @@ public final class ChannelSecurity {
     out.writeUTF(token());
   }
 
-  public static boolean validate(final ChannelBytesWrapper wrapper, final String type) {
+  public static boolean validate(final DataInput in, final String type) {
 
     final String expected = token();
     if(!isConfigured(expected)) {
@@ -55,7 +55,7 @@ public final class ChannelSecurity {
 
     final String provided;
     try {
-      provided = wrapper.readUTF();
+      provided = in.readUTF();
     } catch(final IOException e) {
       PluginCore.log().error("Rejected " + type + " sync payload due to malformed security token.", e, DebugLevel.STANDARD);
       return false;
