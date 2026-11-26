@@ -24,9 +24,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
       - name: Build with Maven
-        run: mvn -e -B verify --file pom.xml
+        run: mvn -e -B -ntp "-Dmaven.repo.local=$RUNNER_TEMP/economycore-maven" clean verify --file pom.xml
       - uses: actions/upload-artifact@v4
         with:
           name: TNE

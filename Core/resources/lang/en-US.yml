@@ -54,8 +54,9 @@ Messages:
     StatusChange: "<white>Your account's status has been changed to <green>$status<white>."
     BlockedAction: "<red>You don't have permission to perform the action \"$action\" with currency \"$currency\"!"
   Data:
-    Backup: "<gold>Successfully backed up database!"
-    BackupFailed: "<red>The database backup failed!"
+    Backup: "<gold>Saved a backup of persisted YAML accounts, balances, and receipts in the backups folder."
+    BackupFailed: "<red>The storage backup failed. Check the server log."
+    BackupUnavailable: "<red>In-game backups are available for YAML storage. Use your database's backup tools for SQL."
     Debug: "<green>Debug level has been set to $level."
     Save: "<green>Saved all TNE data."
   Module:
@@ -375,7 +376,7 @@ Messages:
     Admin:
       Backup:
         Arguments: ""
-        Description: "Creates a backup of all server data."
+        Description: "Archives persisted economy data for YAML storage."
       Create:
         Arguments: "<name> [balance]"
         Description: "Creates a new non-player economy account.<newline>- name - The name of the account.<newline>- Balance ~ The starting balance of the account."
