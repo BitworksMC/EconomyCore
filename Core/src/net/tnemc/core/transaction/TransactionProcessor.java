@@ -19,16 +19,12 @@ package net.tnemc.core.transaction;
  */
 
 import net.tnemc.core.TNECore;
-import net.tnemc.core.account.Account;
-import net.tnemc.core.account.holdings.HoldingsEntry;
 import net.tnemc.core.actions.EconomyResponse;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * This is a class that handles the actual processing of a transaction.
@@ -48,39 +44,16 @@ public interface TransactionProcessor {
    */
   default TransactionResult process(final Transaction transaction) {
 
+    if(TransactionSettlement.inProgress()) {
+      return new TransactionResult(false, "Messages.Money.Failed");
+    }
     final Optional<EconomyResponse> response = processChecks(transaction);
 
     if(response.isPresent() && !response.get().success()) {
       return new TransactionResult(false, response.get().response());
     }
 
-    if(transaction.getFrom() != null) {
-
-      final Optional<Account> from = TNECore.eco().account().findAccount(transaction.getFrom().getId());
-      if(from.isPresent()) {
-        for(final HoldingsEntry entry : transaction.getFrom().getEndingBalances()) {
-          from.get().setHoldings(entry, entry.getHandler());
-        }
-      }
-    }
-
-    if(transaction.getTo() != null) {
-
-      final Optional<Account> to = TNECore.eco().account().findAccount(transaction.getTo().getId());
-      if(to.isPresent()) {
-        for(final HoldingsEntry entry : transaction.getTo().getEndingBalances()) {
-          to.get().setHoldings(entry, entry.getHandler());
-        }
-      }
-    }
-
-    final TransactionResult result = new TransactionResult(true, "");
-
-    final Receipt receipt = new Receipt(UUID.randomUUID(),
-                                        new Date().getTime(),
-                                        transaction);
-    result.setReceipt(receipt);
-    return result;
+    return TransactionSettlement.apply(transaction);
   }
 
   default Optional<EconomyResponse> processChecks(final Transaction transaction) {

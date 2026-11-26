@@ -23,6 +23,7 @@ import net.tnemc.bukkit.listeners.player.PlayerCloseInventoryListener;
 import net.tnemc.bukkit.listeners.player.PlayerExperienceGainListener;
 import net.tnemc.bukkit.listeners.player.PlayerJoinListener;
 import net.tnemc.bukkit.listeners.player.PlayerQuitListener;
+import net.tnemc.bukkit.depend.towny.TownyHandler;
 import net.tnemc.bukkit.listeners.server.PluginEnableListener;
 import net.tnemc.bukkit.listeners.world.WorldLoadListener;
 import net.tnemc.core.TNECore;
@@ -129,6 +130,9 @@ public class PaperPlugin {
 
     //World Listeners
     Bukkit.getPluginManager().registerEvents(new WorldLoadListener(), plugin);
+    if(Bukkit.getPluginManager().getPlugin("Towny") != null) {
+      Bukkit.getPluginManager().registerEvents(new TownyHandler(), plugin);
+    }
 
     //Inventory listeners
     Bukkit.getPluginManager().registerEvents(new ItemCraftListener(), plugin);

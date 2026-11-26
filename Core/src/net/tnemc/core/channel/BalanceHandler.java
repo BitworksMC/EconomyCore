@@ -22,20 +22,25 @@ import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
 import net.tnemc.core.account.holdings.HoldingsEntry;
 import net.tnemc.core.transaction.Transaction;
+import net.tnemc.core.transaction.TransactionResult;
 import net.tnemc.core.utils.Identifier;
 import net.tnemc.plugincore.PluginCore;
+import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 
 import java.io.DataInput;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 /**
  * Syncs balance changes between servers.
@@ -48,6 +53,7 @@ public final class BalanceHandler {
 
   private static final int REMEMBERED_CHANGES = 10_000;
   private static final ThreadLocal<Boolean> APPLYING_REMOTE = ThreadLocal.withInitial(()->false);
+  private static final ThreadLocal<List<Change>> TRANSACTION_CHANGES = new ThreadLocal<>();
   private static final Map<UUID, Boolean> APPLIED = Collections.synchronizedMap(new LinkedHashMap<>() {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<UUID, Boolean> eldest) {
@@ -68,6 +74,42 @@ public final class BalanceHandler {
     return APPLYING_REMOTE.get();
   }
 
+  public static boolean deferringTransactionChanges() {
+
+    return TRANSACTION_CHANGES.get() != null;
+  }
+
+  /**
+   * Captures local balance deltas until the default transaction processor has accepted every leg.
+   */
+  public static TransactionResult afterTransaction(final Supplier<TransactionResult> apply) {
+
+    if(deferringTransactionChanges()) {
+      throw new IllegalStateException("A balance transaction is already processing on this thread");
+    }
+    final List<Change> pending = new ArrayList<>();
+    TRANSACTION_CHANGES.set(pending);
+    final TransactionResult result;
+    try {
+      result = apply.get();
+    } finally {
+      TRANSACTION_CHANGES.remove();
+    }
+    if(result.isSuccessful()) {
+      for(final Change change : pending) {
+        try {
+          publish(change);
+        } catch(final RuntimeException failure) {
+          PluginCore.log().error("Unable to queue committed Redis balance delta " + change.id() + " for account "
+                                 + change.account() + " (" + change.region() + ", " + change.currency() + ", "
+                                 + change.handler().asID() + ", " + change.delta().toPlainString()
+                                 + "). Reconcile this balance across servers.", failure, DebugLevel.OFF);
+        }
+      }
+    }
+    return result;
+  }
+
   public static void send(final String identifier, final String name, final String region, final UUID currency,
                           final Identifier handler, final BigDecimal delta) {
 
@@ -75,16 +117,30 @@ public final class BalanceHandler {
       return;
     }
 
-    final String change = UUID.randomUUID().toString();
+    final Change change = new Change(UUID.randomUUID(), identifier, name, region, currency, handler, delta);
+    final List<Change> pending = TRANSACTION_CHANGES.get();
+    if(pending != null) {
+      pending.add(change);
+      return;
+    }
+    publish(change);
+  }
+
+  private static void publish(final Change change) {
+
     RedisSync.publish(RedisSync.BALANCE, out->{
-      out.writeUTF(change);
-      out.writeUTF(identifier);
-      out.writeUTF(name);
-      out.writeUTF(region);
-      out.writeUTF(currency.toString());
-      out.writeUTF(handler.asID());
-      out.writeUTF(delta.toPlainString());
+      out.writeUTF(change.id().toString());
+      out.writeUTF(change.account());
+      out.writeUTF(change.name());
+      out.writeUTF(change.region());
+      out.writeUTF(change.currency().toString());
+      out.writeUTF(change.handler().asID());
+      out.writeUTF(change.delta().toPlainString());
     });
+  }
+
+  private record Change(UUID id, String account, String name, String region, UUID currency, Identifier handler,
+                        BigDecimal delta) {
   }
 
   static void handle(final DataInput in) throws IOException {

@@ -50,4 +50,16 @@ public class NonPlayerAccount extends SharedAccount {
 
     return UUID.nameUUIDFromBytes(("NonPlayer:" + name).getBytes(StandardCharsets.UTF_8));
   }
+
+  /**
+   * Apply the storage key when loading or moving a persisted account.
+   */
+  public void useStorageIdentifier(final UUID storageIdentifier) {
+
+    if(identifier.equals(owner)) {
+      owner = storageIdentifier;
+    }
+    identifier = storageIdentifier;
+    receiptOwner = storageIdentifier;
+  }
 }

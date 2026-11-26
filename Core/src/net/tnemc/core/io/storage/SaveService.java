@@ -23,6 +23,8 @@ import net.tnemc.plugincore.core.io.storage.StorageConnector;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,6 +32,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 /**
  * Runs every TNE write of this server on one dedicated thread.
@@ -133,6 +136,62 @@ public final class SaveService {
       executor.execute(guard(task));
     } catch(final RejectedExecutionException shutDown) {
       guard(task).run();
+    }
+  }
+
+  /**
+   * Keeps account identity and persistence changes together without letting a storage task
+   * acquire the balance lock. Reload holds that lock while waiting for this same worker.
+   * The operation must use only storage and account state, without invoking plugin callbacks.
+   */
+  boolean rewriteAccount(final BooleanSupplier rewrite) {
+
+    if(Thread.currentThread() == storageThread) {
+      return false;
+    }
+    synchronized(Transaction.BALANCE_LOCK) {
+      final CountDownLatch started = new CountDownLatch(1);
+      final AtomicBoolean claimed = new AtomicBoolean(false);
+      final CompletableFuture<Boolean> result = new CompletableFuture<>();
+      try {
+        executor.execute(()->startRewrite(rewrite, started, claimed, result));
+      } catch(final RejectedExecutionException shutDown) {
+        return false;
+      }
+      if(!awaitRewriteStart(started, claimed)) {
+        return false;
+      }
+      // Once started, learn the outcome before allowing a conflicting cache change.
+      try {
+        return result.join();
+      } catch(final CompletionException failure) {
+        PluginCore.log().error("Account storage rewrite failed.", new Exception(failure.getCause()), DebugLevel.OFF);
+        return false;
+      }
+    }
+  }
+
+  private static void startRewrite(final BooleanSupplier rewrite, final CountDownLatch started,
+                                   final AtomicBoolean claimed, final CompletableFuture<Boolean> result) {
+
+    if(!claimed.compareAndSet(false, true)) {
+      return;
+    }
+    started.countDown();
+    try {
+      result.complete(rewrite.getAsBoolean());
+    } catch(final Throwable failure) {
+      result.completeExceptionally(failure);
+    }
+  }
+
+  private static boolean awaitRewriteStart(final CountDownLatch started, final AtomicBoolean claimed) {
+
+    try {
+      return started.await(RELOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS) || !claimed.compareAndSet(false, true);
+    } catch(final InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      return !claimed.compareAndSet(false, true);
     }
   }
 

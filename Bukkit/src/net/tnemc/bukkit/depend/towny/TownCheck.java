@@ -46,7 +46,7 @@ public class TownCheck implements AccountTypeCheck {
     return value->{
       try {
 
-        final boolean checkResult = value.contains(TownySettings.getTownAccountPrefix());
+        final boolean checkResult = value.startsWith(TownySettings.getTownAccountPrefix());
 
         PluginCore.log().debug("Towny Town Account Check -  Value: " + value + ", Result: " + checkResult);
 
