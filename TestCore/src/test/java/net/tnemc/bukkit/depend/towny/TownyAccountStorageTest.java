@@ -9,10 +9,13 @@ import net.tnemc.core.EconomyManager;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.TNEStorageProvider;
 import net.tnemc.core.account.Account;
+import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.core.account.SharedAccount;
 import net.tnemc.core.config.DataConfig;
 import net.tnemc.core.currency.Currency;
 import net.tnemc.core.io.storage.SaveService;
+import net.tnemc.core.io.storage.datables.yaml.YAMLAccount;
+import net.tnemc.core.io.yaml.YamlStorageManager;
 import net.tnemc.core.manager.AccountManager;
 import net.tnemc.core.manager.CurrencyManager;
 import net.tnemc.plugincore.PluginCore;
@@ -96,6 +99,7 @@ public class TownyAccountStorageTest {
     when(engine.saver()).thenReturn(SAVER);
     core.when(TNECore::instance).thenReturn(engine);
     core.when(TNECore::eco).thenReturn(economy);
+    core.when(TNECore::yaml).thenReturn(new YamlStorageManager());
 
     api = mock(TownyAPI.class);
     towny.when(TownyAPI::getInstance).thenReturn(api);
@@ -191,6 +195,33 @@ public class TownyAccountStorageTest {
     restart();
     assertEquals(new BigDecimal("125.75"), balance(accounts.findAccount(oldTown).orElseThrow()));
     assertEquals(new BigDecimal("11.50"), balance(accounts.findAccount(destination).orElseThrow()));
+  }
+
+  @Test
+  public void townyTypeSurvivesRekeyAndSaveWhenIntegrationIsUnavailableDuringLoad() throws IOException {
+
+    final UUID oldTown = UUID.randomUUID();
+    final UUID destination = registerTown("Harbor", UUID.randomUUID());
+    seedAccount(oldTown, "town-Harbor", "town", "61.25");
+    settings.when(TownySettings::getTownAccountPrefix).thenReturn(null);
+    restart();
+    final Account loaded = accounts.findAccount(oldTown).orElseThrow();
+    assertEquals(NonPlayerAccount.class, loaded.getClass());
+    assertEquals("town", loaded.type());
+
+    settings.when(TownySettings::getTownAccountPrefix).thenReturn("town-");
+    TownyHandler.synchronizeAccounts();
+    final StorageManager storage = engine.storage();
+    final YAMLAccount datable = (YAMLAccount)storage.getEngine().datables().get(Account.class);
+    datable.store(storage.getConnector(), accounts.findAccount(destination).orElseThrow(), destination.toString());
+
+    try(final var lines = Files.lines(accountFile(destination))) {
+      assertTrue(lines.map(String::strip).anyMatch(line->line.equals("Type: town")));
+    }
+    restart();
+    final Account reloaded = accounts.findAccount(destination).orElseThrow();
+    assertEquals("town", reloaded.type());
+    assertEquals(new BigDecimal("61.25"), balance(reloaded));
   }
 
   private UUID registerTown(final String name, final UUID identifier) {

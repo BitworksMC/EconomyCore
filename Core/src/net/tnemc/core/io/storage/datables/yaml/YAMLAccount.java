@@ -22,6 +22,7 @@ import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
+import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.account.SharedAccount;
 import net.tnemc.core.account.holdings.HoldingsEntry;
@@ -303,6 +304,9 @@ public class YAMLAccount implements Datable<Account> {
     }
 
     final Account account = response.getAccount().get();
+    if(account instanceof final NonPlayerAccount nonPlayer) {
+      nonPlayer.useStorageType(type);
+    }
     account.setStatus(TNECore.eco().account().findStatus(yaml.getString("Info.Status")));
     account.setCreationDate(yaml.getLong("Info.CreationDate"));
     account.setPin(yaml.getString("Info.Pin"));

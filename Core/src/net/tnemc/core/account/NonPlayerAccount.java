@@ -30,6 +30,8 @@ import java.util.UUID;
  */
 public class NonPlayerAccount extends SharedAccount {
 
+  private String storedType = "non-player";
+
   public NonPlayerAccount(final UUID identifier, final String name) {
 
     super(identifier, name, null);
@@ -43,7 +45,15 @@ public class NonPlayerAccount extends SharedAccount {
   @Override
   public String type() {
 
-    return "non-player";
+    return storedType;
+  }
+
+  /**
+   * Retains the declared type when its integration is unavailable during account hydration.
+   */
+  public void useStorageType(final String type) {
+
+    this.storedType = type;
   }
 
   public UUID generateIdentifier(final String name) {
