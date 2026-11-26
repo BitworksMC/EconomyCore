@@ -54,12 +54,16 @@ public class AdminCommand extends BaseCommand {
 
   public static void onBackup(final CmdSource<?> sender) {
 
-    if(StorageManager.instance().backup()) {
-
-      sender.message(new MessageData("Messages.Data.Backup"));
+    final StorageManager storage = StorageManager.instance();
+    if(!storage.getEngine().supportsBackup()) {
+      sender.message(new MessageData("Messages.Data.BackupUnavailable"));
       return;
     }
-    sender.message(new MessageData("Messages.Data.BackupFailed"));
+    final var scheduler = PluginCore.server().scheduler();
+    TNECore.instance().saver().run(()->{
+      final String message = storage.backup()? "Messages.Data.Backup" : "Messages.Data.BackupFailed";
+      scheduler.createDelayedTask(()->sender.message(new MessageData(message)), new ChoreTime(0), ChoreExecution.MAIN_THREAD);
+    });
   }
 
   //<player> [balance]

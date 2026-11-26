@@ -19,6 +19,7 @@ package net.tnemc.bukkit.depend.towny;
  */
 
 import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.TownyEconomyHandler;
 import com.palmergames.bukkit.towny.TownySettings;
 import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.plugincore.PluginCore;
@@ -62,17 +63,31 @@ public class NationAccount extends NonPlayerAccount {
   @Override
   public UUID generateIdentifier(final String name) {
 
+    // At Towny's bank-name limit, the shortened name may even match a different nation.
+    if(name.length() == 32) {
+      return identifier;
+    }
     try {
 
       PluginCore.log().debug("Generating Nation UUID for: " + name + ".");
-      final UUID nationID = Objects.requireNonNull(TownyAPI.getInstance().getNation(name.replace(TownySettings.getNationAccountPrefix(), ""))).getUUID();
+      final String prefix = TownySettings.getNationAccountPrefix();
+      if(!name.startsWith(prefix)) {
+        return identifier;
+      }
+      if(TownyAPI.getInstance().getNation(identifier) != null) {
+        return TownyEconomyHandler.modifyNPCUUID(identifier);
+      }
+      final UUID nationID = TownyEconomyHandler.modifyNPCUUID(
+              Objects.requireNonNull(TownyAPI.getInstance().getNation(name.substring(prefix.length()))).getUUID());
 
       PluginCore.log().debug("Generated Nation UUID: " + nationID + ".");
       return nationID;
     } catch(final Exception ignore) {
 
       PluginCore.log().debug("Failed to generate Nation UUID for: " + name + ".");
-      return super.generateIdentifier(name);
+      // Bank names may be truncated by Towny. Keep the supplied UUID when the
+      // full government name cannot be resolved instead of deriving a different one.
+      return identifier;
     }
   }
 }

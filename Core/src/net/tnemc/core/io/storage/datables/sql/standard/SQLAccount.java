@@ -20,6 +20,7 @@ package net.tnemc.core.io.storage.datables.sql.standard;
 
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
+import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.account.SharedAccount;
 import net.tnemc.core.account.holdings.HoldingsEntry;
@@ -358,6 +359,9 @@ public class SQLAccount implements Datable<Account> {
       }
 
       final Account account = response.getAccount().get();
+      if(account instanceof final NonPlayerAccount nonPlayer) {
+        nonPlayer.useStorageType(type);
+      }
       account.setStatus(TNECore.eco().account().findStatus(result.getString("status")));
       account.setCreationDate(result.getTimestamp("created").getTime());
       account.setPin(result.getString("pin"));

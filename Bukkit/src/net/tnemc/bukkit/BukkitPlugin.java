@@ -20,6 +20,7 @@ package net.tnemc.bukkit;
 
 import net.tnemc.bukkit.hook.economy.VaultHook;
 import net.tnemc.bukkit.hook.economy.VaultUnlockedHook;
+import net.tnemc.bukkit.depend.towny.TownyHandler;
 import net.tnemc.bukkit.hook.misc.PAPIHook;
 import net.tnemc.bukkit.hook.misc.PlaceHolderRule;
 import net.tnemc.bukkit.listeners.entity.EntityKilledListener;
@@ -108,6 +109,9 @@ public class BukkitPlugin {
 
     //World Listeners
     Bukkit.getPluginManager().registerEvents(new WorldLoadListener(), plugin);
+    if(Bukkit.getPluginManager().getPlugin("Towny") != null) {
+      Bukkit.getPluginManager().registerEvents(new TownyHandler(), plugin);
+    }
 
     //Inventory Listeners
     Bukkit.getPluginManager().registerEvents(new ItemCraftListener(), plugin);

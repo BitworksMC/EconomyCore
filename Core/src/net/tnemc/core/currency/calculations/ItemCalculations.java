@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -59,15 +60,24 @@ public class ItemCalculations<I> {
 
   public void setItems(final CalculationData<I> data, final BigDecimal amount) {
 
+    trySetItems(data, amount);
+  }
+
+  /**
+   * Applies a denomination plan only when its debit, credit and change can be represented exactly.
+   */
+  public boolean trySetItems(final CalculationData<I> data, final BigDecimal amount) {
+
     final BigDecimal holdings = calculateHoldings(data);
 
-    if(holdings.compareTo(amount) == 0) return;
-
+    if(amount.signum() < 0) return false;
+    if(holdings.compareTo(amount) == 0) return true;
     if(holdings.compareTo(amount) > 0) {
-      calculation(data, holdings.subtract(amount));
-      return;
+      return calculation(data, holdings.subtract(amount)).signum() == 0;
     }
-    provideMaterials(data, amount.subtract(holdings));
+    final Optional<Map<BigDecimal, Integer>> payout = exactPayout(data, amount.subtract(holdings));
+    payout.ifPresent(counts -> executePayout(data, counts));
+    return payout.isPresent();
   }
 
   /**
@@ -95,25 +105,19 @@ public class ItemCalculations<I> {
                            + ", Remaining: " + payment.remaining().toPlainString(), DebugLevel.DEVELOPER);
 
     // If more is still needed to pay, break down a larger denomination
-    BigDecimal changeToGiveBack = BigDecimal.ZERO;
+    Map<BigDecimal, Integer> changeToGiveBack = Map.of();
 
     if(payment.remaining().compareTo(BigDecimal.ZERO) > 0) {
-      final Breakdown breakdown = findBreakdown(data, availableMaterials, payment);
-      if(breakdown == null) {
-        PluginCore.log().debug("Cannot pay - insufficient funds", DebugLevel.DEVELOPER);
+      final Optional<Map<BigDecimal, Integer>> breakdown = findBreakdown(data, availableMaterials, payment);
+      if(breakdown.isEmpty()) {
+        PluginCore.log().debug("Cannot pay the requested amount with exact change", DebugLevel.DEVELOPER);
         return payment.remaining();
       }
-      changeToGiveBack = breakdown.change();
+      changeToGiveBack = breakdown.get();
     }
 
     executeRemovals(data, payment.toRemove());
-
-    // Give back change if any
-    if(changeToGiveBack.compareTo(BigDecimal.ZERO) > 0) {
-
-      PluginCore.log().debug("Providing change: " + changeToGiveBack.toPlainString(), DebugLevel.DEVELOPER);
-      provideMaterials(data, changeToGiveBack);
-    }
+    executePayout(data, changeToGiveBack);
 
     PluginCore.log().debug("=== Calculation Completed ===", DebugLevel.DEVELOPER);
     return BigDecimal.ZERO;
@@ -132,8 +136,8 @@ public class ItemCalculations<I> {
         continue;
       }
 
-      final int needed = remaining.divide(denomination, 0, RoundingMode.DOWN).intValue();
-      final int toUse = Math.min(needed, entry.getValue());
+      final int toUse = remaining.divide(denomination, 0, RoundingMode.DOWN)
+                           .min(BigDecimal.valueOf(entry.getValue())).intValueExact();
       if(toUse > 0) {
         toRemove.put(denomination, toUse);
         final BigDecimal value = denomination.multiply(new BigDecimal(toUse));
@@ -149,26 +153,25 @@ public class ItemCalculations<I> {
     return new DirectPayment(paidAmount, remaining, toRemove);
   }
 
-  private Breakdown findBreakdown(final CalculationData<I> data,
-                                  final TreeMap<BigDecimal, Integer> availableMaterials,
-                                  final DirectPayment payment) {
+  private Optional<Map<BigDecimal, Integer>> findBreakdown(final CalculationData<I> data,
+                                                           final TreeMap<BigDecimal, Integer> availableMaterials,
+                                                           final DirectPayment payment) {
 
-    for(final Map.Entry<BigDecimal, Integer> entry : availableMaterials.entrySet()) {
+    for(final Map.Entry<BigDecimal, Integer> entry : availableMaterials.tailMap(payment.remaining(), false).entrySet()) {
       final BigDecimal denomination = entry.getKey();
-      if(denomination.compareTo(payment.remaining()) <= 0 || entry.getValue() <= 0) {
-        continue;
-      }
-
       final int alreadyUsed = payment.toRemove().getOrDefault(denomination, 0);
       if(entry.getValue() > alreadyUsed) {
         final BigDecimal change = denomination.subtract(payment.remaining());
-        PluginCore.log().debug("Breaking down 1x " + denomination.toPlainString()
-                               + ", change: " + change.toPlainString(), DebugLevel.DEVELOPER);
-        payment.toRemove().put(denomination, alreadyUsed + 1);
-        return new Breakdown(data.getDenominations().get(denomination), change);
+        final Optional<Map<BigDecimal, Integer>> payout = exactPayout(data, change);
+        if(payout.isPresent()) {
+          PluginCore.log().debug("Breaking down 1x " + denomination.toPlainString()
+                                 + ", change: " + change.toPlainString(), DebugLevel.DEVELOPER);
+          payment.toRemove().put(denomination, alreadyUsed + 1);
+          return payout;
+        }
       }
     }
-    return null;
+    return Optional.empty();
   }
 
   private void executeRemovals(final CalculationData<I> data,
@@ -185,8 +188,6 @@ public class ItemCalculations<I> {
   private record DirectPayment(BigDecimal paidAmount, BigDecimal remaining,
                                TreeMap<BigDecimal, Integer> toRemove) { }
 
-  private record Breakdown(Denomination denomination, BigDecimal change) { }
-
   /**
    * Used to exchange an amount to inventory items. This is mostly used for when a larger
    * denomination needs to be broken into smaller denominations for calculation purposes.
@@ -195,10 +196,26 @@ public class ItemCalculations<I> {
    */
   public void provideMaterials(final CalculationData<I> data, final BigDecimal amount) {
 
+    exactPayout(data, amount).ifPresent(counts -> executePayout(data, counts));
+  }
+
+  private Optional<Map<BigDecimal, Integer>> exactPayout(final CalculationData<I> data, final BigDecimal amount) {
+
     data.getCalculator().initialize(data.getCurrency(), data.getInventoryMaterials());
+    final Map<BigDecimal, Integer> counts = data.getCalculator().breakdown(amount);
+    BigDecimal value = BigDecimal.ZERO;
+    for(final Map.Entry<BigDecimal, Integer> entry : counts.entrySet()) {
+      if(entry.getValue() <= 0 || !data.getDenominations().containsKey(entry.getKey())) {
+        return Optional.empty();
+      }
+      value = value.add(entry.getKey().multiply(BigDecimal.valueOf(entry.getValue())));
+    }
+    return value.compareTo(amount) == 0 ? Optional.of(counts) : Optional.empty();
+  }
 
-    for(final Map.Entry<BigDecimal, Integer> entry : data.getCalculator().breakdown(amount).entrySet()) {
+  private void executePayout(final CalculationData<I> data, final Map<BigDecimal, Integer> counts) {
 
+    for(final Map.Entry<BigDecimal, Integer> entry : counts.entrySet()) {
       final int holding = data.getInventoryMaterials().getOrDefault(entry.getKey(), 0);
       data.getInventoryMaterials().put(entry.getKey(), holding + entry.getValue());
       data.provideMaterials(data.getDenominations().get(entry.getKey()), entry.getValue());

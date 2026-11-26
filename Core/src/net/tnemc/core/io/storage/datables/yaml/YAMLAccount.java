@@ -22,6 +22,7 @@ import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.tnemc.core.TNECore;
 import net.tnemc.core.account.Account;
+import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.core.account.PlayerAccount;
 import net.tnemc.core.account.SharedAccount;
 import net.tnemc.core.account.holdings.HoldingsEntry;
@@ -303,6 +304,9 @@ public class YAMLAccount implements Datable<Account> {
     }
 
     final Account account = response.getAccount().get();
+    if(account instanceof final NonPlayerAccount nonPlayer) {
+      nonPlayer.useStorageType(type);
+    }
     account.setStatus(TNECore.eco().account().findStatus(yaml.getString("Info.Status")));
     account.setCreationDate(yaml.getLong("Info.CreationDate"));
     account.setPin(yaml.getString("Info.Pin"));
@@ -315,15 +319,34 @@ public class YAMLAccount implements Datable<Account> {
     if(account instanceof final PlayerAccount playerAccount) {
       playerAccount.setLastOnline(yaml.getLong("Info.LastOnline"));
     }
-    if(account instanceof final SharedAccount shared && yaml.contains("Members")) {
-      loadMembers(yaml, shared);
+    if(account instanceof final SharedAccount shared) {
+      loadSharedDetails(yaml, shared, identifier);
     }
     final Collection<HoldingsEntry> holdings = TNECore.instance().storage().loadAll(HoldingsEntry.class, identifier);
     for(final HoldingsEntry entry : holdings) {
       account.getWallet().setHoldings(entry);
     }
     account.clearDirty();
+    if(!identifier.equals(yaml.getString("Info.ID"))) {
+      account.markDirty();
+    }
     PluginCore.callbacks().call(new AccountLoadCallback(account));
+  }
+
+  private void loadSharedDetails(final YamlDocument yaml, final SharedAccount shared, final String identifier) {
+
+    final String owner = yaml.getString("Info.Owner");
+    if(owner != null && !owner.isBlank()) {
+      try {
+        final String ownerId = owner.equals(yaml.getString("Info.ID"))? identifier : owner;
+        shared.setOwner(UUID.fromString(ownerId));
+      } catch(final IllegalArgumentException failure) {
+        PluginCore.log().warning("Ignoring an invalid owner UUID in account " + identifier + '.');
+      }
+    }
+    if(yaml.contains("Members")) {
+      loadMembers(yaml, shared);
+    }
   }
 
   private void loadMembers(final YamlDocument yaml, final SharedAccount shared) {

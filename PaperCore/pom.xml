@@ -124,7 +124,7 @@
                         </excludes>
                     </artifactSet>
                     <!--
-                      TNPC 1.1.0.2-SNAPSHOT-6 is published as an uber JAR with
+                      TNPC is published as an uber JAR with
                       older Lamp and TNIL classes inside it. Remove every
                       embedded copy before adding the Paper 26.2-compatible
                       versions declared below.

@@ -38,7 +38,6 @@ import net.tnemc.core.transaction.TransactionResult;
 import net.tnemc.core.utils.exceptions.InvalidTransactionException;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
-import net.tnemc.plugincore.core.id.UUIDPair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,18 +272,7 @@ public class TNEVaultUnlocked implements Economy {
   public boolean renameAccount(final @NotNull String plugin, final @NotNull UUID accountID, final @NotNull String name) {
 
     PluginCore.log().debug("RenameAccount method called with Plugin: " + plugin + ", AccountID: " + accountID + ", Name: " + name, DebugLevel.STANDARD);
-    final Optional<Account> account = TNECore.eco().account().findAccount(accountID);
-    if(account.isEmpty()) {
-      return false;
-    }
-
-    account.get().setName(name);
-
-    TNECore.eco().account().uuidProvider().store(new UUIDPair(accountID, name));
-
-    TNECore.eco().account().getAccounts().put(accountID.toString(), account.get());
-
-    return true;
+    return VaultUnlockedSharedAccounts.rename(accountID, name);
   }
 
   @Override

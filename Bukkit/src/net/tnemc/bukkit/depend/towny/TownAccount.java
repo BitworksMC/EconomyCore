@@ -19,6 +19,7 @@ package net.tnemc.bukkit.depend.towny;
  */
 
 import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.TownyEconomyHandler;
 import com.palmergames.bukkit.towny.TownySettings;
 import net.tnemc.core.account.NonPlayerAccount;
 import net.tnemc.core.utils.MISCUtils;
@@ -63,17 +64,31 @@ public class TownAccount extends NonPlayerAccount {
   @Override
   public UUID generateIdentifier(final String name) {
 
+    // At Towny's bank-name limit, the shortened name may even match a different town.
+    if(name.length() == 32) {
+      return identifier;
+    }
     try {
 
       PluginCore.log().debug("Generating Town UUID for: " + name + ".");
-      final UUID townID = Objects.requireNonNull(TownyAPI.getInstance().getTown(name.replace(TownySettings.getTownAccountPrefix(), ""))).getUUID();
+      final String prefix = TownySettings.getTownAccountPrefix();
+      if(!name.startsWith(prefix)) {
+        return identifier;
+      }
+      if(TownyAPI.getInstance().getTown(identifier) != null) {
+        return TownyEconomyHandler.modifyNPCUUID(identifier);
+      }
+      final UUID townID = TownyEconomyHandler.modifyNPCUUID(
+              Objects.requireNonNull(TownyAPI.getInstance().getTown(name.substring(prefix.length()))).getUUID());
 
       PluginCore.log().debug("Generated Town UUID: " + townID + ".");
       return townID;
     } catch(final Exception ignore) {
 
       PluginCore.log().debug("Failed to generate Town UUID for: " + name + ".");
-      return super.generateIdentifier(name);
+      // Bank names may be truncated by Towny. Keep the supplied UUID when the
+      // full government name cannot be resolved instead of deriving a different one.
+      return identifier;
     }
   }
 }

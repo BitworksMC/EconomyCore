@@ -19,21 +19,27 @@ package net.tnemc.bukkit.depend.towny;
  */
 
 import net.tnemc.core.TNECore;
-import net.tnemc.core.account.Account;
-import net.tnemc.core.account.SharedAccount;
-import net.tnemc.core.account.holdings.HoldingsEntry;
+import net.tnemc.core.config.DataConfig;
+import net.tnemc.core.io.storage.AccountIdentifierMigration;
 import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.id.UUIDPair;
+import net.tnemc.plugincore.core.io.storage.connect.YAMLConnector;
 
 import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.TownyEconomyHandler;
 import com.palmergames.bukkit.towny.TownySettings;
+import com.palmergames.bukkit.towny.event.TownyLoadedDatabaseEvent;
+import com.palmergames.bukkit.towny.object.Government;
 import com.palmergames.bukkit.towny.object.Nation;
 import com.palmergames.bukkit.towny.object.Town;
+import com.palmergames.util.StringMgmt;
+import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerLoadEvent;
 
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -42,7 +48,7 @@ import java.util.UUID;
  * @author creatorfromhell
  * @since 0.1.2.0
  */
-public class TownyHandler {
+public class TownyHandler implements Listener {
 
   public static void addTypes() {
 
@@ -52,42 +58,93 @@ public class TownyHandler {
 
   public static void synchronizeAccounts() {
 
-    final Iterator<Map.Entry<UUID, UUIDPair>> idIterator = TNECore.eco().account().uuidProvider().pairs().entrySet().iterator();
-    while(idIterator.hasNext()) {
+    synchronizeAccounts(true);
+  }
 
-      final Map.Entry<UUID, UUIDPair> entry = idIterator.next();
-      final String name = entry.getValue().getUsername();
+  @EventHandler
+  public void afterTownyDatabaseLoad(final TownyLoadedDatabaseEvent event) {
 
-      if(name.contains(TownySettings.getTownAccountPrefix())) {
-        synchronizeTown(entry, idIterator, name);
-      } else if(entry.getValue().getUsername().contains(TownySettings.getNationAccountPrefix())) {
-        synchronizeNation(entry, idIterator, name);
+    // Run before Towny's first economy read can create an empty destination account.
+    repairLocalAccounts();
+  }
+
+  @EventHandler
+  public void afterServerLoad(final ServerLoadEvent event) {
+
+    if(Bukkit.getPluginManager().isPluginEnabled("Towny")) {
+      repairLocalAccounts();
+    }
+  }
+
+  private void repairLocalAccounts() {
+
+    // A second JVM could still write the old key. SQL and Redis networks use the
+    // explicit command during single-server maintenance.
+    if(!DataConfig.yaml().getBoolean("Data.Sync.Enabled", false)
+       && TNECore.instance().storage().getConnector() instanceof YAMLConnector) {
+      synchronizeAccounts(false);
+    }
+  }
+
+  private static void synchronizeAccounts(final boolean removeStale) {
+
+    for(final UUIDPair pair : List.copyOf(TNECore.eco().account().uuidProvider().pairs().values())) {
+      final String name = pair.getUsername();
+      if(name.startsWith(TownySettings.getTownAccountPrefix())) {
+        synchronizeTown(pair.getIdentifier(), name, removeStale);
+      } else if(name.startsWith(TownySettings.getNationAccountPrefix())) {
+        synchronizeNation(pair.getIdentifier(), name, removeStale);
       }
     }
   }
 
-  private static void synchronizeTown(final Map.Entry<UUID, UUIDPair> entry,
-                                      final Iterator<Map.Entry<UUID, UUIDPair>> idIterator,
-                                      final String name) {
+  private static void synchronizeTown(final UUID identifier, final String name, final boolean removeStale) {
 
-    final Town town = TownyAPI.getInstance().getTown(name.replace(TownySettings.getTownAccountPrefix(), ""));
-    if(town == null) {
-      removeStaleAccount("town", name, entry.getKey());
+    if(TownyAPI.getInstance().getTown(identifier) != null) {
+      repairIdentifier(identifier, name, "town", TownyEconomyHandler.modifyNPCUUID(identifier));
       return;
     }
-    repairIdentifier(entry, idIterator, name, "town", town.getUUID());
+    final String prefix = TownySettings.getTownAccountPrefix();
+    if(name.length() == 32 && isTruncatedBankName(name, prefix, TownyAPI.getInstance().getTowns())) {
+      return;
+    }
+    final Town town = TownyAPI.getInstance().getTown(name.substring(prefix.length()));
+    if(town == null) {
+      if(removeStale) {
+        removeStaleAccount("town", name, identifier);
+      }
+      return;
+    }
+    repairIdentifier(identifier, name, "town", TownyEconomyHandler.modifyNPCUUID(town.getUUID()));
   }
 
-  private static void synchronizeNation(final Map.Entry<UUID, UUIDPair> entry,
-                                        final Iterator<Map.Entry<UUID, UUIDPair>> idIterator,
-                                        final String name) {
+  private static void synchronizeNation(final UUID identifier, final String name, final boolean removeStale) {
 
-    final Nation nation = TownyAPI.getInstance().getNation(name.replace(TownySettings.getNationAccountPrefix(), ""));
-    if(nation == null) {
-      removeStaleAccount("nation", name, entry.getKey());
+    if(TownyAPI.getInstance().getNation(identifier) != null) {
+      repairIdentifier(identifier, name, "nation", TownyEconomyHandler.modifyNPCUUID(identifier));
       return;
     }
-    repairIdentifier(entry, idIterator, name, "nation", nation.getUUID());
+    final String prefix = TownySettings.getNationAccountPrefix();
+    if(name.length() == 32 && isTruncatedBankName(name, prefix, TownyAPI.getInstance().getNations())) {
+      return;
+    }
+    final Nation nation = TownyAPI.getInstance().getNation(name.substring(prefix.length()));
+    if(nation == null) {
+      if(removeStale) {
+        removeStaleAccount("nation", name, identifier);
+      }
+      return;
+    }
+    repairIdentifier(identifier, name, "nation", TownyEconomyHandler.modifyNPCUUID(nation.getUUID()));
+  }
+
+  private static boolean isTruncatedBankName(final String name, final String prefix,
+                                             final Collection<? extends Government> governments) {
+
+    // Match Towny's bank-name format without calling getAccount(), which can call back
+    // into the economy provider. Never migrate an account based on an ambiguous prefix.
+    return governments.stream().map(government->prefix + government.getName())
+            .anyMatch(bankName->bankName.length() > 32 && name.equalsIgnoreCase(StringMgmt.trimMaxLength(bankName, 32)));
   }
 
   private static void removeStaleAccount(final String type, final String name, final UUID identifier) {
@@ -96,22 +153,17 @@ public class TownyHandler {
     TNECore.eco().account().deleteAccount(identifier);
   }
 
-  private static void repairIdentifier(final Map.Entry<UUID, UUIDPair> entry,
-                                       final Iterator<Map.Entry<UUID, UUIDPair>> idIterator,
-                                       final String name, final String type, final UUID townyUUID) {
+  private static void repairIdentifier(final UUID source, final String name, final String type, final UUID target) {
 
-    final Optional<Account> account = TNECore.eco().account().findAccount(entry.getKey().toString());
-    if(townyUUID.equals(entry.getKey()) || account.isEmpty()) {
+    if(source.equals(target)) {
       return;
     }
 
-    PluginCore.log().inform("Repairing Towny " + type + " UUID mismatch for: " + name
-                            + ". Old UUID: " + entry.getKey() + ", New UUID: " + townyUUID + '.');
-    final List<HoldingsEntry> holdings = account.get().getWallet().entryList();
-    idIterator.remove();
-    TNECore.eco().account().deleteAccount(entry.getKey());
-
-    final Optional<SharedAccount> response = TNECore.eco().account().createNonPlayerAccount(townyUUID.toString(), name);
-    response.ifPresent(sharedAccount->holdings.forEach(sharedAccount::setHoldings));
+    if(AccountIdentifierMigration.moveAccount(TNECore.eco().account(), source, target, name)) {
+      PluginCore.log().inform("Repaired Towny " + type + " account " + name + " (" + source + " -> " + target + ").");
+    } else {
+      PluginCore.log().warning("Kept Towny " + type + " account " + name + " at " + source
+                               + " because it could not be moved safely to " + target + '.');
+    }
   }
 }

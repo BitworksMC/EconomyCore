@@ -31,6 +31,7 @@ import net.tnemc.plugincore.PluginCore;
 import net.tnemc.plugincore.core.compatibility.log.DebugLevel;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -111,7 +112,11 @@ public class Transaction {
   public Transaction from(final UUID id, final HoldingsModifier modifier) {
 
     final Optional<Account> account = TNECore.eco().account().findAccount(id);
-    account.ifPresent(value->from(value, modifier));
+    if(account.isPresent()) {
+      return from(account.get(), modifier);
+    }
+    this.from = new TransactionParticipant(id, List.of());
+    this.modifierFrom = modifier;
     return this;
   }
 
@@ -125,9 +130,8 @@ public class Transaction {
    */
   public Transaction from(final Account account, final HoldingsModifier modifier) {
 
-    final List<HoldingsEntry> balances = account.getHoldings(modifier.getRegion(), modifier.getCurrency(), modifier.getType());
-    ensureBalance(balances, modifier);
-    this.from = new TransactionParticipant(account.getIdentifier(), balances);
+    this.from = participant(account, modifier);
+    final List<HoldingsEntry> balances = this.from.getStartingBalances();
     final BigDecimal tax = calculateFromTax(modifier);
     final BalanceState state = createBalanceState(balances, modifier);
     for(int i = 0; i < balances.size(); i++) {
@@ -152,7 +156,11 @@ public class Transaction {
   public Transaction to(final UUID id, final HoldingsModifier modifier) {
 
     final Optional<Account> account = TNECore.eco().account().findAccount(id);
-    account.ifPresent(value->to(value, modifier));
+    if(account.isPresent()) {
+      return to(account.get(), modifier);
+    }
+    this.to = new TransactionParticipant(id, List.of());
+    this.modifierTo = modifier;
     return this;
   }
 
@@ -166,9 +174,8 @@ public class Transaction {
    */
   public Transaction to(final Account account, final HoldingsModifier modifier) {
 
-    final List<HoldingsEntry> balances = account.getHoldings(modifier.getRegion(), modifier.getCurrency(), modifier.getType());
-    ensureBalance(balances, modifier);
-    this.to = new TransactionParticipant(account.getIdentifier(), balances);
+    this.to = participant(account, modifier);
+    final List<HoldingsEntry> balances = this.to.getStartingBalances();
     final BigDecimal tax = calculateToTax(modifier);
     final BalanceState state = createBalanceState(balances, modifier);
     for(int i = 0; i < balances.size(); i++) {
@@ -185,12 +192,13 @@ public class Transaction {
     return this;
   }
 
-  private void ensureBalance(final List<HoldingsEntry> balances, final HoldingsModifier modifier) {
+  private TransactionParticipant participant(final Account account, final HoldingsModifier modifier) {
 
-    if(balances.isEmpty()) {
-      balances.add(new HoldingsEntry(modifier.getRegion(), modifier.getCurrency(),
-                                     BigDecimal.ZERO, EconomyManager.NORMAL));
+    final List<HoldingsEntry> balances = new ArrayList<>();
+    for(final HoldingsEntry entry : account.getHoldings(modifier.getRegion(), modifier.getCurrency(), modifier.getType())) {
+      balances.add(new HoldingsEntry(entry.getRegion(), entry.getCurrency(), entry.getAmount(), entry.getHandler()));
     }
+    return new TransactionParticipant(account.getIdentifier(), balances);
   }
 
   private BigDecimal calculateFromTax(final HoldingsModifier modifier) {
@@ -230,7 +238,7 @@ public class Transaction {
                                         final BalanceState state) {
 
     if(state.done) {
-      return entry;
+      return new HoldingsEntry(entry.getRegion(), entry.getCurrency(), entry.getAmount(), entry.getHandler());
     }
     if(!state.take) {
       final HoldingsEntry ending = entry.modifyGrab(modifier).modifyGrab(tax.negate());

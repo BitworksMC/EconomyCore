@@ -143,6 +143,18 @@ TNE has some minimum requirements that should be followed.
 - Redis plus a shared `Data.Sync.Security.Token` on every backend server if you want cross-server
   syncing; opt in with `Data.Sync.Enabled: true`
 
+## Economy data backups
+
+`/tne backup` archives persisted YAML accounts, balances, and transaction receipts in the plugin's
+`backups` folder. It runs on the same storage queue as saves and includes changes that have already
+been written to disk. For a full server backup, stop the server cleanly and back up its data directory.
+Use your database's native backup and restore tools for SQL storage.
+
+To restore a YAML archive, stop the server, keep a copy of the existing TNE data directory, and
+extract the archive into a staging folder. Replace the plugin's `accounts` and `transactions`
+directories with the extracted copies before starting the server. Keep the original currency and
+server configuration with the archive.
+
 ## Contributing
 
 Contributions to TheNewEconomy are welcome and encouraged! Whether you're fixing a bug, adding a new

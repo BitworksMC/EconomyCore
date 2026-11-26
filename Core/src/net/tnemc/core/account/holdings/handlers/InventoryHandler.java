@@ -105,7 +105,9 @@ public class InventoryHandler implements HoldingsHandler {
                                                                  ((PlayerAccount)account).getPlayer()
                                                                          .get().inventory().getInventory(false),
                                                                  ((PlayerAccount)account).getUUID());
-      TNECore.instance().itemCalculations().setItems(data, amount);
+      if(!TNECore.instance().itemCalculations().trySetItems(data, amount)) {
+        return false;
+      }
     }
     account.getWallet().setHoldings(new HoldingsEntry(region, currency.getUid(), amount, identifier()));
     return true;

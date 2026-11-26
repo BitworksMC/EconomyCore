@@ -132,7 +132,6 @@ public class BukkitCore extends TNECore {
 
         PluginCore.log().debug("Adding Towny Account Types");
         TownyHandler.addTypes();
-        TownyHandler.synchronizeAccounts();
       }
 
       if(Bukkit.getPluginManager().getPlugin("Factions") != null) {

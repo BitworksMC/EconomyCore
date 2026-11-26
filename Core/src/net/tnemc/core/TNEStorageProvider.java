@@ -52,6 +52,8 @@ import net.tnemc.plugincore.core.io.storage.engine.sql.MySQL;
 import net.tnemc.plugincore.core.io.storage.engine.sql.PostgreSQL;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -108,7 +110,24 @@ public class TNEStorageProvider implements StorageProvider {
       }
       case "mysql-revamp" -> configureRevampedMySql(prefix, maria);
       default -> {
-        this.engine = new YAML();
+        this.engine = new YAML() {
+          @Override
+          public boolean supportsBackup() {
+
+            return true;
+          }
+
+          @Override
+          public void backup(final StorageConnector<?> connector) {
+
+            try {
+              final var archive = TNECore.yaml().backup(PluginCore.directory().toPath());
+              PluginCore.log().inform("Persisted YAML data backed up to " + archive, DebugLevel.OFF);
+            } catch(final IOException failure) {
+              throw new UncheckedIOException(failure);
+            }
+          }
+        };
         this.connector = new YAMLConnector();
       }
     }

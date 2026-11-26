@@ -145,7 +145,7 @@ public class AccountManager {
     PluginCore.log().debug("Create Account Called! ID: " + identifier + " Name: " + name);
     logColorCodeStack(name);
 
-    final AccountAPIResponse existing = findExistingAccount(identifier, name);
+    final AccountAPIResponse existing = findExistingAccount(identifier, name, skipDB);
     if(existing != null) {
       return existing;
     }
@@ -153,6 +153,11 @@ public class AccountManager {
     final Account account = createAccountObject(identifier, name, nonPlayer);
     if(account == null) {
       return new AccountAPIResponse(null, AccountResponse.CREATION_FAILED);
+    }
+    applyStorageIdentifier(account, identifier, skipDB);
+    final Account canonical = accounts.get(account.getIdentifier().toString());
+    if(canonical != null) {
+      return new AccountAPIResponse(canonical, AccountResponse.ALREADY_EXISTS);
     }
 
     final AccountCreateCallback callback = new AccountCreateCallback(account);
@@ -170,6 +175,14 @@ public class AccountManager {
     return new AccountAPIResponse(account, AccountResponse.CREATED);
   }
 
+  private void applyStorageIdentifier(final Account account, final String identifier, final boolean skipDB) {
+
+    // A Towny name lookup can resolve a newer UUID. Keep the persisted key until storage is rekeyed.
+    if(skipDB && account instanceof final NonPlayerAccount shared) {
+      shared.useStorageIdentifier(UUID.fromString(identifier));
+    }
+  }
+
   private void logColorCodeStack(final String name) {
 
     if(name.contains("§")) {
@@ -182,7 +195,7 @@ public class AccountManager {
     }
   }
 
-  private AccountAPIResponse findExistingAccount(final String identifier, final String name) {
+  private AccountAPIResponse findExistingAccount(final String identifier, final String name, final boolean skipDB) {
 
     if(identifier != null && accounts.containsKey(identifier)) {
       PluginCore.log().debug("Account Exists Already. ID: " + identifier);
@@ -190,7 +203,7 @@ public class AccountManager {
     }
 
     final Optional<UUIDPair> pair = uuidProvider.retrieve(name);
-    if(MainConfig.yaml().getBoolean("Core.Offline", false) && pair.isPresent() && accounts.containsKey(pair.get().getIdentifier().toString())) {
+    if(!skipDB && MainConfig.yaml().getBoolean("Core.Offline", false) && pair.isPresent() && accounts.containsKey(pair.get().getIdentifier().toString())) {
       PluginCore.log().debug("Offline Account Exists Already. ID: " + identifier);
       return new AccountAPIResponse(accounts.get(pair.get().getIdentifier().toString()), AccountResponse.ALREADY_EXISTS);
     }

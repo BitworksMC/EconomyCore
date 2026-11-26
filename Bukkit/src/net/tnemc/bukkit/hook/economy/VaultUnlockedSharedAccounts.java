@@ -10,6 +10,7 @@ package net.tnemc.bukkit.hook.economy;
 
 import net.milkbowl.vault2.economy.AccountPermission;
 import net.tnemc.core.TNECore;
+import net.tnemc.core.transaction.Transaction;
 import net.tnemc.core.account.Account;
 import net.tnemc.core.account.SharedAccount;
 import net.tnemc.core.account.shared.Member;
@@ -40,14 +41,29 @@ public final class VaultUnlockedSharedAccounts {
 
   public static boolean create(final UUID accountID, final String name, final UUID owner) {
 
-    if(TNECore.eco().account().findAccount(name).isPresent()
-       || TNECore.eco().account().findAccount(accountID.toString()).isPresent()) {
-      return false;
+    synchronized(Transaction.BALANCE_LOCK) {
+      if(TNECore.eco().account().findAccount(name).isPresent()
+         || TNECore.eco().account().findAccount(accountID.toString()).isPresent()) {
+        return false;
+      }
+      final SharedAccount account = new SharedAccount(accountID, name, owner);
+      TNECore.eco().account().getAccounts().put(account.getIdentifier().toString(), account);
+      TNECore.eco().account().uuidProvider().store(new UUIDPair(accountID, name));
+      return true;
     }
-    final SharedAccount account = new SharedAccount(accountID, name, owner);
-    TNECore.eco().account().getAccounts().put(account.getIdentifier().toString(), account);
-    TNECore.eco().account().uuidProvider().store(new UUIDPair(accountID, name));
-    return true;
+  }
+
+  public static boolean rename(final UUID accountID, final String name) {
+
+    synchronized(Transaction.BALANCE_LOCK) {
+      final Optional<Account> account = TNECore.eco().account().findAccount(accountID);
+      if(account.isEmpty()) {
+        return false;
+      }
+      account.get().setName(name);
+      TNECore.eco().account().uuidProvider().store(new UUIDPair(accountID, name));
+      return true;
+    }
   }
 
   public static boolean isOwner(final UUID accountID, final UUID identifier) {

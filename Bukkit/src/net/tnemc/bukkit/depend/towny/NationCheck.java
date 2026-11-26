@@ -45,7 +45,7 @@ public class NationCheck implements AccountTypeCheck {
     return value->{
       try {
 
-        final boolean checkResult = value.contains(TownySettings.getNationAccountPrefix());
+        final boolean checkResult = value.startsWith(TownySettings.getNationAccountPrefix());
 
         PluginCore.log().debug("Towny Nation Account Check -  Value: " + value + ", Result: " + checkResult);
 
